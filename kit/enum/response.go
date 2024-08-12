@@ -5,6 +5,7 @@ const (
 	ClientErrorCode       = "01"
 	ResourceErrorCode     = "02"
 	UnAuthorizedErrorCode = "03"
+	NotFoundErrorCode     = "04"
 	SystemErrorCode       = "99"
 
 	SuccessMessage           = "Success"
