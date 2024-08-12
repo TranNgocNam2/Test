@@ -7,9 +7,8 @@ const (
 	UnAuthorizedErrorCode = "03"
 	SystemErrorCode       = "99"
 
-	SuccessMessage           = "Success"
-	SystemErrorMessage       = "System Error"
-	ClientErrorMessage       = "Invalid Request"
-	ResourceErrorMessage     = "Could not get resource !"
-	UnAuthorizedErrorMessage = "User is not authorized !"
+	SuccessMessage       = "Success"
+	SystemErrorMessage   = "System Error"
+	ClientErrorMessage   = "Invalid Request"
+	ResourceErrorMessage = "Could noanot authorized !"
 )
