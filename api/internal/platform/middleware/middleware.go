@@ -3,6 +3,7 @@ package middleware
 import (
 	"Backend/kit/enum"
 	"Backend/kit/web"
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,7 +12,7 @@ func RecoverPanic() gin.HandlerFunc {
 		defer func() {
 			if err := recover(); err != nil {
 				c.Header(enum.HttpContentType, enum.HttpJson)
-				web.SystemError(c)
+				web.SystemError(c, fmt.Errorf("%v", err))
 			}
 		}()
 

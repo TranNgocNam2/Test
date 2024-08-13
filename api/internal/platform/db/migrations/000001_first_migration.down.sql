@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS "post_tags";
+DROP TABLE IF EXISTS "artwork_price";
+DROP TABLE IF EXISTS "user_downloaded_artwork";
+DROP TABLE IF EXISTS "user_liked_post";
+DROP TABLE IF EXISTS "tag";
+DROP TABLE IF EXISTS "transaction";
+DROP TABLE IF EXISTS "order";
+DROP TABLE IF EXISTS "comment";
+DROP TABLE IF EXISTS "artwork";
+DROP TABLE IF EXISTS "post";
+DROP TABLE IF EXISTS "user";

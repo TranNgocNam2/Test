@@ -15,7 +15,7 @@ type ctxKey struct{}
 
 var (
 	once        sync.Once
-	logger      *zap.Logger
+	Logger      *zap.Logger
 	logsFolder  = enum.LogFolder
 	logFileName = enum.LogFileName
 )
@@ -56,10 +56,10 @@ func Get(path string) *zap.Logger {
 			zapcore.NewCore(fileEncoder, logFile, logLevel),
 		)
 
-		logger = zap.New(core)
+		Logger = zap.New(core)
 	})
 
-	return logger
+	return Logger
 }
 
 // FromCtx returns the Logger associated with the ctx. If no logger
@@ -68,7 +68,7 @@ func Get(path string) *zap.Logger {
 func FromCtx(ctx context.Context) *zap.Logger {
 	if l, ok := ctx.Value(ctxKey{}).(*zap.Logger); ok {
 		return l
-	} else if l := logger; l != nil {
+	} else if l := Logger; l != nil {
 		return l
 	}
 
