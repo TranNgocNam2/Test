@@ -6,16 +6,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-type AppCfg struct {
+type Config struct {
 	Host        string `mapstructure:"APP_HOST"`
 	Port        int    `mapstructure:"APP_PORT"`
 	CorsOrigin  string `mapstructure:"CORS_ORIGIN"`
 	DatabaseUrl string `mapstructure:"DATABASE_URL"`
 }
 
-var App *AppCfg
-
-func LoadAllAppConfig(path string) (app *AppCfg, err error) {
+func LoadAllAppConfig(path string) (config *Config, err error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigFile(enum.EnvironmentFile)
 	viper.AutomaticEnv()
@@ -27,6 +25,6 @@ func LoadAllAppConfig(path string) (app *AppCfg, err error) {
 		return
 	}
 
-	err = viper.Unmarshal(&app)
+	err = viper.Unmarshal(&config)
 	return
 }

@@ -2,8 +2,10 @@ package main
 
 import (
 	"Backend/api/cmd/servid/routes"
+	"Backend/api/internal/platform/app"
 	"Backend/api/internal/platform/config"
 	"Backend/api/internal/platform/db"
+	"Backend/api/internal/platform/db/ent"
 	"Backend/api/internal/platform/logger"
 	"Backend/kit/enum"
 	"Backend/kit/file"
@@ -34,39 +36,51 @@ func main() {
 	router := gin.Default()
 	//router.Use(middleware.RecoverPanic())
 
-	//Load all app config
-	config.App, _ = config.LoadAllAppConfig(workingDirectory)
+	cfg, _ := config.LoadAllAppConfig(workingDirectory)
 
 	//Config Cors
 	corsConfig := cors.Config{
-		AllowOrigins:     []string{config.App.CorsOrigin},
+		AllowOrigins:     []string{cfg.CorsOrigin},
 		AllowMethods:     enum.CorsAllowMethods,
 		AllowHeaders:     enum.CorsAllowHeaders,
 		AllowCredentials: true,
 		MaxAge:           enum.CorsMaxAge,
 	}
 	router.Use(cors.New(corsConfig))
-
 	//Set up logger
-	logger.Log = log.Get(workingDirectory)
-	router.Use(logger.RequestLogger())
+	zapLog := log.Get(workingDirectory)
+	router.Use(logger.RequestLogger(zapLog))
+	ctx := context.Background()
+
+	client := db.ConnectDB(ctx, cfg.DatabaseUrl, zapLog)
+	//Create Schema
+	app := app.Application{
+		Config:    cfg,
+		EntClient: client,
+		Logger:    zapLog,
+	}
+
+	if err := client.Schema.Create(ctx); err != nil {
+		log.StartUpError(app.Logger, enum.ErrorCreateSchema)
+	}
 
 	//Connect DB and close connection
-	ctx := context.Background()
-	db.ConnectDB(ctx, config.App.DatabaseUrl)
-	defer db.CloseDB()
+
+	defer func(client *ent.Client) {
+		_ = client.Close()
+	}(client)
 
 	// Load all routes
-	LoadRoutes(router)
+	LoadRoutes(router, &app)
 
-	serverAddr := fmt.Sprintf("%s:%d", config.App.Host, config.App.Port)
-	logger.Log.Info("Server is listening on " + serverAddr)
+	serverAddr := fmt.Sprintf("%s:%d", app.Config.Host, app.Config.Port)
+	app.Logger.Info("Server is listening on " + serverAddr)
 	if err := router.Run(serverAddr); err != nil {
-		log.StartUpError(logger.Log, enum.ApplicationStartFailed)
+		log.StartUpError(app.Logger, enum.ApplicationStartFailed)
 	}
 
 }
 
-func LoadRoutes(router *gin.Engine) {
-	routes.ExampleRoutes(router)
+func LoadRoutes(router *gin.Engine, app *app.Application) {
+	routes.ExampleRoutes(router, app)
 }

@@ -1,2 +1,0 @@
-DROP TABLE IF EXISTS "auth_user";
-DROP TABLE IF EXISTS "user_role";

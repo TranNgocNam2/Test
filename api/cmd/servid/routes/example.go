@@ -1,15 +1,14 @@
 package routes
 
 import (
-	"Backend/api/internal/platform/db"
-	"Backend/api/internal/post"
+	"Backend/api/internal/platform/app"
 	"Backend/kit/enum"
 	"Backend/kit/web"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func ExampleRoutes(router *gin.Engine) {
+func ExampleRoutes(router *gin.Engine, app *app.Application) {
 	router.GET("/hello-world", func(c *gin.Context) {
 		response := web.BaseResponse{
 			ResultCode:    enum.SuccessCode,
@@ -22,7 +21,7 @@ func ExampleRoutes(router *gin.Engine) {
 	})
 
 	router.GET("/health-check", func(c *gin.Context) {
-		err := db.DB.Ping(c.Request.Context())
+		err := app.EntClient.Schema.Create(c.Request.Context())
 		if err != nil {
 			web.SystemError(c, err)
 			return
@@ -38,5 +37,4 @@ func ExampleRoutes(router *gin.Engine) {
 		c.JSON(http.StatusOK, response)
 	})
 
-	router.GET("/post", post.GetAllPost(db.Queries))
 }

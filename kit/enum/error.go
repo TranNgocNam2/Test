@@ -1,10 +1,11 @@
 package enum
 
 const (
-	ErrorConfigFile  = "fatal error config file: %w"
-	ErrorConnectDB   = "Unable to connect to database!"
-	ErrorLoadEnvFile = "Load env file failed!"
+	ErrorConfigFile   = "fatal error config file: %w"
+	ErrorConnectDB    = "Unable to connect to database!"
+	ErrorLoadEnvFile  = "Load env file failed!"
+	ErrorCreateSchema = "Failed to create schema!"
 
-	ErrorToReadRequestBody = "Failed to read request body!"
+	ErrorReadRequestBody   = "Failed to read request body!"
 	ApplicationStartFailed = "application start failed!"
 )

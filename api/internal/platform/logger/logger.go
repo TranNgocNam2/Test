@@ -13,8 +13,6 @@ import (
 	"time"
 )
 
-var Log *zap.Logger
-
 type ResponseWriterWithCapture struct {
 	io.Writer
 	body *strings.Builder
@@ -28,12 +26,12 @@ func (r *ResponseWriterWithCapture) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
-func RequestLogger() gin.HandlerFunc {
+func RequestLogger(logger *zap.Logger) gin.HandlerFunc {
 	return func(context *gin.Context) {
-		Log = log.FromCtx(context.Request.Context())
+		logger = log.FromCtx(context.Request.Context())
 		requestId := context.Request.Header.Get(enum.RequestIDHeader)
 		if context.Request.Method == http.MethodGet {
-			Log.Info(enum.LogStartMessage,
+			logger.Info(enum.LogStartMessage,
 				zap.String(enum.LogRequestId, requestId),
 				zap.String(enum.LogMethod, context.Request.Method),
 				zap.String(enum.LogUrl, context.Request.RequestURI),
@@ -46,11 +44,11 @@ func RequestLogger() gin.HandlerFunc {
 					requestBody = removeExtraSpacing(string(bodyBytes))
 					context.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 				} else {
-					Log.Error(enum.ErrorToReadRequestBody, zap.Error(err))
+					logger.Error(enum.ErrorReadRequestBody, zap.Error(err))
 				}
 			}
 
-			Log.Info(enum.LogStartMessage,
+			logger.Info(enum.LogStartMessage,
 				zap.String(enum.LogRequestId, requestId),
 				zap.String(enum.LogMethod, context.Request.Method),
 				zap.String(enum.LogUrl, context.Request.RequestURI),
@@ -75,7 +73,7 @@ func RequestLogger() gin.HandlerFunc {
 			responseBody = responseBodyWriter.body.String()
 		}
 
-		Log.Info(enum.LogEndMessage,
+		logger.Info(enum.LogEndMessage,
 			zap.String(enum.LogRequestId, requestId),
 			zap.Int(enum.LogStatusCode, context.Writer.Status()),
 			zap.String(enum.LogResponseBody, responseBody),

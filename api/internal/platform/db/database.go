@@ -1,29 +1,26 @@
 package db
 
 import (
-	db "Backend/api/internal/platform/db/sqlc"
-	"Backend/api/internal/platform/logger"
+	"Backend/api/internal/platform/db/ent"
 	"Backend/kit/enum"
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"database/sql"
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )
 
-var DB *pgxpool.Pool
-var Queries *db.Queries
-
-func ConnectDB(ctx context.Context, dsn string) {
-	var err error
-	DB, err = pgxpool.New(ctx, dsn)
-	Queries = db.New(DB)
+func ConnectDB(ctx context.Context, databaseUrl string, logger *zap.Logger) *ent.Client {
+	db, err := sql.Open("pgx", databaseUrl)
 	if err != nil {
-		logger.Log.Fatal(enum.ErrorConnectDB, zap.Error(err))
+		logger.Fatal(enum.ErrorConnectDB, zap.Error(err))
 	}
-	return
-}
 
-func CloseDB() {
-	if DB != nil {
-		DB.Close()
+	if err = db.PingContext(ctx); err != nil {
+		logger.Fatal(enum.ErrorConnectDB, zap.Error(err))
 	}
+
+	drv := entsql.OpenDB(dialect.Postgres, db)
+	return ent.NewClient(ent.Driver(drv))
 }
