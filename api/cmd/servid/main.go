@@ -37,6 +37,7 @@ func main() {
 	//router.Use(middleware.RecoverPanic())
 
 	cfg, _ := config.LoadAllAppConfig(workingDirectory)
+	fmt.Println(workingDirectory)
 
 	//Config Cors
 	corsConfig := cors.Config{
@@ -50,6 +51,7 @@ func main() {
 	//Set up logger
 	zapLog := log.Get(workingDirectory)
 	router.Use(logger.RequestLogger(zapLog))
+
 	ctx := context.Background()
 
 	client := db.ConnectDB(ctx, cfg.DatabaseUrl, zapLog)

@@ -27,9 +27,9 @@ func Get(path string) *zap.Logger {
 		stdout := zapcore.AddSync(os.Stdout)
 
 		// Get the absolute path to the logs directory
-
 		logsDir := filepath.Join(path, logsFolder)
 		logFilePath := filepath.Join(logsDir, logFileName)
+
 		logFile := zapcore.AddSync(&lumberjack.Logger{
 			Filename:   logFilePath,
 			MaxSize:    5, // megabytes
