@@ -24,10 +24,10 @@ func NotFoundError(context *gin.Context, message string) {
 	context.JSON(http.StatusNotFound, notFoundError)
 }
 
-func ClientError(context *gin.Context) {
+func BadRequest(context *gin.Context, message string) {
 	var clientError = &ErrorResponse{
-		ResultCode:    enum.ClientErrorCode,
-		ResultMessage: enum.ClientErrorMessage,
+		ResultCode:    enum.BadRequestCode,
+		ResultMessage: message,
 	}
 	context.JSON(http.StatusBadRequest, clientError)
 }

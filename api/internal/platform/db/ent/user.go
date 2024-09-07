@@ -21,7 +21,7 @@ type User struct {
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
 	// Password holds the value of the "password" field.
-	Password     string `json:"password,omitempty"`
+	Password     string `json:"-"`
 	selectValues sql.SelectValues
 }
 

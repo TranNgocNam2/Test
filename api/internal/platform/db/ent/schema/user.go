@@ -16,7 +16,7 @@ func (User) Fields() []ent.Field {
 		field.Int("id").Unique().Immutable(),
 		field.String("name").Default("unknown"),
 		field.String("email").Unique(),
-		field.String("password").Default("unknown"),
+		field.String("password").Default("unknown").StructTag(`json:"-"`),
 	}
 }
 

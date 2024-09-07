@@ -35,10 +35,10 @@ COPY --from=builder /build/apiserver /app/
 COPY --from=builder /build/.env /app/
 
 
-# Use a non-root user for security
+# Use a non-root usergrp for security
 RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
 
-# Change ownership of the app directory and its contents to the nonroot user
+# Change ownership of the app directory and its contents to the nonroot usergrp
 RUN chown -R nonroot:nonroot /app
 
 USER nonroot

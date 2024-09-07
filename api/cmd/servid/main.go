@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Backend/api/cmd/servid/handlers/usergrp"
 	"Backend/api/cmd/servid/routes"
 	"Backend/api/internal/platform/app"
 	"Backend/api/internal/platform/config"
@@ -85,4 +86,5 @@ func main() {
 
 func LoadRoutes(router *gin.Engine, app *app.Application) {
 	routes.ExampleRoutes(router, app)
+	usergrp.UserRoutes(router, app)
 }
