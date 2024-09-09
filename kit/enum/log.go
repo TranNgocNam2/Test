@@ -2,7 +2,7 @@ package enum
 
 const (
 	LogFolder       = "logs"
-	LogFileName     = "app.logging"
+	LogFileName     = "app.log"
 	LogTimeKey      = "timestamp"
 	LogStartMessage = "Request started"
 	LogEndMessage   = "Request completed"

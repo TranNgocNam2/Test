@@ -7,18 +7,27 @@ import (
 	"net/http"
 )
 
-func SystemError(context *gin.Context) {
+func SystemError(context *gin.Context, error error) {
 	var systemError = &ErrorResponse{
 		ResultCode:    enum.SystemErrorCode,
 		ResultMessage: enum.SystemErrorMessage,
 	}
+	LogRequestError(context, error.Error())
 	context.JSON(http.StatusInternalServerError, systemError)
 }
 
-func ClientError(context *gin.Context) {
+func NotFoundError(context *gin.Context, message string) {
+	var notFoundError = &ErrorResponse{
+		ResultCode:    enum.NotFoundErrorCode,
+		ResultMessage: message,
+	}
+	context.JSON(http.StatusNotFound, notFoundError)
+}
+
+func BadRequest(context *gin.Context, message string) {
 	var clientError = &ErrorResponse{
-		ResultCode:    enum.ClientErrorCode,
-		ResultMessage: enum.ClientErrorMessage,
+		ResultCode:    enum.BadRequestCode,
+		ResultMessage: message,
 	}
 	context.JSON(http.StatusBadRequest, clientError)
 }

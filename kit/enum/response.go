@@ -2,13 +2,15 @@ package enum
 
 const (
 	SuccessCode           = "00"
-	ClientErrorCode       = "01"
+	BadRequestCode        = "01"
 	ResourceErrorCode     = "02"
 	UnAuthorizedErrorCode = "03"
+	NotFoundErrorCode     = "04"
 	SystemErrorCode       = "99"
 
-	SuccessMessage       = "Success"
-	SystemErrorMessage   = "System Error"
-	ClientErrorMessage   = "Invalid Request"
-	ResourceErrorMessage = "Could noanot authorized !"
+	SuccessMessage           = "Thành công"
+	SystemErrorMessage       = "Lỗi hệ thống"
+	BadRequestMessage        = "Yêu cầu không hợp lệ"
+	ResourceErrorMessage     = "Could not get resource !"
+	UnAuthorizedErrorMessage = "Người dùng không có quyền sử dụng chức năng này"
 )

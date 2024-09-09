@@ -1,4 +1,4 @@
-package logging
+package logger
 
 import (
 	"Backend/kit/enum"
@@ -26,13 +26,12 @@ func (r *ResponseWriterWithCapture) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
-func RequestLogger() gin.HandlerFunc {
+func RequestLogger(logger *zap.Logger) gin.HandlerFunc {
 	return func(context *gin.Context) {
-		l := log.FromCtx(context.Request.Context())
+		logger = log.FromCtx(context.Request.Context())
 		requestId := context.Request.Header.Get(enum.RequestIDHeader)
-
 		if context.Request.Method == http.MethodGet {
-			l.Info(enum.LogStartMessage,
+			logger.Info(enum.LogStartMessage,
 				zap.String(enum.LogRequestId, requestId),
 				zap.String(enum.LogMethod, context.Request.Method),
 				zap.String(enum.LogUrl, context.Request.RequestURI),
@@ -45,11 +44,11 @@ func RequestLogger() gin.HandlerFunc {
 					requestBody = removeExtraSpacing(string(bodyBytes))
 					context.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 				} else {
-					l.Error("Failed to read request body", zap.Error(err))
+					logger.Error(enum.ErrorReadRequestBody, zap.Error(err))
 				}
 			}
 
-			l.Info(enum.LogStartMessage,
+			logger.Info(enum.LogStartMessage,
 				zap.String(enum.LogRequestId, requestId),
 				zap.String(enum.LogMethod, context.Request.Method),
 				zap.String(enum.LogUrl, context.Request.RequestURI),
@@ -74,7 +73,7 @@ func RequestLogger() gin.HandlerFunc {
 			responseBody = responseBodyWriter.body.String()
 		}
 
-		l.Info(enum.LogEndMessage,
+		logger.Info(enum.LogEndMessage,
 			zap.String(enum.LogRequestId, requestId),
 			zap.Int(enum.LogStatusCode, context.Writer.Status()),
 			zap.String(enum.LogResponseBody, responseBody),
