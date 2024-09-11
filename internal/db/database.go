@@ -1,7 +1,7 @@
 package db
 
 import (
-	"Backend/db/ent"
+	"Backend/internal/db/ent"
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"

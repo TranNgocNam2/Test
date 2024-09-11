@@ -1,6 +1,9 @@
 package schema
 
-import "entgo.io/ent"
+import (
+	"entgo.io/ent"
+	"entgo.io/ent/schema/field"
+)
 
 // Account holds the schema definition for the Account entity.
 type Account struct {
@@ -9,7 +12,9 @@ type Account struct {
 
 // Fields of the Account.
 func (Account) Fields() []ent.Field {
-	return nil
+	return []ent.Field{
+		field.Int("id").Unique().Immutable(),
+	}
 }
 
 // Edges of the Account.

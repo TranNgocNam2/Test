@@ -1,9 +1,9 @@
 package app
 
 import (
-	"Backend/db/ent"
-	"Backend/db/sqlc"
 	"Backend/internal/config"
+	"Backend/internal/db/ent"
+	"Backend/internal/db/sqlc"
 	"go.uber.org/zap"
 )
 

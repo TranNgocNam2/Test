@@ -2,11 +2,11 @@ package main
 
 import (
 	"Backend/api/servid/routes"
-	"Backend/db"
-	"Backend/db/ent"
-	"Backend/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/config"
+	"Backend/internal/db"
+	"Backend/internal/db/ent"
+	"Backend/internal/db/sqlc"
 	"Backend/internal/log"
 	"context"
 	"fmt"
