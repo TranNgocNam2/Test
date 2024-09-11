@@ -3,7 +3,8 @@ package db
 import (
 	"Backend/db/ent"
 	"context"
-	"database/sql"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -12,16 +13,15 @@ import (
 	"go.uber.org/zap"
 )
 
-func ConnectDB(ctx context.Context, databaseUrl string, logger *zap.Logger) *ent.Client {
-	db, err := sql.Open("pgx", databaseUrl)
+func ConnectDB(ctx context.Context, databaseUrl string, logger *zap.Logger) (*ent.Client, *pgxpool.Pool) {
+	pool, err := pgxpool.New(context.Background(), databaseUrl)
+
 	if err != nil {
 		logger.Fatal(message.FailedConnectDatabase, zap.Error(err))
 	}
 
-	if err = db.PingContext(ctx); err != nil {
-		logger.Fatal(message.FailedConnectDatabase, zap.Error(err))
-	}
+	db := stdlib.OpenDBFromPool(pool)
 
 	drv := entsql.OpenDB(dialect.Postgres, db)
-	return ent.NewClient(ent.Driver(drv))
+	return ent.NewClient(ent.Driver(drv)), pool
 }

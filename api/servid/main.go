@@ -1,11 +1,12 @@
 package main
 
 import (
-	"Backend/api/servid/handlers/usergrp"
 	"Backend/api/servid/routes"
+	"Backend/db"
+	"Backend/db/ent"
+	"Backend/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/config"
-	"Backend/internal/db"
 	"Backend/internal/log"
 	"context"
 	"fmt"
@@ -52,12 +53,13 @@ func main() {
 
 	ctx := context.Background()
 
-	client := db.ConnectDB(ctx, cfg.DatabaseUrl, zapLog)
+	client, pool := db.ConnectDB(ctx, cfg.DatabaseUrl, zapLog)
 	//Create Schema
-	app := app.Application{
+	a := app.Application{
 		Config:    cfg,
 		EntClient: client,
 		Logger:    zapLog,
+		Queries:   sqlc.New(pool),
 	}
 
 	//Connect DB and close connection
@@ -67,17 +69,16 @@ func main() {
 	}(client)
 
 	// Load all routes
-	LoadRoutes(router, &app)
+	LoadRoutes(router, &a)
 
-	serverAddr := fmt.Sprintf("%s:%d", app.Config.Host, app.Config.Port)
-	app.Logger.Info("Server is listening on " + serverAddr)
+	serverAddr := fmt.Sprintf("%s:%d", a.Config.Host, a.Config.Port)
+	a.Logger.Info("Server is listening on " + serverAddr)
 	if err := router.Run(serverAddr); err != nil {
-		logger.StartUpError(app.Logger, message.FailedStartApplication)
+		logger.StartUpError(a.Logger, message.FailedStartApplication)
 	}
 
 }
 
 func LoadRoutes(router *gin.Engine, app *app.Application) {
 	routes.ExampleRoutes(router)
-	usergrp.UserRoutes(router, app)
 }
