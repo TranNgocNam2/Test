@@ -10,7 +10,6 @@ RUN go mod download && go mod verify
 
 # Copy the rest of the source code
 COPY ./api ./api
-COPY ./kit ./kit
 
 # Copy environment file
 COPY ./.env ./.env
