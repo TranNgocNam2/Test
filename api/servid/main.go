@@ -3,11 +3,10 @@ package main
 import (
 	"Backend/api/servid/handlers/usergrp"
 	"Backend/api/servid/routes"
-	"Backend/internal/platform/app"
-	"Backend/internal/platform/config"
-	"Backend/internal/platform/db"
-	"Backend/internal/platform/db/ent"
-	"Backend/internal/platform/log"
+	"Backend/internal/app"
+	"Backend/internal/config"
+	"Backend/internal/db"
+	"Backend/internal/log"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -59,10 +58,6 @@ func main() {
 		Config:    cfg,
 		EntClient: client,
 		Logger:    zapLog,
-	}
-
-	if err := client.Schema.Create(ctx); err != nil {
-		logger.StartUpError(app.Logger, message.FailedCreateEntSchema)
 	}
 
 	//Connect DB and close connection
