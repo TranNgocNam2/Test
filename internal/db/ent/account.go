@@ -13,9 +13,13 @@ import (
 
 // Account is the model entity for the Account schema.
 type Account struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID           int `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// Email holds the value of the "email" field.
+	Email        string `json:"email,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -26,6 +30,8 @@ func (*Account) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case account.FieldID:
 			values[i] = new(sql.NullInt64)
+		case account.FieldName, account.FieldEmail:
+			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -47,6 +53,18 @@ func (a *Account) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			a.ID = int(value.Int64)
+		case account.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				a.Name = value.String
+			}
+		case account.FieldEmail:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field email", values[i])
+			} else if value.Valid {
+				a.Email = value.String
+			}
 		default:
 			a.selectValues.Set(columns[i], values[i])
 		}
@@ -82,7 +100,12 @@ func (a *Account) Unwrap() *Account {
 func (a *Account) String() string {
 	var builder strings.Builder
 	builder.WriteString("Account(")
-	builder.WriteString(fmt.Sprintf("id=%v", a.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", a.ID))
+	builder.WriteString("name=")
+	builder.WriteString(a.Name)
+	builder.WriteString(", ")
+	builder.WriteString("email=")
+	builder.WriteString(a.Email)
 	builder.WriteByte(')')
 	return builder.String()
 }

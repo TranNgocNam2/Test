@@ -258,6 +258,18 @@ func (aq *AccountQuery) Clone() *AccountQuery {
 
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.Account.Query().
+//		GroupBy(account.FieldName).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (aq *AccountQuery) GroupBy(field string, fields ...string) *AccountGroupBy {
 	aq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &AccountGroupBy{build: aq}
@@ -269,6 +281,16 @@ func (aq *AccountQuery) GroupBy(field string, fields ...string) *AccountGroupBy 
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//	}
+//
+//	client.Account.Query().
+//		Select(account.FieldName).
+//		Scan(ctx, &v)
 func (aq *AccountQuery) Select(fields ...string) *AccountSelect {
 	aq.ctx.Fields = append(aq.ctx.Fields, fields...)
 	sbuild := &AccountSelect{AccountQuery: aq}

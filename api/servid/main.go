@@ -18,11 +18,11 @@ import (
 	"os"
 )
 
-var workingDirectory string
+var WorkingDirectory string
 
 func init() {
 	var err error
-	workingDirectory, err = file.WorkingDirectory()
+	WorkingDirectory, err = file.WorkingDirectory()
 	if err != nil {
 		fmt.Println("Error getting root path:", err)
 		os.Exit(1)
@@ -35,8 +35,8 @@ func init() {
 func main() {
 	router := gin.Default()
 	//router.Use(middleware.RecoverPanic())
-
-	cfg, _ := config.LoadAllAppConfig(workingDirectory)
+	fmt.Println(WorkingDirectory)
+	cfg, _ := config.LoadAllAppConfig(WorkingDirectory)
 
 	//Config Cors
 	//corsConfig := cors.Config{
@@ -48,13 +48,14 @@ func main() {
 	//}
 	//router.Use(cors.New(corsConfig))
 	//Set up log
-	zapLog := logger.Get(workingDirectory)
+	zapLog := logger.Get(WorkingDirectory)
 	router.Use(log.RequestLogger(zapLog))
 
 	ctx := context.Background()
 
 	client, pool := db.ConnectDB(ctx, cfg.DatabaseUrl, zapLog)
 	//Create Schema
+
 	a := app.Application{
 		Config:    cfg,
 		EntClient: client,
@@ -62,7 +63,9 @@ func main() {
 		Queries:   sqlc.New(pool),
 	}
 
-	//Connect DB and close connection
+	//if err := client.Schema.Create(ctx); err != nil {
+	//	logger.StartUpError(a.Logger, message.FailedCreateEntSchema)
+	//}
 
 	defer func(client *ent.Client) {
 		_ = client.Close()

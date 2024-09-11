@@ -14,6 +14,8 @@ type Account struct {
 func (Account) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("id").Unique().Immutable(),
+		field.String("name").NotEmpty(),
+		field.String("email").NotEmpty().Unique(),
 	}
 }
 

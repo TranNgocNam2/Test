@@ -5,6 +5,7 @@ package ent
 import (
 	"Backend/internal/db/ent/account"
 	"context"
+	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -16,6 +17,18 @@ type AccountCreate struct {
 	config
 	mutation *AccountMutation
 	hooks    []Hook
+}
+
+// SetName sets the "name" field.
+func (ac *AccountCreate) SetName(s string) *AccountCreate {
+	ac.mutation.SetName(s)
+	return ac
+}
+
+// SetEmail sets the "email" field.
+func (ac *AccountCreate) SetEmail(s string) *AccountCreate {
+	ac.mutation.SetEmail(s)
+	return ac
 }
 
 // SetID sets the "id" field.
@@ -58,6 +71,22 @@ func (ac *AccountCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (ac *AccountCreate) check() error {
+	if _, ok := ac.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Account.name"`)}
+	}
+	if v, ok := ac.mutation.Name(); ok {
+		if err := account.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Account.name": %w`, err)}
+		}
+	}
+	if _, ok := ac.mutation.Email(); !ok {
+		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "Account.email"`)}
+	}
+	if v, ok := ac.mutation.Email(); ok {
+		if err := account.EmailValidator(v); err != nil {
+			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Account.email": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -89,6 +118,14 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 	if id, ok := ac.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := ac.mutation.Name(); ok {
+		_spec.SetField(account.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if value, ok := ac.mutation.Email(); ok {
+		_spec.SetField(account.FieldEmail, field.TypeString, value)
+		_node.Email = value
 	}
 	return _node, _spec
 }
