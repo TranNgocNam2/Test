@@ -1,2 +1,2 @@
--- name: GetAccount :one
-SELECT * FROM "accounts";
+-- name: GetAccounts :many
+SELECT * FROM accounts;

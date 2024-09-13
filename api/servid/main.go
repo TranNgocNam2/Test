@@ -1,21 +1,21 @@
 package main
 
 import (
+	"Backend/api/servid/handlers/testgrp"
 	"Backend/api/servid/routes"
 	"Backend/internal/app"
 	"Backend/internal/config"
 	"Backend/internal/db"
-	"Backend/internal/db/ent"
 	"Backend/internal/db/sqlc"
-	"Backend/internal/log"
 	"context"
 	"fmt"
+	"io"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"gitlab.com/innovia69420/kit/enum/message"
 	"gitlab.com/innovia69420/kit/file"
 	"gitlab.com/innovia69420/kit/logger"
-	"io"
-	"os"
 )
 
 var workingDirectory string
@@ -49,24 +49,18 @@ func main() {
 	//router.Use(cors.New(corsConfig))
 	//Set up log
 	zapLog := logger.Get(workingDirectory)
-	router.Use(log.RequestLogger(zapLog))
+	//router.Use(log.RequestLogger(zapLog))
 
 	ctx := context.Background()
 
-	client, pool := db.ConnectDB(ctx, cfg.DatabaseUrl, zapLog)
-	//Create Schema
+	dbConn := db.ConnectDB(ctx, cfg.DatabaseUrl, zapLog)
+
 	a := app.Application{
-		Config:    cfg,
-		EntClient: client,
-		Logger:    zapLog,
-		Queries:   sqlc.New(pool),
+		Config:  cfg,
+		Logger:  zapLog,
+		Db:      dbConn,
+		Queries: sqlc.New(dbConn),
 	}
-
-	//Connect DB and close connection
-
-	defer func(client *ent.Client) {
-		_ = client.Close()
-	}(client)
 
 	// Load all routes
 	LoadRoutes(router, &a)
@@ -81,4 +75,5 @@ func main() {
 
 func LoadRoutes(router *gin.Engine, app *app.Application) {
 	routes.ExampleRoutes(router)
+	testgrp.AccountRoutes(router, app)
 }

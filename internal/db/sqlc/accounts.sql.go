@@ -9,13 +9,36 @@ import (
 	"context"
 )
 
-const getAccount = `-- name: GetAccount :one
-SELECT id FROM "accounts"
+const getAccounts = `-- name: GetAccounts :many
+SELECT id, username, password, email, phone, address FROM accounts
 `
 
-func (q *Queries) GetAccount(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, getAccount)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) GetAccounts(ctx context.Context) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAccounts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.Password,
+			&i.Email,
+			&i.Phone,
+			&i.Address,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

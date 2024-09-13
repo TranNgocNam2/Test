@@ -4,6 +4,15 @@
 
 package sqlc
 
+import (
+	"database/sql"
+)
+
 type Account struct {
-	ID int64 `json:"id"`
+	ID       string         `json:"id"`
+	Username sql.NullString `json:"username"`
+	Password sql.NullString `json:"password"`
+	Email    sql.NullString `json:"email"`
+	Phone    sql.NullString `json:"phone"`
+	Address  sql.NullString `json:"address"`
 }
