@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"level":"fatal","timestamp":"2024-09-11T17:41:37.715+0700","msg":"Load env file failed!"}
+=======
+{"level":"fatal","timestamp":"2024-09-11T17:39:53.181+0700","msg":"Load env file failed!"}
+>>>>>>> ee9a2433c26b60dd0d0f672accad18ecd67879ba
