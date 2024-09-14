@@ -10,6 +10,7 @@ RUN go mod download && go mod verify
 
 # Copy the rest of the source code
 COPY ./api ./api
+COPY ./internal ./internal
 
 # Copy environment file
 COPY ./.env ./.env
@@ -21,7 +22,7 @@ ENV GOCACHE=/root/.cache/go-build
 # Build the Go application with CGO enabled for Alpine
 RUN --mount=type=cache,target="/root/.cache/go-build" \
     CGO_CFLAGS_ALLOW=-Xpreprocessor \
-    GOOS=linux go build -a -installsuffix cgo -o apiserver ./api/cmd/servid
+    GOOS=linux go build -a -installsuffix cgo -o apiserver ./api/servid/
 
 # Stage 2: Final stage
 FROM alpine:edge
