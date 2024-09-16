@@ -1,4 +1,4 @@
-CREATE table accounts(
+CREATE table accounts (
     id uuid PRIMARY KEY,
     first_name character varying (10) NOT NULL,
     last_name character varying(10) NOT NULL,
@@ -10,13 +10,13 @@ CREATE table accounts(
     is_deleted bool DEFAULT false
 );
 
-CREATE table learners(
+CREATE table learners (
     account_id uuid PRIMARY KEY,
-    school_id uuid NOT NULL
+    school_id uuid UNIQUE NOT NULL
 );
 
 CREATE table staffs (
     account_id uuid PRIMARY KEY,
-    role smallint NOT NULL CHECK ( role in (1, 2) ) ,
+    role smallint NOT NULL CHECK (role in (1, 2)),
     created_by uuid NOT NULL
 );
