@@ -34,12 +34,9 @@ WORKDIR /app
 COPY --from=builder /build/apiserver /app/
 COPY --from=builder /build/.env /app/
 
-
-# Use a non-root usergrp for security
-RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
-
-# Change ownership of the app directory and its contents to the nonroot usergrp
-RUN chown -R nonroot:nonroot /app
+# Use nonroot user
+RUN addgroup -S nonroot \
+    && adduser -S nonroot -G nonroot
 
 USER nonroot
 

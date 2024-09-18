@@ -35,7 +35,7 @@ func init() {
 
 func main() {
 	router := gin.Default()
-	//router.Use(middleware.RecoverPanic())
+
 	cfg, _ := config.LoadAllAppConfig(WorkingDirectory)
 
 	//Config Cors
@@ -53,9 +53,9 @@ func main() {
 
 	//ctx := context.Background()
 
-	dbConn, err := db.ConnectDB(cfg.DatabaseUrl, log)
+	dbConn, err := db.ConnectDB(cfg.DatabaseUrl)
 	if err != nil {
-		log.Error(message.FailedConnectDatabase)
+		log.Fatal(message.FailedConnectDatabase)
 		return
 	}
 
@@ -72,7 +72,7 @@ func main() {
 	serverAddr := fmt.Sprintf("%s:%d", a.Config.Host, a.Config.Port)
 	log.Info("Server is listening on " + serverAddr)
 	if err := router.Run(serverAddr); err != nil {
-		log.Error(message.FailedStartApplication)
+		log.Fatal(message.FailedStartApplication)
 		return
 	}
 
