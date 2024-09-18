@@ -19,14 +19,18 @@ func LoadAllAppConfig(path string) (config *Config, err error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigFile(file.Env)
 	viper.AutomaticEnv()
+	l := logger.Get(path)
 
 	err = viper.ReadInConfig()
 	if err != nil {
-		l := logger.Get(path)
 		logger.StartUpError(l, message.FailedLoadingEnv)
 		return
 	}
 
 	err = viper.Unmarshal(&config)
+	if err != nil {
+		logger.StartUpError(l, message.FailedUnmarshalConfig)
+		return
+	}
 	return
 }

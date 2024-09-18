@@ -7,8 +7,9 @@ import (
 	"Backend/internal/config"
 	"Backend/internal/db"
 	"Backend/internal/db/sqlc"
-	"context"
+	"Backend/internal/http"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"io"
 	"os"
 
@@ -38,25 +39,29 @@ func main() {
 	cfg, _ := config.LoadAllAppConfig(WorkingDirectory)
 
 	//Config Cors
-	//corsConfig := cors.Config{
-	//	AllowOrigins:     []string{cfg.CorsOrigin},
-	//	AllowMethods:     enum.CorsAllowMethods,
-	//	AllowHeaders:     enum.CorsAllowHeaders,
-	//	AllowCredentials: true,
-	//	MaxAge:           enum.CorsMaxAge,
-	//}
-	//router.Use(cors.New(corsConfig))
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{cfg.CorsOrigin},
+		AllowMethods:     http.AllowMethods,
+		AllowHeaders:     http.AllowHeaders,
+		AllowCredentials: true,
+		MaxAge:           http.CorsMaxAge,
+	}
+	router.Use(cors.New(corsConfig))
 	//Set up log
-	zapLog := logger.Get(WorkingDirectory)
-	//router.Use(log.RequestLogger(zapLog))
+	log := logger.Get(WorkingDirectory)
+	router.Use(logger.RequestLogger(log))
 
-	ctx := context.Background()
+	//ctx := context.Background()
 
-	dbConn := db.ConnectDB(ctx, cfg.DatabaseUrl, zapLog)
+	dbConn, err := db.ConnectDB(cfg.DatabaseUrl, log)
+	if err != nil {
+		log.Error(message.FailedConnectDatabase)
+		return
+	}
 
 	a := app.Application{
 		Config:  cfg,
-		Logger:  zapLog,
+		Logger:  log,
 		Db:      dbConn,
 		Queries: sqlc.New(dbConn),
 	}
@@ -65,9 +70,10 @@ func main() {
 	LoadRoutes(router, &a)
 
 	serverAddr := fmt.Sprintf("%s:%d", a.Config.Host, a.Config.Port)
-	a.Logger.Info("Server is listening on " + serverAddr)
+	log.Info("Server is listening on " + serverAddr)
 	if err := router.Run(serverAddr); err != nil {
-		logger.StartUpError(a.Logger, message.FailedStartApplication)
+		log.Error(message.FailedStartApplication)
+		return
 	}
 
 }
