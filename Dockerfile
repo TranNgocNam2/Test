@@ -11,7 +11,7 @@ RUN go mod download && go mod verify
 # Copy the rest of the source code
 COPY ./api ./api
 COPY ./internal ./internal
-
+COPY ./main.go ./main.go
 # Copy environment file
 COPY ./.env ./.env
 
