@@ -1,14 +1,14 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "internal/db/queries"
-    schema: "internal/db/migrations"
+    queries: "business/db/queries"
+    schema: "business/db/migrations"
     gen:
       go:
         emit_json_tags: true
         json_tags_case_style: camel
         package: "sqlc"
-        out: "internal/db/sqlc"
+        out: "business/db/sqlc"
         overrides:
           - db_type: "uuid"
             nullable: true

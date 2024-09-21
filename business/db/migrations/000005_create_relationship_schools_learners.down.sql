@@ -1,0 +1,1 @@
+ALTER table learners DROP CONSTRAINT fk_learner_school;
