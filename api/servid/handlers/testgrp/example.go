@@ -1,4 +1,4 @@
-package routes
+package testgrp
 
 import (
 	"gitlab.com/innovia69420/kit/enum/code"

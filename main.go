@@ -1,22 +1,22 @@
 package main
 
 import (
-	"Backend/api/servid/handlers/testgrp"
-	"Backend/api/servid/routes"
+	"Backend/api/servid/handlers/schoolgrp"
+	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/config"
-	"Backend/internal/db"
-	"Backend/internal/db/sqlc"
 	"Backend/internal/http"
+	"Backend/internal/middleware"
 	"fmt"
 	"github.com/gin-contrib/cors"
-	"io"
-	"os"
-
 	"github.com/gin-gonic/gin"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 	"gitlab.com/innovia69420/kit/enum/message"
 	"gitlab.com/innovia69420/kit/file"
 	"gitlab.com/innovia69420/kit/logger"
+	"io"
+	"os"
 )
 
 var WorkingDirectory string
@@ -47,17 +47,23 @@ func main() {
 		MaxAge:           http.CorsMaxAge,
 	}
 	router.Use(cors.New(corsConfig))
+
 	//Set up log
 	log := logger.Get(WorkingDirectory)
 	router.Use(logger.RequestLogger(log))
-
-	//ctx := context.Background()
-
-	dbConn, err := db.ConnectDB(cfg.DatabaseUrl)
+	dbConn, err := sqlx.Connect("pgx", cfg.DatabaseUrl)
 	if err != nil {
+		fmt.Println(err)
 		log.Fatal(message.FailedConnectDatabase)
 		return
 	}
+
+	defer func(dbConn *sqlx.DB) {
+		err := dbConn.Close()
+		if err != nil {
+			log.Fatal(message.FailedCloseDatabase)
+		}
+	}(dbConn)
 
 	a := app.Application{
 		Config:  cfg,
@@ -79,6 +85,7 @@ func main() {
 }
 
 func LoadRoutes(router *gin.Engine, app *app.Application) {
-	routes.ExampleRoutes(router)
-	testgrp.AccountRoutes(router, app)
+	router.Use(middleware.CheckApiKeyAndRequestID(app.Config.ApiKey))
+
+	schoolgrp.SchoolRoutes(router, app)
 }

@@ -1,9 +1,8 @@
 package app
 
 import (
+	"Backend/business/db/sqlc"
 	"Backend/internal/config"
-	"Backend/internal/db/sqlc"
-
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
