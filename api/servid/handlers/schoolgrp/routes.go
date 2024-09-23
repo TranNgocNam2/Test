@@ -8,8 +8,10 @@ import (
 
 func SchoolRoutes(router *gin.Engine, app *app.Application) {
 	schoolCore := school.NewCore(app)
-	hdl := New(schoolCore)
+	handlers := New(schoolCore)
 
-	router.GET("/provinces", hdl.GetProvinces())
-	router.GET("/provinces/:province_id/districts", hdl.GetDistrictsByProvince())
+	router.POST("/schools", handlers.CreateSchool())
+	router.DELETE("/schools/:id", handlers.DeleteSchool())
+	router.GET("/provinces", handlers.GetProvinces())
+	router.GET("/provinces/:id/districts", handlers.GetDistrictsByProvince())
 }

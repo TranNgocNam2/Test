@@ -1,19 +1,32 @@
 package schoolgrp
 
-import "Backend/business/db/sqlc"
+import (
+	"Backend/business/db/sqlc"
+	"Backend/internal/validate"
+	"fmt"
+	"github.com/google/uuid"
+)
 
 type ClientNewSchool struct {
-	SchoolName string `json:"schoolName" validate:"required, min=30, max=250"`
-	Address    string `json:"address" validate:"required, min=30, max=250"`
+	SchoolName string `json:"schoolName" validate:"required"`
+	Address    string `json:"address" validate:"required"`
 	DistrictID int32  `json:"districtID" validate:"required"`
 }
 
-func toCoreNewSchool(clientNewSchool ClientNewSchool) sqlc.School {
-	return sqlc.School{
+func toCoreNewSchool(clientNewSchool ClientNewSchool) sqlc.CreateSchoolParams {
+	return sqlc.CreateSchoolParams{
+		ID:         uuid.New(),
 		Name:       clientNewSchool.SchoolName,
 		Address:    clientNewSchool.Address,
 		DistrictID: clientNewSchool.DistrictID,
 	}
+}
+
+func (clientNewSchool ClientNewSchool) Validate() error {
+	if err := validate.Check(clientNewSchool); err != nil {
+		return fmt.Errorf("validate: %w", err)
+	}
+	return nil
 }
 
 type ClientProvince struct {
