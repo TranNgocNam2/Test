@@ -1,9 +1,9 @@
 package user
 
 const (
-	MALE    = 1
-	FEMALE  = 2
-	UNKNOWN = 3
+	MALE   = 1
+	FEMALE = 2
+	OTHER  = 3
 )
 
 func GetGenderStr(gender int16) string {
@@ -12,10 +12,10 @@ func GetGenderStr(gender int16) string {
 		return "MALE"
 	case FEMALE:
 		return "FEMALE"
-	case UNKNOWN:
-		return "UNKNOWN"
+	case OTHER:
+		return "OTHER"
 	default:
-		return "UNKNOWN"
+		return "OTHER"
 	}
 }
 
@@ -25,9 +25,9 @@ func GetGenderNum(gender string) int16 {
 		return MALE
 	case "FEMALE":
 		return FEMALE
-	case "UNKNOWN":
-		return UNKNOWN
+	case "OTHER":
+		return OTHER
 	default:
-		return UNKNOWN
+		return OTHER
 	}
 }

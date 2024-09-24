@@ -1,15 +1,15 @@
 package usergrp
 
-//type WebUser struct {
-//	ID       string               `json:"id"`
-//	FullName string               `json:"fullName"`
-//	Email    string               `json:"email"`
-//	Phone    string               `json:"phone"`
-//	Gender   string               `json:"gender"`
-//	Role     string               `json:"-"`
-//	Photo    string               `json:"photo"`
-//	School   *schoolgrp.WebSchool `json:"school,omitempty"`
-//}
+type WebUser struct {
+	ID         string `json:"id"`
+	FullName   string `json:"fullName"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Gender     string `json:"gender"`
+	Role       string `json:"-"`
+	Photo      string `json:"photo"`
+	SchoolName string `json:"schoolName,omitempty"`
+}
 
 //func toWebUser(dbUser sqlc.User, dbSchool) WebUser {
 //	return WebUser{

@@ -7,7 +7,6 @@ import (
 	"gitlab.com/innovia69420/kit/enum/message"
 	"gitlab.com/innovia69420/kit/web"
 	"strings"
-	"time"
 )
 
 func CheckApiKeyAndRequestID(apiKey string) gin.HandlerFunc {
@@ -15,7 +14,6 @@ func CheckApiKeyAndRequestID(apiKey string) gin.HandlerFunc {
 
 		if strings.Compare(c.GetHeader(header.XApiKey), apiKey) != 0 {
 			web.UnauthorizedError(c, message.InvalidApiKey)
-			time.Sleep(1 * time.Second)
 			c.Abort()
 			return
 		}
