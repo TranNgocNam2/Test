@@ -15,7 +15,7 @@ func ExampleRoutes(router *gin.Engine) {
 			ResultCode:    code.Success,
 			ResultMessage: message.Success,
 			Data: map[string]string{
-				"message": "Hello World",
+				"message": "Hello World 2",
 			},
 		}
 		c.JSON(http.StatusOK, res)
