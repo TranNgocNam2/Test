@@ -23,7 +23,7 @@ ENV GOCACHE=/root/.cache/go-build
 # Build the Go application with CGO enabled for Alpine
 RUN --mount=type=cache,target="/root/.cache/go-build" \
     CGO_CFLAGS_ALLOW=-Xpreprocessor \
-    GOOS=linux go build -a -installsuffix cgo -o apiserver ./api/servid/
+    GOOS=linux go build -a -installsuffix cgo -o innovia-backend .
 
 # Stage 2: Final stage
 FROM alpine:edge
@@ -32,7 +32,7 @@ FROM alpine:edge
 WORKDIR /app
 
 # Copy the binary and environment file from the build stage
-COPY --from=builder /build/apiserver /app/
+COPY --from=builder /build/innovia-backend /app/
 COPY --from=builder /build/.env /app/
 
 # Use nonroot user
@@ -42,5 +42,5 @@ RUN addgroup -S nonroot \
 USER nonroot
 
 # Set the entrypoint to the Go application
-ENTRYPOINT ["/app/apiserver"]
+ENTRYPOINT ["/app/innovia-backend"]
 EXPOSE 3000

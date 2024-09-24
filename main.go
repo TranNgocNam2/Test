@@ -86,8 +86,9 @@ func main() {
 }
 
 func LoadRoutes(router *gin.Engine, app *app.Application) {
+	testgrp.ExampleRoutes(router)
+
 	router.Use(middleware.CheckApiKeyAndRequestID(app.Config.ApiKey))
 
-	testgrp.ExampleRoutes(router)
 	schoolgrp.SchoolRoutes(router, app)
 }
