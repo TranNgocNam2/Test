@@ -10,27 +10,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type Account struct {
-	ID           string        `json:"id"`
-	FirstName    string        `json:"firstName"`
-	LastName     string        `json:"lastName"`
-	Email        string        `json:"email"`
-	Phone        string        `json:"phone"`
-	Gender       sql.NullInt32 `json:"gender"`
-	ProfilePhoto string        `json:"profilePhoto"`
-	Status       sql.NullInt32 `json:"status"`
-	IsDeleted    sql.NullBool  `json:"isDeleted"`
-}
-
 type District struct {
 	ID         int32  `json:"id"`
 	Name       string `json:"name"`
 	ProvinceID int32  `json:"provinceId"`
 }
 
-type Learner struct {
-	AccountID string    `json:"accountId"`
-	SchoolID  uuid.UUID `json:"schoolId"`
+type LearnerSpecialization struct {
+	LearnerID        string       `json:"learnerId"`
+	SpecializationID uuid.UUID    `json:"specializationId"`
+	CreatedAt        sql.NullTime `json:"createdAt"`
 }
 
 type Province struct {
@@ -39,14 +28,42 @@ type Province struct {
 }
 
 type School struct {
-	ID         uuid.UUID `json:"id"`
-	Name       string    `json:"name"`
-	Address    string    `json:"address"`
-	DistrictID int32     `json:"districtId"`
+	ID         uuid.UUID    `json:"id"`
+	Name       string       `json:"name"`
+	Address    string       `json:"address"`
+	DistrictID int32        `json:"districtId"`
+	IsDeleted  sql.NullBool `json:"isDeleted"`
 }
 
-type Staff struct {
-	AccountID string `json:"accountId"`
-	Role      int16  `json:"role"`
-	CreatedBy string `json:"createdBy"`
+type Skill struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
+type Specialization struct {
+	ID          uuid.UUID    `json:"id"`
+	Name        string       `json:"name"`
+	TimeAmount  int32        `json:"timeAmount"`
+	ImageLink   string       `json:"imageLink"`
+	IsDraft     sql.NullBool `json:"isDraft"`
+	Description string       `json:"description"`
+	CreatedBy   string       `json:"createdBy"`
+}
+
+type SpecializationsSkill struct {
+	SpecializationID uuid.UUID `json:"specializationId"`
+	SkillID          uuid.UUID `json:"skillId"`
+}
+
+type User struct {
+	ID           string        `json:"id"`
+	FullName     string        `json:"fullName"`
+	Email        string        `json:"email"`
+	Phone        string        `json:"phone"`
+	Gender       int16         `json:"gender"`
+	ProfilePhoto string        `json:"profilePhoto"`
+	Status       sql.NullInt32 `json:"status"`
+	IsDeleted    sql.NullBool  `json:"isDeleted"`
+	SchoolID     uuid.UUID     `json:"schoolId"`
+	Role         int16         `json:"role"`
 }

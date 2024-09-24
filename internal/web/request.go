@@ -3,19 +3,11 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dimfeld/httptreemux/v5"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type validator interface {
 	Validate() error
-}
-
-// Param returns the web call parameters from the request.
-func Param(r *http.Request, key string) string {
-	m := httptreemux.ContextParams(r.Context())
-	return m[key]
 }
 
 // Decode reads the body of an HTTP request looking for a JSON document. The

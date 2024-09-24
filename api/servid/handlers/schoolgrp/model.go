@@ -1,70 +1,112 @@
 package schoolgrp
 
 import (
-	"Backend/business/db/sqlc"
+	"Backend/business/core/school"
 	"Backend/internal/validate"
 	"fmt"
 	"github.com/google/uuid"
 )
 
-type ClientNewSchool struct {
+type SchoolResponse struct {
+	ID         uuid.UUID `json:"id"`
+	SchoolName string    `json:"schoolName"`
+	Address    string    `json:"address"`
+}
+
+func toSchoolResponse(school school.School) SchoolResponse {
+	return SchoolResponse{
+		ID:         school.ID,
+		SchoolName: school.Name,
+		Address:    school.Address,
+	}
+}
+
+func toWebSchools(schools []school.School) []SchoolResponse {
+	items := make([]SchoolResponse, len(schools))
+	for i, school := range schools {
+		items[i] = toSchoolResponse(school)
+	}
+	return items
+}
+
+type NewSchoolRequest struct {
 	SchoolName string `json:"schoolName" validate:"required"`
 	Address    string `json:"address" validate:"required"`
 	DistrictID int32  `json:"districtID" validate:"required"`
 }
 
-func toCoreNewSchool(clientNewSchool ClientNewSchool) sqlc.CreateSchoolParams {
-	return sqlc.CreateSchoolParams{
-		ID:         uuid.New(),
-		Name:       clientNewSchool.SchoolName,
-		Address:    clientNewSchool.Address,
-		DistrictID: clientNewSchool.DistrictID,
+func toCoreNewSchool(newSchoolRequest NewSchoolRequest) school.NewSchool {
+	return school.NewSchool{
+		Name:       newSchoolRequest.SchoolName,
+		Address:    newSchoolRequest.Address,
+		DistrictID: newSchoolRequest.DistrictID,
 	}
 }
 
-func (clientNewSchool ClientNewSchool) Validate() error {
-	if err := validate.Check(clientNewSchool); err != nil {
+func (newSchoolRequest NewSchoolRequest) Validate() error {
+	if err := validate.Check(newSchoolRequest); err != nil {
 		return fmt.Errorf("validate: %w", err)
 	}
 	return nil
 }
 
-type ClientProvince struct {
+type UpdateSchoolRequest struct {
+	Name       *string `json:"schoolName" `
+	Address    *string `json:"address"`
+	DistrictID *int32  `json:"districtID"`
+}
+
+func toCoreUpdateSchool(updateSchoolRequest UpdateSchoolRequest) school.UpdateSchool {
+	return school.UpdateSchool{
+		Name:       updateSchoolRequest.Name,
+		Address:    updateSchoolRequest.Address,
+		DistrictID: updateSchoolRequest.DistrictID,
+	}
+}
+
+func (updateSchoolRequest UpdateSchoolRequest) Validate() error {
+	if err := validate.Check(updateSchoolRequest); err != nil {
+		return fmt.Errorf("validate: %w", err)
+	}
+	return nil
+}
+
+type ProvinceResponse struct {
 	ID   int32  `json:"id"`
 	Name string `json:"name"`
 }
 
-type ClientDistrict struct {
+func toProvinceResponse(province school.Province) ProvinceResponse {
+	return ProvinceResponse{
+		ID:   province.ID,
+		Name: province.Name,
+	}
+}
+func toProvinceResponses(provinces []school.Province) []ProvinceResponse {
+	items := make([]ProvinceResponse, len(provinces))
+	for i, dbProvince := range provinces {
+		items[i] = toProvinceResponse(dbProvince)
+	}
+	return items
+}
+
+type DistrictResponse struct {
 	ID         int32  `json:"id"`
 	Name       string `json:"name"`
 	ProvinceID int32  `json:"province_id"`
 }
 
-func toClientProvince(dbProvince sqlc.Province) ClientProvince {
-	return ClientProvince{
-		ID:   dbProvince.ID,
-		Name: dbProvince.Name,
+func toDistrictResponse(district school.District) DistrictResponse {
+	return DistrictResponse{
+		ID:         district.ID,
+		Name:       district.Name,
+		ProvinceID: district.ProvinceID,
 	}
 }
-func toClientProvinces(dbProvinces []sqlc.Province) []ClientProvince {
-	provinces := make([]ClientProvince, len(dbProvinces))
-	for i, dbProvince := range dbProvinces {
-		provinces[i] = toClientProvince(dbProvince)
+func toClientDistricts(districts []school.District) []DistrictResponse {
+	items := make([]DistrictResponse, len(districts))
+	for i, district := range districts {
+		items[i] = toDistrictResponse(district)
 	}
-	return provinces
-}
-
-func toClientDistrict(dbDistrict sqlc.District) ClientDistrict {
-	return ClientDistrict{
-		ID:         dbDistrict.ID,
-		Name:       dbDistrict.Name,
-		ProvinceID: dbDistrict.ProvinceID,
-	}
-}
-func toClientDistricts(dbDistricts []sqlc.District) []ClientDistrict {
-	districts := make([]ClientDistrict, len(dbDistricts))
-	for i, dbDistrict := range dbDistricts {
-		districts[i] = toClientDistrict(dbDistrict)
-	}
-	return districts
+	return items
 }

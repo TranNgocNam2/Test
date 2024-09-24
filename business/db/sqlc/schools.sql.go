@@ -34,7 +34,8 @@ func (q *Queries) CreateSchool(ctx context.Context, arg CreateSchoolParams) erro
 }
 
 const deleteSchool = `-- name: DeleteSchool :exec
-DELETE FROM schools
+UPDATE schools
+SET is_deleted = true
 WHERE id = $1::uuid
 `
 
@@ -44,7 +45,7 @@ func (q *Queries) DeleteSchool(ctx context.Context, id uuid.UUID) error {
 }
 
 const getSchoolByID = `-- name: GetSchoolByID :one
-SELECT id, name, address, district_id FROM schools
+SELECT id, name, address, district_id, is_deleted FROM schools
 WHERE id = $1::uuid
 `
 
@@ -56,6 +57,65 @@ func (q *Queries) GetSchoolByID(ctx context.Context, id uuid.UUID) (School, erro
 		&i.Name,
 		&i.Address,
 		&i.DistrictID,
+		&i.IsDeleted,
 	)
 	return i, err
+}
+
+const getSchoolsByDistrictID = `-- name: GetSchoolsByDistrictID :many
+SELECT id, name, address, district_id, is_deleted FROM schools
+WHERE district_id = $1::integer
+AND is_deleted = false
+`
+
+func (q *Queries) GetSchoolsByDistrictID(ctx context.Context, districtID int32) ([]School, error) {
+	rows, err := q.db.QueryContext(ctx, getSchoolsByDistrictID, districtID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []School
+	for rows.Next() {
+		var i School
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Address,
+			&i.DistrictID,
+			&i.IsDeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateSchool = `-- name: UpdateSchool :exec
+UPDATE schools
+SET name = $1, address = $2, district_id = $3::integer
+WHERE id = $4::uuid
+`
+
+type UpdateSchoolParams struct {
+	Name       string    `json:"name"`
+	Address    string    `json:"address"`
+	DistrictID int32     `json:"districtId"`
+	ID         uuid.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateSchool(ctx context.Context, arg UpdateSchoolParams) error {
+	_, err := q.db.ExecContext(ctx, updateSchool,
+		arg.Name,
+		arg.Address,
+		arg.DistrictID,
+		arg.ID,
+	)
+	return err
 }

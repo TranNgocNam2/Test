@@ -2,6 +2,7 @@ package main
 
 import (
 	"Backend/api/servid/handlers/schoolgrp"
+	"Backend/api/servid/handlers/testgrp"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/config"
@@ -87,5 +88,6 @@ func main() {
 func LoadRoutes(router *gin.Engine, app *app.Application) {
 	router.Use(middleware.CheckApiKeyAndRequestID(app.Config.ApiKey))
 
+	testgrp.ExampleRoutes(router)
 	schoolgrp.SchoolRoutes(router, app)
 }
