@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrSchoolNotFound   = errors.New("school not found")
+	ErrNotFound         = errors.New("school not found")
 	ErrDistrictNotFound = errors.New("district not found")
 	ErrProvinceNotFound = errors.New("province/city not found")
 	FailedToDelete      = errors.New("failed to delete school")
@@ -69,7 +69,7 @@ func (s *Store) Delete(ctx *gin.Context, school school.School) error {
 func (s *Store) GetByID(ctx *gin.Context, id uuid.UUID) (school.School, error) {
 	schoolDB, err := s.queries.GetSchoolByID(ctx, id)
 	if err != nil {
-		return school.School{}, ErrSchoolNotFound
+		return school.School{}, ErrNotFound
 	}
 
 	return toCoreSchool(schoolDB), nil
@@ -78,7 +78,7 @@ func (s *Store) GetByID(ctx *gin.Context, id uuid.UUID) (school.School, error) {
 func (s *Store) GetByDistrict(ctx *gin.Context, districtID int32) ([]school.School, error) {
 	schools, err := s.queries.GetSchoolsByDistrictID(ctx, districtID)
 	if err != nil {
-		return nil, ErrSchoolNotFound
+		return nil, ErrNotFound
 	}
 
 	return toCoreSchoolSlice(schools), nil

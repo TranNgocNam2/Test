@@ -92,12 +92,7 @@ func (c *Core) Delete(ctx *gin.Context) (error, int) {
 	return nil, http.StatusOK
 }
 
-func (c *Core) GetSchoolByID(ctx *gin.Context) (School, error, int) {
-	id, err := uuid.Parse(ctx.Param("id"))
-	if err != nil {
-		return School{}, ErrInvalidID, http.StatusBadRequest
-	}
-
+func (c *Core) GetSchoolByID(ctx *gin.Context, id uuid.UUID) (School, error, int) {
 	school, err := c.storer.GetByID(ctx, id)
 	if err != nil {
 		return School{}, err, http.StatusNotFound

@@ -56,14 +56,15 @@ type SpecializationsSkill struct {
 }
 
 type User struct {
-	ID           string        `json:"id"`
-	FullName     string        `json:"fullName"`
-	Email        string        `json:"email"`
-	Phone        string        `json:"phone"`
-	Gender       int16         `json:"gender"`
-	ProfilePhoto string        `json:"profilePhoto"`
-	Status       sql.NullInt32 `json:"status"`
-	IsDeleted    sql.NullBool  `json:"isDeleted"`
-	SchoolID     uuid.UUID     `json:"schoolId"`
-	Role         int16         `json:"role"`
+	ID           string         `json:"id"`
+	FullName     string         `json:"fullName"`
+	Email        string         `json:"email"`
+	Phone        string         `json:"phone"`
+	Gender       int16          `json:"gender"`
+	ProfilePhoto string         `json:"profilePhoto"`
+	Status       int32          `json:"status"`
+	IsDeleted    bool           `json:"isDeleted"`
+	SchoolID     uuid.NullUUID  `json:"schoolId"`
+	Role         int16          `json:"role"`
+	CreatedBy    sql.NullString `json:"createdBy"`
 }

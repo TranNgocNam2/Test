@@ -19,6 +19,19 @@ func GetRoleName(role int16) string {
 	}
 }
 
+func IsValidRole(role int) bool {
+	switch role {
+	case LEARNER:
+		return true
+	case TEACHER:
+		return true
+	case MANAGER:
+		return true
+	default:
+		return false
+	}
+}
+
 func GetRoleID(role string) int16 {
 	switch role {
 	case "LEARNER":

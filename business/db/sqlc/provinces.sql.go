@@ -10,7 +10,8 @@ import (
 )
 
 const getAllProvince = `-- name: GetAllProvince :many
-SELECT id, name FROM provinces ORDER BY id
+SELECT id, name FROM provinces
+         ORDER BY id
 `
 
 func (q *Queries) GetAllProvince(ctx context.Context) ([]Province, error) {
