@@ -9,15 +9,18 @@ import (
 	"Backend/internal/http"
 	"Backend/internal/middleware"
 	"fmt"
+	"io"
+	"os"
+	"strings"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/reflectx"
 	"gitlab.com/innovia69420/kit/enum/message"
 	"gitlab.com/innovia69420/kit/file"
 	"gitlab.com/innovia69420/kit/logger"
-	"io"
-	"os"
 )
 
 var WorkingDirectory string
@@ -58,6 +61,12 @@ func main() {
 		log.Fatal(message.FailedConnectDatabase)
 		return
 	}
+
+	dbConn.Mapper = reflectx.NewMapperTagFunc("db",
+		nil,
+		func(s string) string {
+			return strings.ToLower(s)
+		})
 
 	defer func(dbConn *sqlx.DB) {
 		err := dbConn.Close()

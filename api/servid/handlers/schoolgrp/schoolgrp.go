@@ -2,9 +2,12 @@ package schoolgrp
 
 import (
 	"Backend/business/core/school"
+	"Backend/internal/order"
+	"Backend/internal/page"
 	"Backend/internal/web"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Handlers struct {
@@ -74,6 +77,45 @@ func (h *Handlers) GetSchoolByID() gin.HandlerFunc {
 		}
 
 		web.Respond(ctx, toSchoolResponse(school), statusCode, nil)
+	}
+}
+
+func (h *Handlers) GetSchoolPaginated() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		pageInfo, err := page.Parse(ctx)
+		if err != nil {
+			pageInfo = page.Page{
+				Number: 1,
+				Size:   10,
+			}
+		}
+
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = school.QueryFilter{
+				Name: nil,
+			}
+		}
+
+		orderBy, err := parseOrder(ctx)
+		if err != nil {
+			orderBy = order.NewBy("name", order.ASC)
+		}
+
+		schools, err, getSchoolStatusCode := h.school.GetSchoolsPaginated(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		if err != nil {
+			web.Respond(ctx, nil, getSchoolStatusCode, err)
+			return
+		}
+		total, err, countStatusCode := h.school.Count(ctx, filter)
+		if err != nil {
+			web.Respond(ctx, nil, countStatusCode, err)
+			return
+		}
+
+		result := page.NewPageResponse[school.School](schools, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, result, 200, nil)
 	}
 }
 

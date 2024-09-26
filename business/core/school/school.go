@@ -1,11 +1,13 @@
 package school
 
 import (
+	"Backend/internal/order"
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 var (
@@ -17,7 +19,8 @@ type Storer interface {
 	Update(ctx *gin.Context, school School) error
 	Delete(ctx *gin.Context, school School) error
 	GetByID(ctx *gin.Context, id uuid.UUID) (School, error)
-	//GetSchoolByName(ctx gin.Context, school sqlc.School) (sqlc.School, error)
+	Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber, rowsPerPage int) ([]School, error)
+	Count(ctx *gin.Context, filter QueryFilter) (int, error)
 	GetByDistrict(ctx *gin.Context, districtID int32) ([]School, error)
 	GetAllProvinces(ctx *gin.Context) ([]Province, error)
 	GetDistrictsByProvince(ctx *gin.Context, provinceID int32) ([]District, error)
@@ -104,6 +107,32 @@ func (c *Core) GetSchoolByID(ctx *gin.Context) (School, error, int) {
 	}
 
 	return school, nil, http.StatusOK
+}
+
+func (c *Core) GetSchoolsPaginated(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]School, error, int) {
+	if err := filter.Validate(); err != nil {
+		return nil, err, http.StatusBadRequest
+	}
+
+	schools, err := c.storer.Query(ctx, filter, orderBy, pageNumber, rowsPerPage)
+	if err != nil {
+		schools = []School{}
+	}
+
+	return schools, nil, http.StatusOK
+}
+
+func (c *Core) Count(ctx *gin.Context, filter QueryFilter) (int, error, int) {
+	if err := filter.Validate(); err != nil {
+		return 0, err, http.StatusBadRequest
+	}
+
+	count, err := c.storer.Count(ctx, filter)
+	if err != nil {
+		count = 0
+	}
+
+	return count, err, http.StatusOK
 }
 
 func (c *Core) GetSchoolsByDistrictID(ctx *gin.Context) ([]School, error, int) {

@@ -1,11 +1,22 @@
 package school
 
 import (
-	"github.com/google/uuid"
+	"Backend/internal/validate"
+	"fmt"
 )
 
 type QueryFilter struct {
-	ID         *uuid.UUID
-	Name       *string `validate:"omitempty,min=3"`
-	DistrictID *int
+	Name *string `validate:"omitempty,min=3"`
+}
+
+func (qf *QueryFilter) Validate() error {
+	if err := validate.Check(qf); err != nil {
+		return fmt.Errorf("validate: %w", err)
+	}
+
+	return nil
+}
+
+func (qf *QueryFilter) WithName(name string) {
+	qf.Name = &name
 }
