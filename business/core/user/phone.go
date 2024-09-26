@@ -7,7 +7,5 @@ import (
 func IsValidPhoneNumber(phoneNumber string) bool {
 	e164Regex := `(0[35789])([0-9]{8})\b`
 	re := regexp.MustCompile(e164Regex)
-	//phoneNumber = strings.ReplaceAll(phoneNumber, " ", "")
-
 	return re.Find([]byte(phoneNumber)) != nil
 }
