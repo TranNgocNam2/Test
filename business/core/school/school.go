@@ -1,15 +1,15 @@
 package school
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"net/http"
 	"strconv"
 )
 
 var (
-	ErrInvalidID = errors.New("invalid school id")
+	ErrInvalidID = errors.New("ID không hợp lệ!")
 )
 
 type Storer interface {
@@ -17,7 +17,6 @@ type Storer interface {
 	Update(ctx *gin.Context, school School) error
 	Delete(ctx *gin.Context, school School) error
 	GetByID(ctx *gin.Context, id uuid.UUID) (School, error)
-	//GetSchoolByName(ctx gin.Context, school sqlc.School) (sqlc.School, error)
 	GetByDistrict(ctx *gin.Context, districtID int32) ([]School, error)
 	GetAllProvinces(ctx *gin.Context) ([]Province, error)
 	GetDistrictsByProvince(ctx *gin.Context, provinceID int32) ([]District, error)
@@ -69,7 +68,7 @@ func (c *Core) Update(ctx *gin.Context, updateSchool UpdateSchool) (error, int) 
 		school.DistrictID = *updateSchool.DistrictID
 	}
 
-	if err := c.storer.Update(ctx, school); err != nil {
+	if err = c.storer.Update(ctx, school); err != nil {
 		return err, http.StatusInternalServerError
 	}
 	return nil, http.StatusOK
@@ -86,7 +85,7 @@ func (c *Core) Delete(ctx *gin.Context) (error, int) {
 		return err, http.StatusNotFound
 	}
 
-	if err := c.storer.Delete(ctx, school); err != nil {
+	if err = c.storer.Delete(ctx, school); err != nil {
 		return err, http.StatusInternalServerError
 	}
 	return nil, http.StatusOK

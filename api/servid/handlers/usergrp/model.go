@@ -3,17 +3,16 @@ package usergrp
 import (
 	"Backend/business/core/user"
 	"Backend/internal/validate"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"net/mail"
 )
 
 var (
-	ErrInvalidSchoolID    = errors.New("invalid school id")
-	ErrInvalidRole        = errors.New("invalid role")
-	ErrInvalidEmail       = errors.New("invalid email")
-	ErrInvalidPhoneNumber = errors.New("invalid phone number")
+	ErrInvalidSchoolID    = errors.New("ID trường học không hợp lệ!")
+	ErrInvalidEmail       = errors.New("Email không hợp lệ!")
+	ErrInvalidPhoneNumber = errors.New("Số điện thoại không hợp lệ!")
 )
 
 type UserResponse struct {
@@ -78,10 +77,6 @@ func toCoreNewUser(newUserRequest NewUserRequest) (user.NewUser, error) {
 		return user.NewUser{}, ErrInvalidEmail
 	}
 
-	if !user.IsValidRole(newUserRequest.Role) {
-		return user.NewUser{}, ErrInvalidRole
-	}
-
 	if !user.IsValidPhoneNumber(newUserRequest.Phone) {
 		return user.NewUser{}, ErrInvalidPhoneNumber
 	}
@@ -101,7 +96,7 @@ func toCoreNewUser(newUserRequest NewUserRequest) (user.NewUser, error) {
 }
 func (newUserRequest NewUserRequest) Validate() error {
 	if err := validate.Check(newUserRequest); err != nil {
-		return fmt.Errorf("validate: %w", err)
+		return fmt.Errorf(validate.ErrValidation.Error(), err)
 	}
 	return nil
 }

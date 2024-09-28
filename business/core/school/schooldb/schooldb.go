@@ -3,19 +3,9 @@ package schooldb
 import (
 	"Backend/business/core/school"
 	"Backend/business/db/sqlc"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-)
-
-var (
-	ErrNotFound         = errors.New("school not found")
-	ErrDistrictNotFound = errors.New("district not found")
-	ErrProvinceNotFound = errors.New("province/city not found")
-	FailedToDelete      = errors.New("failed to delete school")
-	FailedToCreate      = errors.New("failed to create school")
-	FailedToUpdate      = errors.New("failed to update school")
 )
 
 type Store struct {
@@ -38,7 +28,7 @@ func (s *Store) Create(ctx *gin.Context, school school.School) error {
 		DistrictID: school.DistrictID,
 	}
 	if err := s.queries.CreateSchool(ctx, newSchoolDB); err != nil {
-		return FailedToCreate
+		return err
 	}
 
 	return nil
@@ -52,7 +42,7 @@ func (s *Store) Update(ctx *gin.Context, school school.School) error {
 		ID:         school.ID,
 	}
 	if err := s.queries.UpdateSchool(ctx, updateSchoolDB); err != nil {
-		return FailedToUpdate
+		return err
 	}
 
 	return nil
@@ -60,7 +50,7 @@ func (s *Store) Update(ctx *gin.Context, school school.School) error {
 
 func (s *Store) Delete(ctx *gin.Context, school school.School) error {
 	if err := s.queries.DeleteSchool(ctx, school.ID); err != nil {
-		return FailedToDelete
+		return err
 	}
 
 	return nil
@@ -69,7 +59,7 @@ func (s *Store) Delete(ctx *gin.Context, school school.School) error {
 func (s *Store) GetByID(ctx *gin.Context, id uuid.UUID) (school.School, error) {
 	schoolDB, err := s.queries.GetSchoolByID(ctx, id)
 	if err != nil {
-		return school.School{}, ErrNotFound
+		return school.School{}, err
 	}
 
 	return toCoreSchool(schoolDB), nil
@@ -78,7 +68,7 @@ func (s *Store) GetByID(ctx *gin.Context, id uuid.UUID) (school.School, error) {
 func (s *Store) GetByDistrict(ctx *gin.Context, districtID int32) ([]school.School, error) {
 	schools, err := s.queries.GetSchoolsByDistrictID(ctx, districtID)
 	if err != nil {
-		return nil, ErrNotFound
+		return nil, err
 	}
 
 	return toCoreSchoolSlice(schools), nil
@@ -87,7 +77,7 @@ func (s *Store) GetByDistrict(ctx *gin.Context, districtID int32) ([]school.Scho
 func (s *Store) GetAllProvinces(ctx *gin.Context) ([]school.Province, error) {
 	provinces, err := s.queries.GetAllProvince(ctx)
 	if err != nil {
-		return nil, ErrProvinceNotFound
+		return nil, err
 	}
 
 	return toCoreProvinceSlice(provinces), nil
@@ -96,7 +86,7 @@ func (s *Store) GetAllProvinces(ctx *gin.Context) ([]school.Province, error) {
 func (s *Store) GetDistrictsByProvince(ctx *gin.Context, provinceID int32) ([]school.District, error) {
 	districts, err := s.queries.GetDistrictsByProvince(ctx, provinceID)
 	if err != nil {
-		return nil, ErrDistrictNotFound
+		return nil, err
 	}
 
 	return toCoreDistrictSlice(districts), nil

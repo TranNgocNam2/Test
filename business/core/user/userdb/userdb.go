@@ -3,17 +3,10 @@ package userdb
 import (
 	"Backend/business/core/user"
 	"Backend/business/db/sqlc"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"net/mail"
-)
-
-var (
-	ErrNotFound     = errors.New("user not found")
-	FailedToGetUser = errors.New("failed to get user")
-	FailedToCreate  = errors.New("failed to create user")
 )
 
 type Store struct {
@@ -43,7 +36,7 @@ func (s *Store) Create(ctx *gin.Context, user user.User) error {
 		Role: user.Role,
 	}
 	if err := s.queries.CreateUser(ctx, newUserDB); err != nil {
-		return FailedToCreate
+		return err
 	}
 
 	return nil
@@ -52,7 +45,7 @@ func (s *Store) Create(ctx *gin.Context, user user.User) error {
 func (s *Store) GetByEmail(ctx *gin.Context, email mail.Address) (user.User, error) {
 	dbUser, err := s.queries.GetUserByEmail(ctx, email.Address)
 	if err != nil {
-		return user.User{}, ErrNotFound
+		return user.User{}, err
 	}
 	return toCoreUser(dbUser), nil
 }
@@ -60,7 +53,7 @@ func (s *Store) GetByEmail(ctx *gin.Context, email mail.Address) (user.User, err
 func (s *Store) GetByPhone(ctx *gin.Context, phone string) (user.User, error) {
 	dbUser, err := s.queries.GetUserByPhone(ctx, phone)
 	if err != nil {
-		return user.User{}, ErrNotFound
+		return user.User{}, err
 	}
 	return toCoreUser(dbUser), nil
 }
@@ -68,7 +61,7 @@ func (s *Store) GetByPhone(ctx *gin.Context, phone string) (user.User, error) {
 func (s *Store) GetByID(ctx *gin.Context, id string) (user.User, error) {
 	dbUser, err := s.queries.GetUserByID(ctx, id)
 	if err != nil {
-		return user.User{}, ErrNotFound
+		return user.User{}, err
 	}
 
 	if !dbUser.SchoolID.Valid {
@@ -77,7 +70,7 @@ func (s *Store) GetByID(ctx *gin.Context, id string) (user.User, error) {
 
 	dbSchool, err := s.queries.GetSchoolByID(ctx, dbUser.SchoolID.UUID)
 	if err != nil {
-		return user.User{}, FailedToGetUser
+		return user.User{}, err
 	}
 
 	coreUser := toCoreUser(dbUser)

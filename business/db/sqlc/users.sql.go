@@ -18,14 +18,14 @@ VALUES ($1, $2, $3, $4,
 `
 
 type CreateUserParams struct {
-	ID           string        `json:"id"`
-	FullName     string        `json:"fullName"`
-	Email        string        `json:"email"`
-	Phone        string        `json:"phone"`
-	Gender       int16         `json:"gender"`
-	ProfilePhoto string        `json:"profilePhoto"`
-	SchoolID     uuid.NullUUID `json:"schoolId"`
-	Role         int16         `json:"role"`
+	ID           string        `db:"id" json:"id"`
+	FullName     string        `db:"full_name" json:"fullName"`
+	Email        string        `db:"email" json:"email"`
+	Phone        string        `db:"phone" json:"phone"`
+	Gender       int16         `db:"gender" json:"gender"`
+	ProfilePhoto string        `db:"profile_photo" json:"profilePhoto"`
+	SchoolID     uuid.NullUUID `db:"school_id" json:"schoolId"`
+	Role         int16         `db:"role" json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {

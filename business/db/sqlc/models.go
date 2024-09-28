@@ -11,60 +11,60 @@ import (
 )
 
 type District struct {
-	ID         int32  `json:"id"`
-	Name       string `json:"name"`
-	ProvinceID int32  `json:"provinceId"`
+	ID         int32  `db:"id" json:"id"`
+	Name       string `db:"name" json:"name"`
+	ProvinceID int32  `db:"province_id" json:"provinceId"`
 }
 
 type LearnerSpecialization struct {
-	LearnerID        string       `json:"learnerId"`
-	SpecializationID uuid.UUID    `json:"specializationId"`
-	CreatedAt        sql.NullTime `json:"createdAt"`
+	LearnerID        string       `db:"learner_id" json:"learnerId"`
+	SpecializationID uuid.UUID    `db:"specialization_id" json:"specializationId"`
+	CreatedAt        sql.NullTime `db:"created_at" json:"createdAt"`
 }
 
 type Province struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
+	ID   int32  `db:"id" json:"id"`
+	Name string `db:"name" json:"name"`
 }
 
 type School struct {
-	ID         uuid.UUID    `json:"id"`
-	Name       string       `json:"name"`
-	Address    string       `json:"address"`
-	DistrictID int32        `json:"districtId"`
-	IsDeleted  sql.NullBool `json:"isDeleted"`
+	ID         uuid.UUID    `db:"id" json:"id"`
+	Name       string       `db:"name" json:"name"`
+	Address    string       `db:"address" json:"address"`
+	DistrictID int32        `db:"district_id" json:"districtId"`
+	IsDeleted  sql.NullBool `db:"is_deleted" json:"isDeleted"`
 }
 
 type Skill struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+	ID   uuid.UUID `db:"id" json:"id"`
+	Name string    `db:"name" json:"name"`
 }
 
 type Specialization struct {
-	ID          uuid.UUID    `json:"id"`
-	Name        string       `json:"name"`
-	TimeAmount  int32        `json:"timeAmount"`
-	ImageLink   string       `json:"imageLink"`
-	IsDraft     sql.NullBool `json:"isDraft"`
-	Description string       `json:"description"`
-	CreatedBy   string       `json:"createdBy"`
+	ID          uuid.UUID    `db:"id" json:"id"`
+	Name        string       `db:"name" json:"name"`
+	TimeAmount  int32        `db:"time_amount" json:"timeAmount"`
+	ImageLink   string       `db:"image_link" json:"imageLink"`
+	IsDraft     sql.NullBool `db:"is_draft" json:"isDraft"`
+	Description string       `db:"description" json:"description"`
+	CreatedBy   string       `db:"created_by" json:"createdBy"`
 }
 
 type SpecializationsSkill struct {
-	SpecializationID uuid.UUID `json:"specializationId"`
-	SkillID          uuid.UUID `json:"skillId"`
+	SpecializationID uuid.UUID `db:"specialization_id" json:"specializationId"`
+	SkillID          uuid.UUID `db:"skill_id" json:"skillId"`
 }
 
 type User struct {
-	ID           string         `json:"id"`
-	FullName     string         `json:"fullName"`
-	Email        string         `json:"email"`
-	Phone        string         `json:"phone"`
-	Gender       int16          `json:"gender"`
-	ProfilePhoto string         `json:"profilePhoto"`
-	Status       int32          `json:"status"`
-	IsDeleted    bool           `json:"isDeleted"`
-	SchoolID     uuid.NullUUID  `json:"schoolId"`
-	Role         int16          `json:"role"`
-	CreatedBy    sql.NullString `json:"createdBy"`
+	ID           string         `db:"id" json:"id"`
+	FullName     string         `db:"full_name" json:"fullName"`
+	Email        string         `db:"email" json:"email"`
+	Phone        string         `db:"phone" json:"phone"`
+	Gender       int16          `db:"gender" json:"gender"`
+	ProfilePhoto string         `db:"profile_photo" json:"profilePhoto"`
+	Status       int32          `db:"status" json:"status"`
+	IsDeleted    bool           `db:"is_deleted" json:"isDeleted"`
+	SchoolID     uuid.NullUUID  `db:"school_id" json:"schoolId"`
+	Role         int16          `db:"role" json:"role"`
+	CreatedBy    sql.NullString `db:"created_by" json:"createdBy"`
 }

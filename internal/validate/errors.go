@@ -1,6 +1,13 @@
 package validate
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"github.com/pkg/errors"
+)
+
+var (
+	ErrValidation = errors.New("Yêu cầu không đúng định dạng: %w")
+)
 
 type FieldError struct {
 	Field string `json:"field"`

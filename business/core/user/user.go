@@ -2,16 +2,16 @@ package user
 
 import (
 	"Backend/internal/app"
-	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"net/http"
 	"net/mail"
 )
 
 var (
-	ErrEmailAlreadyExists = errors.New("email already exists")
-	ErrPhoneAlreadyExists = errors.New("phone already exists")
-	ErrorUserAlreadyExist = errors.New("user already exists")
+	ErrEmailAlreadyExists = errors.New("Email đã tồn tại trong hệ thống!")
+	ErrPhoneAlreadyExists = errors.New("Số điện thoại đã tồn tại trong hệ thống!")
+	ErrorUserAlreadyExist = errors.New("Người dùng đã tồn tại trong hệ thống!")
 )
 
 type Core struct {
@@ -27,15 +27,9 @@ func NewCore(storer Storer) *Core {
 
 type Storer interface {
 	Create(ctx *gin.Context, user User) error
-	//Update(ctx *gin.Context, school sqlc.School) error
-	//Delete(ctx *gin.Context) error
 	GetByID(ctx *gin.Context, id string) (User, error)
 	GetByEmail(ctx *gin.Context, email mail.Address) (User, error)
 	GetByPhone(ctx *gin.Context, phone string) (User, error)
-	//GetSchoolByName(ctx gin.Context, school sqlc.School) (sqlc.School, error)
-	//GetSchoolByDistrictID(ctx gin.Context, districtID int) ([]sqlc.School, error)
-	//GetAllProvinces(ctx *gin.Context) ([]sqlc.Province, error)
-	//GetDistrictsByProvince(ctx *gin.Context) ([]sqlc.District, error)
 }
 
 func (c *Core) CreateUser(ctx *gin.Context, newUser NewUser) (error, int) {

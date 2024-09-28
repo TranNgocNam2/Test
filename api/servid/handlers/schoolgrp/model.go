@@ -45,7 +45,7 @@ func toCoreNewSchool(newSchoolRequest NewSchoolRequest) school.NewSchool {
 
 func (newSchoolRequest NewSchoolRequest) Validate() error {
 	if err := validate.Check(newSchoolRequest); err != nil {
-		return fmt.Errorf("validate: %w", err)
+		return fmt.Errorf(validate.ErrValidation.Error(), err)
 	}
 	return nil
 }
@@ -66,7 +66,7 @@ func toCoreUpdateSchool(updateSchoolRequest UpdateSchoolRequest) school.UpdateSc
 
 func (updateSchoolRequest UpdateSchoolRequest) Validate() error {
 	if err := validate.Check(updateSchoolRequest); err != nil {
-		return fmt.Errorf("validate: %w", err)
+		return fmt.Errorf(validate.ErrValidation.Error(), err)
 	}
 	return nil
 }
@@ -93,7 +93,7 @@ func toProvinceResponses(provinces []school.Province) []ProvinceResponse {
 type DistrictResponse struct {
 	ID         int32  `json:"id"`
 	Name       string `json:"name"`
-	ProvinceID int32  `json:"province_id"`
+	ProvinceID int32  `json:"provinceID"`
 }
 
 func toDistrictResponse(district school.District) DistrictResponse {
