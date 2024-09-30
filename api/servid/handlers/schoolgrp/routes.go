@@ -2,13 +2,13 @@ package schoolgrp
 
 import (
 	"Backend/business/core/school"
-	"Backend/business/core/school/schooldb"
 	"Backend/internal/app"
+
 	"github.com/gin-gonic/gin"
 )
 
 func SchoolRoutes(router *gin.Engine, app *app.Application) {
-	schoolCore := school.NewCore(schooldb.NewStore(app.Db, app.Queries, app.Logger))
+	schoolCore := school.NewCore(app.Db, app.Queries, app.Logger)
 	handlers := New(schoolCore)
 
 	schools := router.Group("/schools")

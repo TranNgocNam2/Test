@@ -2,8 +2,6 @@ package schoolgrp
 
 import (
 	"Backend/business/core/school"
-	"Backend/internal/validate"
-	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -27,48 +25,6 @@ func toWebSchools(schools []school.School) []SchoolResponse {
 		items[i] = toSchoolResponse(school)
 	}
 	return items
-}
-
-type NewSchoolRequest struct {
-	SchoolName string `json:"schoolName" validate:"required"`
-	Address    string `json:"address" validate:"required"`
-	DistrictID int32  `json:"districtID" validate:"required"`
-}
-
-func toCoreNewSchool(newSchoolRequest NewSchoolRequest) school.NewSchool {
-	return school.NewSchool{
-		Name:       newSchoolRequest.SchoolName,
-		Address:    newSchoolRequest.Address,
-		DistrictID: newSchoolRequest.DistrictID,
-	}
-}
-
-func (newSchoolRequest NewSchoolRequest) Validate() error {
-	if err := validate.Check(newSchoolRequest); err != nil {
-		return fmt.Errorf(validate.ErrValidation.Error(), err)
-	}
-	return nil
-}
-
-type UpdateSchoolRequest struct {
-	Name       *string `json:"schoolName" `
-	Address    *string `json:"address"`
-	DistrictID *int32  `json:"districtID"`
-}
-
-func toCoreUpdateSchool(updateSchoolRequest UpdateSchoolRequest) school.UpdateSchool {
-	return school.UpdateSchool{
-		Name:       updateSchoolRequest.Name,
-		Address:    updateSchoolRequest.Address,
-		DistrictID: updateSchoolRequest.DistrictID,
-	}
-}
-
-func (updateSchoolRequest UpdateSchoolRequest) Validate() error {
-	if err := validate.Check(updateSchoolRequest); err != nil {
-		return fmt.Errorf(validate.ErrValidation.Error(), err)
-	}
-	return nil
 }
 
 type ProvinceResponse struct {

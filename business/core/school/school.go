@@ -1,165 +1,213 @@
 package school
 
 import (
+	"Backend/business/db/pgx"
+	"Backend/business/db/sqlc"
 	"Backend/internal/order"
+	"bytes"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"net/http"
-	"strconv"
+	"gitlab.com/innovia69420/kit/web/request"
+	"go.uber.org/zap"
 )
 
 var (
-	ErrInvalidID = errors.New("ID không hợp lệ!")
+	ErrInvalidID          = errors.New("ID không hợp lệ!")
+	ErrSchoolNotFound     = errors.New("Không tìm thấy trường học!")
+	ErrCreateSchoolFailed = errors.New("Có lỗi trong quá trình tạo trường học!")
+	ErrUpdateSchoolFailed = errors.New("Có lỗi trong quá trình cập nhật trường học!")
+	ErrDeleteSchoolFailed = errors.New("Có lỗi trong quá trình xóa trường học!")
 )
 
-type Storer interface {
-	Create(ctx *gin.Context, school School) error
-	Update(ctx *gin.Context, school School) error
-	Delete(ctx *gin.Context, school School) error
-	GetByID(ctx *gin.Context, id uuid.UUID) (School, error)
-	Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber, rowsPerPage int) ([]School, error)
-	Count(ctx *gin.Context, filter QueryFilter) (int, error)
-	GetByDistrict(ctx *gin.Context, districtID int32) ([]School, error)
-	GetAllProvinces(ctx *gin.Context) ([]Province, error)
-	GetDistrictsByProvince(ctx *gin.Context, provinceID int32) ([]District, error)
-}
-
 type Core struct {
-	storer Storer
+	db      *sqlx.DB
+	queries *sqlc.Queries
+	logger  *zap.Logger
 }
 
-func NewCore(storer Storer) *Core {
+func NewCore(db *sqlx.DB, queries *sqlc.Queries, logger *zap.Logger) *Core {
 	return &Core{
-		storer: storer,
+		db:      db,
+		queries: queries,
+		logger:  logger,
 	}
 }
 
-func (c *Core) Create(ctx *gin.Context, newSchool NewSchool) (error, int) {
-	var school = School{
+func (c *Core) Create(ctx *gin.Context, request request.NewSchool) error {
+	var school = sqlc.CreateSchoolParams{
 		ID:         uuid.New(),
-		Name:       newSchool.Name,
-		Address:    newSchool.Address,
-		DistrictID: newSchool.DistrictID,
+		Name:       request.Name,
+		Address:    request.Address,
+		DistrictID: request.DistrictId,
 	}
-	if err := c.storer.Create(ctx, school); err != nil {
-		return err, http.StatusInternalServerError
+
+	if err := c.queries.CreateSchool(ctx, school); err != nil {
+		return ErrCreateSchoolFailed
 	}
-	return nil, http.StatusOK
+	return nil
 }
 
-func (c *Core) Update(ctx *gin.Context, updateSchool UpdateSchool) (error, int) {
+func (c *Core) Update(ctx *gin.Context, request request.UpdateSchool) error {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		return ErrInvalidID, http.StatusBadRequest
+		return ErrInvalidID
 	}
 
-	school, err := c.storer.GetByID(ctx, id)
+	school, err := c.queries.GetSchoolByID(ctx, id)
 	if err != nil {
-		return err, http.StatusNotFound
+		return ErrSchoolNotFound
 	}
 
-	if updateSchool.Name != nil {
-		school.Name = *updateSchool.Name
+	school.Name = request.Name
+	school.Address = request.Address
+	school.DistrictID = request.DistrictId
+
+	params := sqlc.UpdateSchoolParams{
+		Name:       school.Name,
+		Address:    school.Address,
+		DistrictID: school.DistrictID,
+		ID:         school.ID,
 	}
 
-	if updateSchool.Address != nil {
-		school.Address = *updateSchool.Address
+	if err = c.queries.UpdateSchool(ctx, params); err != nil {
+		return ErrUpdateSchoolFailed
 	}
-
-	if updateSchool.DistrictID != nil {
-		school.DistrictID = *updateSchool.DistrictID
-	}
-
-	if err = c.storer.Update(ctx, school); err != nil {
-		return err, http.StatusInternalServerError
-	}
-	return nil, http.StatusOK
+	return nil
 }
 
-func (c *Core) Delete(ctx *gin.Context) (error, int) {
+func (c *Core) Delete(ctx *gin.Context) error {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		return ErrInvalidID, http.StatusBadRequest
+		return ErrInvalidID
 	}
 
-	school, err := c.storer.GetByID(ctx, id)
+	school, err := c.queries.GetSchoolByID(ctx, id)
 	if err != nil {
-		return err, http.StatusNotFound
+		return ErrSchoolNotFound
 	}
 
-	if err = c.storer.Delete(ctx, school); err != nil {
-		return err, http.StatusInternalServerError
+	if err = c.queries.DeleteSchool(ctx, school.ID); err != nil {
+		return ErrDeleteSchoolFailed
 	}
-	return nil, http.StatusOK
+	return nil
 }
 
-func (c *Core) GetSchoolByID(ctx *gin.Context, id uuid.UUID) (School, error, int) {
-	school, err := c.storer.GetByID(ctx, id)
+func (c *Core) GetSchoolByID(ctx *gin.Context, id uuid.UUID) (*School, error) {
+	school, err := c.queries.GetSchoolByID(ctx, id)
+
 	if err != nil {
-		return School{}, err, http.StatusNotFound
+		return nil, ErrSchoolNotFound
 	}
 
-	return school, nil, http.StatusOK
+	result := School{
+		ID:         school.ID,
+		Name:       school.Name,
+		Address:    school.Address,
+		DistrictID: school.DistrictID,
+	}
+
+	return &result, nil
 }
 
-func (c *Core) GetSchoolsPaginated(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]School, error, int) {
+func (c *Core) GetSchoolsPaginated(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []School {
 	if err := filter.Validate(); err != nil {
-		return nil, err, http.StatusBadRequest
+		c.logger.Error(err.Error())
+		return nil
 	}
 
-	schools, err := c.storer.Query(ctx, filter, orderBy, pageNumber, rowsPerPage)
-	if err != nil {
-		schools = []School{}
+	data := map[string]interface{}{
+		"offset":        (pageNumber - 1) * rowsPerPage,
+		"rows_per_page": rowsPerPage,
 	}
 
-	return schools, nil, http.StatusOK
+	const q = `SELECT
+                        id, name, address, district_id
+               FROM
+                        schools`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf)
+	orderByClause := orderByClause(orderBy)
+
+	buf.WriteString(orderByClause)
+	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
+	c.logger.Info(buf.String())
+
+	var schools []sqlc.School
+
+	if err := pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &schools); err != nil {
+		c.logger.Error(err.Error())
+		return nil
+	}
+
+	result := toCoreSchoolSlice(schools)
+
+	return result
 }
 
-func (c *Core) Count(ctx *gin.Context, filter QueryFilter) (int, error, int) {
+func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
 	if err := filter.Validate(); err != nil {
-		return 0, err, http.StatusBadRequest
+		c.logger.Error(err.Error())
+		return 0
 	}
 
-	count, err := c.storer.Count(ctx, filter)
-	if err != nil {
-		count = 0
+	data := map[string]interface{}{}
+
+	const q = `SELECT
+                        count(1)
+               FROM
+                        schools`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf)
+
+	var count struct {
+		Count int `db:"count"`
 	}
 
-	return count, err, http.StatusOK
+	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	return count.Count
 }
 
-func (c *Core) GetSchoolsByDistrictID(ctx *gin.Context) ([]School, error, int) {
+func (c *Core) GetSchoolsByDistrictID(ctx *gin.Context) ([]School, error) {
 	districtID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		return nil, ErrInvalidID, http.StatusBadRequest
+		return nil, ErrInvalidID
 	}
 
-	schools, err := c.storer.GetByDistrict(ctx, int32(districtID))
+	schools, err := c.queries.GetSchoolsByDistrictID(ctx, int32(districtID))
 	if err != nil {
-		return nil, err, http.StatusNotFound
+		return nil, err
 	}
 
-	return schools, nil, http.StatusOK
+	return toCoreSchoolSlice(schools), nil
 }
 
-func (c *Core) GetAllProvinces(ctx *gin.Context) ([]Province, error, int) {
-	provinces, err := c.storer.GetAllProvinces(ctx)
+func (c *Core) GetAllProvinces(ctx *gin.Context) ([]Province, error) {
+	provinces, err := c.queries.GetAllProvince(ctx)
 	if err != nil {
-		return nil, err, http.StatusNotFound
+		return nil, err
 	}
-	return provinces, nil, http.StatusOK
+	return toCoreProvinceSlice(provinces), nil
 }
 
-func (c *Core) GetDistrictsByProvinceID(ctx *gin.Context) ([]District, error, int) {
+func (c *Core) GetDistrictsByProvinceID(ctx *gin.Context) ([]District, error) {
 	provinceID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		return nil, ErrInvalidID, http.StatusBadRequest
+		return nil, ErrInvalidID
 	}
 
-	districts, err := c.storer.GetDistrictsByProvince(ctx, int32(provinceID))
+	districts, err := c.queries.GetDistrictsByProvince(ctx, int32(provinceID))
 	if err != nil {
-		return nil, err, http.StatusNotFound
+		return nil, err
 	}
-	return districts, nil, http.StatusOK
+	return toCoreDistrictSlice(districts), nil
 }
