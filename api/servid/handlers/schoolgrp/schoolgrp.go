@@ -5,9 +5,9 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"net/http"
 )
 
 type Handlers struct {
@@ -70,7 +70,12 @@ func (h *Handlers) DeleteSchool() gin.HandlerFunc {
 
 func (h *Handlers) GetSchoolByID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		school, err, statusCode := h.school.GetSchoolByID(ctx)
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+		}
+
+		school, err, statusCode := h.school.GetSchoolByID(ctx, id)
 		if err != nil {
 			web.Respond(ctx, nil, statusCode, err)
 			return

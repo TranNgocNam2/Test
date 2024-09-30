@@ -3,10 +3,10 @@ package school
 import "github.com/google/uuid"
 
 type School struct {
-	ID         uuid.UUID `db:"id"`
-	Name       string    `db:"name"`
-	Address    string    `db:"address"`
-	DistrictID int32     `db:"district_id"`
+	ID         uuid.UUID
+	Name       string
+	Address    string
+	DistrictID int32
 }
 
 type NewSchool struct {
