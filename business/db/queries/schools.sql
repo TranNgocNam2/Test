@@ -9,7 +9,7 @@ WHERE id = sqlc.arg(id)::uuid;
 
 -- name: GetSchoolByID :one
 SELECT * FROM schools
-WHERE id = sqlc.arg(id)::uuid;
+WHERE id = sqlc.arg(id)::uuid AND is_deleted = false;
 
 -- name: UpdateSchool :exec
 UPDATE schools

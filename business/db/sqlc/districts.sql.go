@@ -10,7 +10,9 @@ import (
 )
 
 const getDistrictsByProvince = `-- name: GetDistrictsByProvince :many
-SELECT id, name, province_id FROM districts WHERE districts.province_id = $1::integer ORDER BY id
+SELECT id, name, province_id FROM districts
+         WHERE districts.province_id = $1::integer
+         ORDER BY id
 `
 
 func (q *Queries) GetDistrictsByProvince(ctx context.Context, provinceID int32) ([]District, error) {

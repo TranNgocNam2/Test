@@ -3,21 +3,25 @@ package main
 import (
 	"Backend/api/servid/handlers/schoolgrp"
 	"Backend/api/servid/handlers/testgrp"
+	"Backend/api/servid/handlers/usergrp"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/config"
 	"Backend/internal/http"
 	"Backend/internal/middleware"
 	"fmt"
+	"io"
+	"os"
+	"strings"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/reflectx"
 	"gitlab.com/innovia69420/kit/enum/message"
 	"gitlab.com/innovia69420/kit/file"
 	"gitlab.com/innovia69420/kit/logger"
-	"io"
-	"os"
 )
 
 var WorkingDirectory string
@@ -59,6 +63,12 @@ func main() {
 		return
 	}
 
+	dbConn.Mapper = reflectx.NewMapperTagFunc("db",
+		nil,
+		func(s string) string {
+			return strings.ToLower(s)
+		})
+
 	defer func(dbConn *sqlx.DB) {
 		err := dbConn.Close()
 		if err != nil {
@@ -89,6 +99,6 @@ func LoadRoutes(router *gin.Engine, app *app.Application) {
 	testgrp.ExampleRoutes(router)
 
 	router.Use(middleware.CheckApiKeyAndRequestID(app.Config.ApiKey))
-
+	usergrp.UserRoutes(router, app)
 	schoolgrp.SchoolRoutes(router, app)
 }

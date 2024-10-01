@@ -2,20 +2,33 @@ package schoolgrp
 
 import (
 	"Backend/business/core/school"
-	"Backend/business/core/school/schooldb"
 	"Backend/internal/app"
+
 	"github.com/gin-gonic/gin"
 )
 
 func SchoolRoutes(router *gin.Engine, app *app.Application) {
-	schoolCore := school.NewCore(schooldb.NewStore(app.Db, app.Queries))
+	schoolCore := school.NewCore(app.Db, app.Queries, app.Logger)
 	handlers := New(schoolCore)
 
-	router.POST("/schools", handlers.CreateSchool())
-	router.PUT("/schools/:id", handlers.UpdateSchool())
-	router.DELETE("/schools/:id", handlers.DeleteSchool())
-	router.GET("/schools/:id", handlers.GetSchoolByID())
-	router.GET("/districts/:id/schools", handlers.GetSchoolsByDistrict())
-	router.GET("/provinces", handlers.GetProvinces())
-	router.GET("/provinces/:id/districts", handlers.GetDistrictsByProvince())
+	schools := router.Group("/schools")
+	{
+		schools.POST("", handlers.CreateSchool())
+		schools.GET("/:id", handlers.GetSchoolByID())
+		schools.DELETE("/:id", handlers.DeleteSchool())
+		schools.PUT("/:id", handlers.UpdateSchool())
+		schools.GET("", handlers.GetSchoolPaginated())
+	}
+
+	provinces := router.Group("/provinces")
+	{
+		provinces.GET("", handlers.GetProvinces())
+		provinces.GET("/:id/districts", handlers.GetDistrictsByProvince())
+	}
+
+	districts := router.Group("/districts")
+	{
+		districts.GET("/:id/schools", handlers.GetSchoolsByDistrict())
+
+	}
 }

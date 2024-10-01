@@ -21,11 +21,11 @@ func Respond(ctx *gin.Context, data interface{}, httpStatus int, err error) {
 		break
 
 	case http.StatusNotFound:
-		web.NotFoundError(ctx, err.Error())
+		web.NotFoundError(ctx, err)
 		break
 
 	case http.StatusBadRequest:
-		web.BadRequestError(ctx, err.Error())
+		web.BadRequestError(ctx, err)
 		break
 
 	case http.StatusInternalServerError:

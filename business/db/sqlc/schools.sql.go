@@ -17,10 +17,10 @@ VALUES ($1::uuid, $2, $3, $4::integer)
 `
 
 type CreateSchoolParams struct {
-	ID         uuid.UUID `json:"id"`
-	Name       string    `json:"name"`
-	Address    string    `json:"address"`
-	DistrictID int32     `json:"districtId"`
+	ID         uuid.UUID `db:"id" json:"id"`
+	Name       string    `db:"name" json:"name"`
+	Address    string    `db:"address" json:"address"`
+	DistrictID int32     `db:"district_id" json:"districtId"`
 }
 
 func (q *Queries) CreateSchool(ctx context.Context, arg CreateSchoolParams) error {
@@ -46,7 +46,7 @@ func (q *Queries) DeleteSchool(ctx context.Context, id uuid.UUID) error {
 
 const getSchoolByID = `-- name: GetSchoolByID :one
 SELECT id, name, address, district_id, is_deleted FROM schools
-WHERE id = $1::uuid
+WHERE id = $1::uuid AND is_deleted = false
 `
 
 func (q *Queries) GetSchoolByID(ctx context.Context, id uuid.UUID) (School, error) {
@@ -104,10 +104,10 @@ WHERE id = $4::uuid
 `
 
 type UpdateSchoolParams struct {
-	Name       string    `json:"name"`
-	Address    string    `json:"address"`
-	DistrictID int32     `json:"districtId"`
-	ID         uuid.UUID `json:"id"`
+	Name       string    `db:"name" json:"name"`
+	Address    string    `db:"address" json:"address"`
+	DistrictID int32     `db:"district_id" json:"districtId"`
+	ID         uuid.UUID `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateSchool(ctx context.Context, arg UpdateSchoolParams) error {

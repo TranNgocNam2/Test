@@ -9,8 +9,9 @@ require (
 	github.com/google/uuid v1.4.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.19.0
-	gitlab.com/innovia69420/kit v0.0.0-20240921185712-2ce32465ba58
+	gitlab.com/innovia69420/kit v0.0.0-20240930142010-557a98dcfc14
 	go.uber.org/zap v1.27.0
 )
 

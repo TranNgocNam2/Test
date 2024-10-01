@@ -4,13 +4,16 @@ import (
 	"Backend/business/core/school"
 	"Backend/internal/validate"
 	"fmt"
+
 	"github.com/google/uuid"
+	"gitlab.com/innovia69420/kit/web/request"
 )
 
 type SchoolResponse struct {
 	ID         uuid.UUID `json:"id"`
 	SchoolName string    `json:"schoolName"`
 	Address    string    `json:"address"`
+	DistrictId int       `json:"districtId"`
 }
 
 func toSchoolResponse(school school.School) SchoolResponse {
@@ -18,6 +21,7 @@ func toSchoolResponse(school school.School) SchoolResponse {
 		ID:         school.ID,
 		SchoolName: school.Name,
 		Address:    school.Address,
+		DistrictId: int(school.DistrictID),
 	}
 }
 
@@ -27,48 +31,6 @@ func toWebSchools(schools []school.School) []SchoolResponse {
 		items[i] = toSchoolResponse(school)
 	}
 	return items
-}
-
-type NewSchoolRequest struct {
-	SchoolName string `json:"schoolName" validate:"required"`
-	Address    string `json:"address" validate:"required"`
-	DistrictID int32  `json:"districtID" validate:"required"`
-}
-
-func toCoreNewSchool(newSchoolRequest NewSchoolRequest) school.NewSchool {
-	return school.NewSchool{
-		Name:       newSchoolRequest.SchoolName,
-		Address:    newSchoolRequest.Address,
-		DistrictID: newSchoolRequest.DistrictID,
-	}
-}
-
-func (newSchoolRequest NewSchoolRequest) Validate() error {
-	if err := validate.Check(newSchoolRequest); err != nil {
-		return fmt.Errorf("validate: %w", err)
-	}
-	return nil
-}
-
-type UpdateSchoolRequest struct {
-	Name       *string `json:"schoolName" `
-	Address    *string `json:"address"`
-	DistrictID *int32  `json:"districtID"`
-}
-
-func toCoreUpdateSchool(updateSchoolRequest UpdateSchoolRequest) school.UpdateSchool {
-	return school.UpdateSchool{
-		Name:       updateSchoolRequest.Name,
-		Address:    updateSchoolRequest.Address,
-		DistrictID: updateSchoolRequest.DistrictID,
-	}
-}
-
-func (updateSchoolRequest UpdateSchoolRequest) Validate() error {
-	if err := validate.Check(updateSchoolRequest); err != nil {
-		return fmt.Errorf("validate: %w", err)
-	}
-	return nil
 }
 
 type ProvinceResponse struct {
@@ -93,7 +55,7 @@ func toProvinceResponses(provinces []school.Province) []ProvinceResponse {
 type DistrictResponse struct {
 	ID         int32  `json:"id"`
 	Name       string `json:"name"`
-	ProvinceID int32  `json:"province_id"`
+	ProvinceID int32  `json:"provinceID"`
 }
 
 func toDistrictResponse(district school.District) DistrictResponse {
@@ -103,10 +65,25 @@ func toDistrictResponse(district school.District) DistrictResponse {
 		ProvinceID: district.ProvinceID,
 	}
 }
+
 func toClientDistricts(districts []school.District) []DistrictResponse {
 	items := make([]DistrictResponse, len(districts))
 	for i, district := range districts {
 		items[i] = toDistrictResponse(district)
 	}
 	return items
+}
+
+func validateCreateSchoolRequest(request request.NewSchool) error {
+	if err := validate.Check(request); err != nil {
+		return fmt.Errorf("validate: %w", err)
+	}
+	return nil
+}
+
+func validateUpdateSchoolRequest(request request.UpdateSchool) error {
+	if err := validate.Check(request); err != nil {
+		return fmt.Errorf("validate: %w", err)
+	}
+	return nil
 }
