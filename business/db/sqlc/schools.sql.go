@@ -46,7 +46,7 @@ func (q *Queries) DeleteSchool(ctx context.Context, id uuid.UUID) error {
 
 const getSchoolByID = `-- name: GetSchoolByID :one
 SELECT id, name, address, district_id, is_deleted FROM schools
-WHERE id = $1::uuid
+WHERE id = $1::uuid AND is_deleted = false
 `
 
 func (q *Queries) GetSchoolByID(ctx context.Context, id uuid.UUID) (School, error) {

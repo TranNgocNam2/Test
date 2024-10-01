@@ -30,7 +30,14 @@ func (h *Handlers) CreateSchool() gin.HandlerFunc {
 			return
 		}
 
-		err := h.school.Create(ctx, request)
+		err := validateCreateSchoolRequest(request)
+
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.school.Create(ctx, request)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusInternalServerError, err)
 			return
@@ -48,7 +55,14 @@ func (h *Handlers) UpdateSchool() gin.HandlerFunc {
 			return
 		}
 
-		err := h.school.Update(ctx, request)
+		err := validateUpdateSchoolRequest(request)
+
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.school.Update(ctx, request)
 		if err != nil {
 			switch err {
 			case school.ErrInvalidID:
@@ -94,6 +108,7 @@ func (h *Handlers) GetSchoolByID() gin.HandlerFunc {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
 		}
 
 		result, err := h.school.GetSchoolByID(ctx, id)
@@ -137,7 +152,7 @@ func (h *Handlers) GetSchoolPaginated() gin.HandlerFunc {
 		schools := h.school.GetSchoolsPaginated(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		total := h.school.Count(ctx, filter)
 
-		result := page.NewPageResponse[school.School](schools, total, pageInfo.Number, pageInfo.Size)
+		result := page.NewPageResponse(schools, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}

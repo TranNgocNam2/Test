@@ -34,5 +34,8 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 	if len(wc) > 0 {
 		buf.WriteString(" WHERE ")
 		buf.WriteString(strings.Join(wc, " AND "))
+		buf.WriteString(" AND is_deleted = false")
+	} else {
+		buf.WriteString(" WHERE is_deleted = false")
 	}
 }
