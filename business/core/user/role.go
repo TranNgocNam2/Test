@@ -1,9 +1,10 @@
 package user
 
 const (
-	LEARNER = 1
-	TEACHER = 2
-	MANAGER = 3
+	LEARNER = iota
+	MANAGER
+	TEACHER
+	ADMIN
 )
 
 func GetRoleName(role int16) string {
@@ -14,6 +15,8 @@ func GetRoleName(role int16) string {
 		return "TEACHER"
 	case MANAGER:
 		return "MANAGER"
+	case ADMIN:
+		return "ADMIN"
 	default:
 		return "LEARNER"
 	}
@@ -27,6 +30,8 @@ func GetRoleID(role string) int16 {
 		return TEACHER
 	case "MANAGER":
 		return MANAGER
+	case "ADMIN":
+		return ADMIN
 	default:
 		return LEARNER
 	}

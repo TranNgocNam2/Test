@@ -65,8 +65,9 @@ type District struct {
 
 func toCoreDistrict(dbDistrict sqlc.District) District {
 	return District{
-		ID:   dbDistrict.ID,
-		Name: dbDistrict.Name,
+		ID:         dbDistrict.ID,
+		Name:       dbDistrict.Name,
+		ProvinceID: dbDistrict.ProvinceID,
 	}
 }
 

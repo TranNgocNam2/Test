@@ -1,9 +1,8 @@
 package order
 
 import (
-	"Backend/internal/validate"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +11,10 @@ import (
 const (
 	ASC  = "ASC"
 	DESC = "DESC"
+)
+
+var (
+	ErrInvalidDirection = errors.New("Không thể xác định được kiểu xác định: %s!")
 )
 
 var directions = map[string]string{
@@ -41,25 +44,16 @@ func NewBy(field string, direction string) By {
 func Parse(c *gin.Context, defaultOrder By) (By, error) {
 	orderBy := c.Query("orderBy")
 
-	parts := strings.Split(orderBy, ",")
+	sortBy := c.DefaultQuery("sortBy", "ASC")
 
 	var by By
 
-	switch len(parts) {
-	case 1:
-		by = NewBy(strings.TrimSpace(parts[0]), ASC)
-
-	case 2:
-		direction := strings.Trim(parts[1], " ")
-		if _, exists := directions[direction]; !exists {
-			return By{}, validate.NewFieldsError(orderBy, fmt.Errorf("unknown direction: %s", by.Direction))
-		}
-
-		by = NewBy(strings.Trim(parts[0], " "), direction)
-
-	default:
-		return By{}, validate.NewFieldsError(orderBy, errors.New("unknown order field"))
+	if _, exists := directions[sortBy]; !exists {
+		return defaultOrder, fmt.Errorf(ErrInvalidDirection.Error(), by.Direction)
+		//return By{}, validate.NewFieldsError(orderBy, fmt.Errorf("unknown direction: %s", by.Direction))
 	}
+
+	by = NewBy(strings.Trim(orderBy, " "), sortBy)
 
 	return by, nil
 }

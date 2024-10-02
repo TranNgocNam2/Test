@@ -4,6 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
+	"strings"
+)
+
+var (
+	InvalidPayload        = errors.New("Dữ liệu không hợp lệ: %s!")
+	UnableToDecodePayload = errors.New("Không thể giải mã dữ liệu: %s!")
 )
 
 type validator interface {
@@ -18,12 +25,16 @@ func Decode(c *gin.Context, val any) error {
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(val); err != nil {
-		return fmt.Errorf("unable to decode payload: %w", err)
+		start := strings.Index(err.Error(), `"`) + 1
+		end := strings.LastIndex(err.Error(), `"`)
+
+		fieldName := err.Error()[start:end]
+		return fmt.Errorf(UnableToDecodePayload.Error(), fieldName)
 	}
 
 	if v, ok := val.(validator); ok {
 		if err := v.Validate(); err != nil {
-			return fmt.Errorf("unable to validate payload: %w", err)
+			return fmt.Errorf(InvalidPayload.Error(), err)
 		}
 	}
 

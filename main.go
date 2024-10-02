@@ -1,19 +1,15 @@
 package main
 
 import (
-	"Backend/api/servid/handlers/schoolgrp"
-	"Backend/api/servid/handlers/testgrp"
-	"Backend/api/servid/handlers/usergrp"
+	"Backend/api/handlers/schoolgrp"
+	"Backend/api/handlers/testgrp"
+	"Backend/api/handlers/usergrp"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/config"
 	"Backend/internal/http"
 	"Backend/internal/middleware"
 	"fmt"
-	"io"
-	"os"
-	"strings"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -22,6 +18,9 @@ import (
 	"gitlab.com/innovia69420/kit/enum/message"
 	"gitlab.com/innovia69420/kit/file"
 	"gitlab.com/innovia69420/kit/logger"
+	"io"
+	"os"
+	"strings"
 )
 
 var WorkingDirectory string

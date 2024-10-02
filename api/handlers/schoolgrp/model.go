@@ -3,8 +3,6 @@ package schoolgrp
 import (
 	"Backend/business/core/school"
 	"Backend/internal/validate"
-	"fmt"
-
 	"github.com/google/uuid"
 	"gitlab.com/innovia69420/kit/web/request"
 )
@@ -13,7 +11,7 @@ type SchoolResponse struct {
 	ID         uuid.UUID `json:"id"`
 	SchoolName string    `json:"schoolName"`
 	Address    string    `json:"address"`
-	DistrictId int       `json:"districtId"`
+	DistrictID int       `json:"districtID"`
 }
 
 func toSchoolResponse(school school.School) SchoolResponse {
@@ -21,16 +19,31 @@ func toSchoolResponse(school school.School) SchoolResponse {
 		ID:         school.ID,
 		SchoolName: school.Name,
 		Address:    school.Address,
-		DistrictId: int(school.DistrictID),
+		DistrictID: int(school.DistrictID),
 	}
 }
 
-func toWebSchools(schools []school.School) []SchoolResponse {
+func toSchoolsResponse(schools []school.School) []SchoolResponse {
 	items := make([]SchoolResponse, len(schools))
 	for i, school := range schools {
 		items[i] = toSchoolResponse(school)
 	}
 	return items
+}
+
+func toCoreNewSchool(newSchoolRequest request.NewSchool) school.School {
+	return school.School{
+		Name:       newSchoolRequest.Name,
+		Address:    newSchoolRequest.Address,
+		DistrictID: newSchoolRequest.DistrictID,
+	}
+}
+
+func validateCreateSchoolRequest(newSchoolRequest request.NewSchool) error {
+	if err := validate.Check(newSchoolRequest); err != nil {
+		return err
+	}
+	return nil
 }
 
 type ProvinceResponse struct {
@@ -66,7 +79,7 @@ func toDistrictResponse(district school.District) DistrictResponse {
 	}
 }
 
-func toClientDistricts(districts []school.District) []DistrictResponse {
+func toDistrictsResponse(districts []school.District) []DistrictResponse {
 	items := make([]DistrictResponse, len(districts))
 	for i, district := range districts {
 		items[i] = toDistrictResponse(district)
@@ -74,16 +87,17 @@ func toClientDistricts(districts []school.District) []DistrictResponse {
 	return items
 }
 
-func validateCreateSchoolRequest(request request.NewSchool) error {
-	if err := validate.Check(request); err != nil {
-		return fmt.Errorf("validate: %w", err)
+func toCoreUpdateSchool(updateSchoolRequest request.UpdateSchool) school.School {
+	return school.School{
+		Name:       updateSchoolRequest.Name,
+		Address:    updateSchoolRequest.Address,
+		DistrictID: updateSchoolRequest.DistrictID,
 	}
-	return nil
 }
 
 func validateUpdateSchoolRequest(request request.UpdateSchool) error {
 	if err := validate.Check(request); err != nil {
-		return fmt.Errorf("validate: %w", err)
+		return err
 	}
 	return nil
 }

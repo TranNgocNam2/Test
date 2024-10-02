@@ -3,6 +3,7 @@ package school
 import (
 	"Backend/business/db/pgx"
 	"Backend/business/db/sqlc"
+	"Backend/internal/app"
 	"Backend/internal/order"
 	"bytes"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"gitlab.com/innovia69420/kit/web/request"
 	"go.uber.org/zap"
 )
 
@@ -29,20 +29,20 @@ type Core struct {
 	logger  *zap.Logger
 }
 
-func NewCore(db *sqlx.DB, queries *sqlc.Queries, logger *zap.Logger) *Core {
+func NewCore(app *app.Application) *Core {
 	return &Core{
-		db:      db,
-		queries: queries,
-		logger:  logger,
+		db:      app.Db,
+		queries: app.Queries,
+		logger:  app.Logger,
 	}
 }
 
-func (c *Core) Create(ctx *gin.Context, request request.NewSchool) error {
+func (c *Core) Create(ctx *gin.Context, newSchool School) error {
 	var school = sqlc.CreateSchoolParams{
 		ID:         uuid.New(),
-		Name:       request.Name,
-		Address:    request.Address,
-		DistrictID: request.DistrictId,
+		Name:       newSchool.Name,
+		Address:    newSchool.Address,
+		DistrictID: newSchool.DistrictID,
 	}
 
 	if err := c.queries.CreateSchool(ctx, school); err != nil {
@@ -51,7 +51,7 @@ func (c *Core) Create(ctx *gin.Context, request request.NewSchool) error {
 	return nil
 }
 
-func (c *Core) Update(ctx *gin.Context, request request.UpdateSchool) error {
+func (c *Core) Update(ctx *gin.Context, updatedSchool School) error {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		return ErrInvalidID
@@ -62,18 +62,18 @@ func (c *Core) Update(ctx *gin.Context, request request.UpdateSchool) error {
 		return ErrSchoolNotFound
 	}
 
-	school.Name = request.Name
-	school.Address = request.Address
-	school.DistrictID = request.DistrictId
+	school.Name = updatedSchool.Name
+	school.Address = updatedSchool.Address
+	school.DistrictID = updatedSchool.DistrictID
 
-	params := sqlc.UpdateSchoolParams{
+	dbSchool := sqlc.UpdateSchoolParams{
 		Name:       school.Name,
 		Address:    school.Address,
 		DistrictID: school.DistrictID,
 		ID:         school.ID,
 	}
 
-	if err = c.queries.UpdateSchool(ctx, params); err != nil {
+	if err = c.queries.UpdateSchool(ctx, dbSchool); err != nil {
 		return ErrUpdateSchoolFailed
 	}
 	return nil
@@ -96,21 +96,14 @@ func (c *Core) Delete(ctx *gin.Context) error {
 	return nil
 }
 
-func (c *Core) GetSchoolByID(ctx *gin.Context, id uuid.UUID) (*School, error) {
+func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (School, error) {
 	school, err := c.queries.GetSchoolByID(ctx, id)
 
 	if err != nil {
-		return nil, ErrSchoolNotFound
+		return School{}, ErrSchoolNotFound
 	}
 
-	result := School{
-		ID:         school.ID,
-		Name:       school.Name,
-		Address:    school.Address,
-		DistrictID: school.DistrictID,
-	}
-
-	return &result, nil
+	return toCoreSchool(school), nil
 }
 
 func (c *Core) GetSchoolsPaginated(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []School {
