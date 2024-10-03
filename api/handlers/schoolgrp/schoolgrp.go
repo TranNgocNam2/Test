@@ -5,6 +5,7 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,20 +25,18 @@ func New(school *school.Core) *Handlers {
 
 func (h *Handlers) CreateSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var request request.NewSchool
-		if err := web.Decode(ctx, &request); err != nil {
+		var newSchool request.NewSchool
+		if err := web.Decode(ctx, &newSchool); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
-		err := validateCreateSchoolRequest(request)
-
-		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+		if err := validateCreateSchoolRequest(newSchool); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
-		err = h.school.Create(ctx, request)
+		err := h.school.Create(ctx, toCoreNewSchool(newSchool))
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusInternalServerError, err)
 			return
@@ -49,26 +48,24 @@ func (h *Handlers) CreateSchool() gin.HandlerFunc {
 
 func (h *Handlers) UpdateSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var request request.UpdateSchool
-		if err := web.Decode(ctx, &request); err != nil {
+		var updatedSchool request.UpdateSchool
+		if err := web.Decode(ctx, &updatedSchool); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
-		err := validateUpdateSchoolRequest(request)
-
-		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+		if err := validateUpdateSchoolRequest(updatedSchool); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
-		err = h.school.Update(ctx, request)
+		err := h.school.Update(ctx, toCoreUpdateSchool(updatedSchool))
 		if err != nil {
-			switch err {
-			case school.ErrInvalidID:
+			switch {
+			case errors.Is(err, school.ErrInvalidID):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
-			case school.ErrSchoolNotFound:
+			case errors.Is(err, school.ErrSchoolNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			default:
@@ -85,11 +82,11 @@ func (h *Handlers) DeleteSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		err := h.school.Delete(ctx)
 		if err != nil {
-			switch err {
-			case school.ErrInvalidID:
+			switch {
+			case errors.Is(err, school.ErrInvalidID):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
-			case school.ErrSchoolNotFound:
+			case errors.Is(err, school.ErrSchoolNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			default:
@@ -111,10 +108,10 @@ func (h *Handlers) GetSchoolByID() gin.HandlerFunc {
 			return
 		}
 
-		result, err := h.school.GetSchoolByID(ctx, id)
+		schoolRes, err := h.school.GetByID(ctx, id)
 		if err != nil {
-			switch err {
-			case school.ErrSchoolNotFound:
+			switch {
+			case errors.Is(err, school.ErrSchoolNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			default:
@@ -123,7 +120,7 @@ func (h *Handlers) GetSchoolByID() gin.HandlerFunc {
 			}
 		}
 
-		web.Respond(ctx, toSchoolResponse(*result), http.StatusOK, nil)
+		web.Respond(ctx, toSchoolResponse(schoolRes), http.StatusOK, nil)
 	}
 }
 
@@ -151,8 +148,7 @@ func (h *Handlers) GetSchoolPaginated() gin.HandlerFunc {
 
 		schools := h.school.GetSchoolsPaginated(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		total := h.school.Count(ctx, filter)
-
-		result := page.NewPageResponse(schools, total, pageInfo.Number, pageInfo.Size)
+		result := page.NewPageResponse(toSchoolsResponse(schools), total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}
@@ -162,8 +158,8 @@ func (h *Handlers) GetSchoolsByDistrict() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		schools, err := h.school.GetSchoolsByDistrictID(ctx)
 		if err != nil {
-			switch err {
-			case school.ErrInvalidID:
+			switch {
+			case errors.Is(err, school.ErrInvalidID):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			default:
@@ -172,7 +168,7 @@ func (h *Handlers) GetSchoolsByDistrict() gin.HandlerFunc {
 			}
 		}
 
-		web.Respond(ctx, toWebSchools(schools), http.StatusOK, nil)
+		web.Respond(ctx, toSchoolsResponse(schools), http.StatusOK, nil)
 	}
 }
 
@@ -196,6 +192,6 @@ func (h *Handlers) GetDistrictsByProvince() gin.HandlerFunc {
 			return
 		}
 
-		web.Respond(ctx, toClientDistricts(districts), http.StatusOK, nil)
+		web.Respond(ctx, toDistrictsResponse(districts), http.StatusOK, nil)
 	}
 }

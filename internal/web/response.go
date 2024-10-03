@@ -25,6 +25,10 @@ func Respond(ctx *gin.Context, data interface{}, httpStatus int, err error) {
 		break
 
 	case http.StatusBadRequest:
+		if data != nil {
+			web.ValidationError(ctx, err, data)
+			break
+		}
 		web.BadRequestError(ctx, err)
 		break
 

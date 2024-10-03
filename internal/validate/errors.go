@@ -6,12 +6,12 @@ import (
 )
 
 var (
-	ErrValidation = errors.New("Yêu cầu không đúng định dạng: %w")
+	ErrValidation = errors.New("Yêu cầu không đúng định dạng: %w!")
 )
 
 type FieldError struct {
-	Field string `json:"field"`
-	Err   string `json:"error"`
+	Field string `json:"field,omitempty"`
+	Err   string `json:"error,omitempty"`
 }
 
 func NewFieldsError(field string, err error) error {

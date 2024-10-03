@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"gitlab.com/innovia69420/kit/web/request"
 	"net/mail"
 )
 
@@ -23,9 +24,9 @@ type UserResponse struct {
 	Gender   int16  `json:"gender"`
 	Role     int16  `json:"-"`
 	Photo    string `json:"photo"`
-	School   struct {
-		ID   string `json:"id,omitempty"`
-		Name string `json:"name,omitempty"`
+	School   *struct {
+		ID   *uuid.UUID `json:"id,omitempty"`
+		Name *string    `json:"name,omitempty"`
 	} `json:"school,omitempty"`
 }
 
@@ -33,21 +34,21 @@ func toUserResponse(user user.User) UserResponse {
 	userResponse := UserResponse{
 		ID:       user.ID,
 		FullName: user.FullName,
-		Email:    user.Email,
+		Email:    user.Email.Address,
 		Phone:    user.Phone,
 		Gender:   user.Gender,
 		Role:     user.Role,
 		Photo:    user.Photo,
 	}
-	if user.School.ID != uuid.Nil {
-		userResponse.School.ID = user.School.ID.String()
+	if user.School != nil {
+		userResponse.School.ID = user.School.ID
 		userResponse.School.Name = user.School.Name
 	}
 
 	return userResponse
 }
 
-func toUserResponses(users []user.User) []UserResponse {
+func toUsersResponse(users []user.User) []UserResponse {
 	items := make([]UserResponse, len(users))
 	for i, user := range users {
 		items[i] = toUserResponse(user)
@@ -55,46 +56,37 @@ func toUserResponses(users []user.User) []UserResponse {
 	return items
 }
 
-type NewUserRequest struct {
-	ID       string `json:"id" validate:"required"`
-	FullName string `json:"fullName" validate:"required"`
-	Email    string `json:"email" validate:"required,email"`
-	Phone    string `json:"phone" validate:"required,startswith=0,len=10"`
-	Gender   int    `json:"gender" validate:"required,gte=1,lte=3"`
-	Role     int    `json:"role" validate:"required,gte=1,lte=3"`
-	Photo    string `json:"photo" validate:"required"`
-	SchoolID string `json:"schoolID"`
-}
-
-func toCoreNewUser(newUserRequest NewUserRequest) (user.NewUser, error) {
+func toCoreUser(newUserRequest request.NewUser) (user.User, error) {
 	schoolID, err := uuid.Parse(newUserRequest.SchoolID)
 	if err != nil && newUserRequest.SchoolID != "" {
-		return user.NewUser{}, ErrInvalidSchoolID
+		return user.User{}, ErrInvalidSchoolID
 	}
 
 	emailAddr, err := mail.ParseAddress(newUserRequest.Email)
 	if err != nil {
-		return user.NewUser{}, ErrInvalidEmail
+		return user.User{}, ErrInvalidEmail
 	}
 
 	if !user.IsValidPhoneNumber(newUserRequest.Phone) {
-		return user.NewUser{}, ErrInvalidPhoneNumber
+		return user.User{}, ErrInvalidPhoneNumber
 	}
 
-	user := user.NewUser{
+	user := user.User{
 		ID:       newUserRequest.ID,
 		FullName: newUserRequest.FullName,
 		Email:    *emailAddr,
 		Phone:    newUserRequest.Phone,
-		Gender:   newUserRequest.Gender,
-		Role:     newUserRequest.Role,
+		Gender:   int16(newUserRequest.Gender),
+		Role:     int16(newUserRequest.Role),
 		Photo:    newUserRequest.Photo,
-		SchoolID: &schoolID,
+	}
+	if schoolID != uuid.Nil {
+		user.School.ID = &schoolID
 	}
 
 	return user, nil
 }
-func (newUserRequest NewUserRequest) Validate() error {
+func validateNewUserRequest(newUserRequest request.NewUser) error {
 	if err := validate.Check(newUserRequest); err != nil {
 		return fmt.Errorf(validate.ErrValidation.Error(), err)
 	}
