@@ -18,7 +18,6 @@ var (
 )
 
 type Core struct {
-	//storer Storer
 	db      *sqlx.DB
 	queries *sqlc.Queries
 	logger  *zap.Logger
@@ -32,15 +31,7 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
-//type Storer interface {
-//	Create(ctx *gin.Context, user User) error
-//	GetByID(ctx *gin.Context, id string) (User, error)
-//	GetByEmail(ctx *gin.Context, email mail.Address) (User, error)
-//	GetByPhone(ctx *gin.Context, phone string) (User, error)
-//}
-
 func (c *Core) Create(ctx *gin.Context, newUser User) error {
-
 	if _, err := c.queries.GetUserByEmail(ctx, newUser.Email.Address); err == nil {
 		return ErrEmailAlreadyExists
 	}

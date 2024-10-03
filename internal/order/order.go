@@ -50,7 +50,6 @@ func Parse(c *gin.Context, defaultOrder By) (By, error) {
 
 	if _, exists := directions[sortBy]; !exists {
 		return defaultOrder, fmt.Errorf(ErrInvalidDirection.Error(), by.Direction)
-		//return By{}, validate.NewFieldsError(orderBy, fmt.Errorf("unknown direction: %s", by.Direction))
 	}
 
 	by = NewBy(strings.Trim(orderBy, " "), sortBy)

@@ -32,14 +32,3 @@ func toCoreUser(dbUser sqlc.User) User {
 		Photo:    dbUser.ProfilePhoto,
 	}
 }
-
-//type NewUser struct {
-//	ID       string
-//	FullName string
-//	Email    mail.Address
-//	Phone    string
-//	Gender   int
-//	Role     int
-//	Photo    string
-//	SchoolID *uuid.UUID
-//}
