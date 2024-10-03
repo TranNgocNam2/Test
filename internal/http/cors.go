@@ -1,10 +1,14 @@
 package http
 
-import "time"
+import (
+	"gitlab.com/innovia69420/kit/enum/http/header"
+	"net/http"
+	"time"
+)
 
 var (
-	AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "X-CSRF-Token", "X-Request-ID",
-		"Access-Control-Allow-Origin", "X-API-Key"}
+	AllowMethods = []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions}
+	AllowHeaders = []string{header.Origin, header.ContentLength, header.ContentType, header.Authorization,
+		header.XCsrfToken, header.XRequestId, header.AccessControlAllowOrigin, header.XApiKey}
 	CorsMaxAge = 12 * time.Hour
 )

@@ -13,7 +13,7 @@ type QueryFilter struct {
 
 func (qf *QueryFilter) Validate() error {
 	if err := validate.Check(qf); err != nil {
-		return fmt.Errorf("validate: %w", err)
+		return fmt.Errorf(validate.ErrValidation.Error(), err)
 	}
 
 	return nil
