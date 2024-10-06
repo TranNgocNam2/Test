@@ -1,4 +1,4 @@
-CREATE table training_programs(
+CREATE table programs(
     id              uuid PRIMARY KEY,
     name            character varying(100) NOT NULL,
     start_date      date NOT NULL,
@@ -9,10 +9,10 @@ CREATE table training_programs(
     created_at      timestamp DEFAULT now(),
     updated_at      timestamp,
 
-    CONSTRAINT fk_training_programs_updated_by
+    CONSTRAINT fk_programs_staff_updated_by
         FOREIGN KEY (updated_by)
-            REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_training_programs_created_by
+            REFERENCES staffs(id) ON DELETE CASCADE,
+    CONSTRAINT fk_programs_staff_created_by
         FOREIGN KEY (created_by)
-            REFERENCES users(id) ON DELETE CASCADE
+            REFERENCES staffs(id) ON DELETE CASCADE
 );

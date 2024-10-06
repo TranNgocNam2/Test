@@ -1,48 +1,46 @@
-CREATE table learners_in_classes(
+CREATE table class_learners(
     id             uuid PRIMARY KEY,
     learner_id     character varying(50) NOT NULL,
     class_id       uuid NOT NULL,
 
-    CONSTRAINT fk_learners_in_classes_learner
+    CONSTRAINT fk_class_learners_learner
         FOREIGN KEY (learner_id)
             REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_learners_in_classes_class
+    CONSTRAINT fk_class_learners_class
         FOREIGN KEY (class_id)
             REFERENCES classes(id) ON DELETE CASCADE,
 
-    CONSTRAINT unique_learner_in_class UNIQUE (learner_id, class_id)
+    CONSTRAINT unique_class_learners UNIQUE (learner_id, class_id)
 );
 
 CREATE table learner_attendances(
-    id            uuid PRIMARY KEY,
-    learner_id    character varying(50) NOT NULL,
-    class_id      uuid NOT NULL,
-    slot_id       uuid NOT NULL,
-    status        int NOT NULL,
+    id                  uuid PRIMARY KEY,
+    class_learner_id    uuid NOT NULL,
+    slot_id             uuid NOT NULL,
+    status              int NOT NULL,
 
-    CONSTRAINT fk_learner_attendances_learner
-        FOREIGN KEY (learner_id, class_id)
-            REFERENCES learners_in_classes(learner_id, class_id) ON DELETE CASCADE,
+    CONSTRAINT fk_learner_attendances_class_learners
+        FOREIGN KEY (class_learner_id)
+            REFERENCES class_learners(id) ON DELETE CASCADE,
     CONSTRAINT fk_learner_attendances_slot
         FOREIGN KEY (slot_id)
             REFERENCES slots(id) ON DELETE CASCADE,
 
-    CONSTRAINT unique_learner_attendances UNIQUE (learner_id, slot_id, class_id)
+    CONSTRAINT unique_learner_attendances UNIQUE (class_learner_id, slot_id)
 );
 
 CREATE table learner_assignments(
-    id              uuid PRIMARY KEY,
-    learner_id      character varying(50) NOT NULL,
-    class_id        uuid NOT NULL,
-    assignment_id   uuid NOT NULL,
-    status          int NOT NULL,
+    id                  uuid PRIMARY KEY,
+    class_lerner_id     uuid NOT NULL,
+    assignment_id       uuid NOT NULL,
+    grade               float NOT NULL,
 
-    CONSTRAINT fk_learner_assignments_learner
-        FOREIGN KEY (learner_id, class_id)
-            REFERENCES learners_in_classes(learner_id, class_id) ON DELETE CASCADE,
+    CONSTRAINT fk_learner_assignments_class_learners
+        FOREIGN KEY (class_lerner_id)
+            REFERENCES class_learners(id) ON DELETE CASCADE,
     CONSTRAINT fk_learner_assignments_assignment
         FOREIGN KEY (assignment_id)
             REFERENCES assignments(id) ON DELETE CASCADE,
 
-    CONSTRAINT unique_learner_assignment UNIQUE (learner_id, assignment_id, class_id)
+    CONSTRAINT unique_learner_assignment UNIQUE (assignment_id, class_lerner_id)
 );
