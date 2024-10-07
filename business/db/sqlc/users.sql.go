@@ -7,25 +7,56 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
 
+const createLeaner = `-- name: CreateLeaner :exec
+INSERT INTO learners (id, school_id)
+VALUES ($1, $2)
+`
+
+type CreateLeanerParams struct {
+	ID       string    `db:"id" json:"id"`
+	SchoolID uuid.UUID `db:"school_id" json:"schoolId"`
+}
+
+func (q *Queries) CreateLeaner(ctx context.Context, arg CreateLeanerParams) error {
+	_, err := q.db.ExecContext(ctx, createLeaner, arg.ID, arg.SchoolID)
+	return err
+}
+
+const createStaff = `-- name: CreateStaff :exec
+INSERT INTO staffs (id, role, created_by)
+VALUES ($1, $2, $3)
+`
+
+type CreateStaffParams struct {
+	ID        string         `db:"id" json:"id"`
+	Role      int16          `db:"role" json:"role"`
+	CreatedBy sql.NullString `db:"created_by" json:"createdBy"`
+}
+
+func (q *Queries) CreateStaff(ctx context.Context, arg CreateStaffParams) error {
+	_, err := q.db.ExecContext(ctx, createStaff, arg.ID, arg.Role, arg.CreatedBy)
+	return err
+}
+
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, full_name, email, phone, gender, profile_photo, school_id, role)
+INSERT INTO users (id, full_name, email, phone, gender, profile_photo, auth_role)
 VALUES ($1, $2, $3, $4,
-        $5, $6, $7, $8)
+        $5, $6, $7)
 `
 
 type CreateUserParams struct {
-	ID           string        `db:"id" json:"id"`
-	FullName     string        `db:"full_name" json:"fullName"`
-	Email        string        `db:"email" json:"email"`
-	Phone        string        `db:"phone" json:"phone"`
-	Gender       int16         `db:"gender" json:"gender"`
-	ProfilePhoto string        `db:"profile_photo" json:"profilePhoto"`
-	SchoolID     uuid.NullUUID `db:"school_id" json:"schoolId"`
-	Role         int16         `db:"role" json:"role"`
+	ID           string `db:"id" json:"id"`
+	FullName     string `db:"full_name" json:"fullName"`
+	Email        string `db:"email" json:"email"`
+	Phone        string `db:"phone" json:"phone"`
+	Gender       int16  `db:"gender" json:"gender"`
+	ProfilePhoto string `db:"profile_photo" json:"profilePhoto"`
+	AuthRole     int16  `db:"auth_role" json:"authRole"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -36,14 +67,25 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.Phone,
 		arg.Gender,
 		arg.ProfilePhoto,
-		arg.SchoolID,
-		arg.Role,
+		arg.AuthRole,
 	)
 	return err
 }
 
+const getLearnerByID = `-- name: GetLearnerByID :one
+SELECT id, role, school_id FROM learners
+WHERE id = $1
+`
+
+func (q *Queries) GetLearnerByID(ctx context.Context, id string) (Learner, error) {
+	row := q.db.QueryRowContext(ctx, getLearnerByID, id)
+	var i Learner
+	err := row.Scan(&i.ID, &i.Role, &i.SchoolID)
+	return i, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, full_name, email, phone, gender, profile_photo, status, is_deleted, school_id, role, created_by FROM users
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status FROM users
 WHERE email = $1
 `
 
@@ -56,18 +98,15 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.Phone,
 		&i.Gender,
+		&i.AuthRole,
 		&i.ProfilePhoto,
 		&i.Status,
-		&i.IsDeleted,
-		&i.SchoolID,
-		&i.Role,
-		&i.CreatedBy,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, full_name, email, phone, gender, profile_photo, status, is_deleted, school_id, role, created_by FROM users
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status FROM users
 WHERE id = $1
 `
 
@@ -80,18 +119,15 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 		&i.Email,
 		&i.Phone,
 		&i.Gender,
+		&i.AuthRole,
 		&i.ProfilePhoto,
 		&i.Status,
-		&i.IsDeleted,
-		&i.SchoolID,
-		&i.Role,
-		&i.CreatedBy,
 	)
 	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, full_name, email, phone, gender, profile_photo, status, is_deleted, school_id, role, created_by FROM users
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status FROM users
 WHERE phone = $1
 `
 
@@ -104,12 +140,9 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error
 		&i.Email,
 		&i.Phone,
 		&i.Gender,
+		&i.AuthRole,
 		&i.ProfilePhoto,
 		&i.Status,
-		&i.IsDeleted,
-		&i.SchoolID,
-		&i.Role,
-		&i.CreatedBy,
 	)
 	return i, err
 }

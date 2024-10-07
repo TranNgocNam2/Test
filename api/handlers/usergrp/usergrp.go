@@ -41,9 +41,11 @@ func (h *Handlers) CreateUser() gin.HandlerFunc {
 		err = h.user.Create(ctx, newUser)
 		if err != nil {
 			switch {
-			case errors.Is(err, user.ErrEmailAlreadyExists),
+			case
+				errors.Is(err, user.ErrEmailAlreadyExists),
 				errors.Is(err, user.ErrPhoneAlreadyExists),
-				errors.Is(err, user.ErrorUserAlreadyExist):
+				errors.Is(err, user.ErrUserAlreadyExist):
+
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			default:
@@ -61,8 +63,8 @@ func (h *Handlers) GetUserByID() gin.HandlerFunc {
 		userRes, err := h.user.GetUserByID(ctx)
 		if err != nil {
 			switch {
-			case errors.Is(err, user.ErrEmailAlreadyExists):
-				web.Respond(ctx, nil, http.StatusBadRequest, err)
+			case errors.Is(err, user.ErrUserNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			default:
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)

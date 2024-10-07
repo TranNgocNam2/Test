@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"gitlab.com/innovia69420/kit/enum/role"
 	"gitlab.com/innovia69420/kit/web/request"
 	"net/mail"
 )
 
 var (
-	ErrInvalidSchoolID    = errors.New("ID trường học không hợp lệ!")
-	ErrInvalidEmail       = errors.New("Email không hợp lệ!")
-	ErrInvalidPhoneNumber = errors.New("Số điện thoại không hợp lệ!")
+	ErrInvalidSchoolID      = errors.New("ID trường học không hợp lệ!")
+	ErrInvalidEmail         = errors.New("Email không hợp lệ!")
+	ErrInvalidPhoneNumber   = errors.New("Số điện thoại không hợp lệ!")
+	ErrUserCannotBeCreated  = errors.New("Không thể tạo người dùng!")
+	ErrStaffCannotBeCreated = errors.New("Không thể tạo nhân viên!")
+	ErrNilSchool            = errors.New("Vui lòng cung cấp thông tin về trường học!")
 )
 
 type UserResponse struct {
@@ -41,8 +45,13 @@ func toUserResponse(user user.User) UserResponse {
 		Photo:    user.Photo,
 	}
 	if user.School != nil {
-		userResponse.School.ID = user.School.ID
-		userResponse.School.Name = user.School.Name
+		userResponse.School = &struct {
+			ID   *uuid.UUID `json:"id,omitempty"`
+			Name *string    `json:"name,omitempty"`
+		}{
+			ID:   user.School.ID,
+			Name: user.School.Name,
+		}
 	}
 
 	return userResponse
@@ -57,6 +66,16 @@ func toUsersResponse(users []user.User) []UserResponse {
 }
 
 func toCoreUser(newUserRequest request.NewUser) (user.User, error) {
+	authRole := *newUserRequest.Role
+	if authRole == role.ADMIN {
+		return user.User{}, ErrUserCannotBeCreated
+	}
+	if authRole != role.LEARNER && newUserRequest.CreatedBy == "" {
+		return user.User{}, ErrStaffCannotBeCreated
+	}
+	if authRole == role.LEARNER && newUserRequest.SchoolID == "" {
+		return user.User{}, ErrNilSchool
+	}
 	schoolID, err := uuid.Parse(newUserRequest.SchoolID)
 	if err != nil && newUserRequest.SchoolID != "" {
 		return user.User{}, ErrInvalidSchoolID
@@ -72,16 +91,22 @@ func toCoreUser(newUserRequest request.NewUser) (user.User, error) {
 	}
 
 	user := user.User{
-		ID:       newUserRequest.ID,
-		FullName: newUserRequest.FullName,
-		Email:    *emailAddr,
-		Phone:    newUserRequest.Phone,
-		Gender:   int16(newUserRequest.Gender),
-		Role:     int16(newUserRequest.Role),
-		Photo:    newUserRequest.Photo,
+		ID:        newUserRequest.ID,
+		FullName:  newUserRequest.FullName,
+		Email:     *emailAddr,
+		Phone:     newUserRequest.Phone,
+		Gender:    int16(*newUserRequest.Gender),
+		Role:      int16(authRole),
+		Photo:     newUserRequest.Photo,
+		CreatedBy: &newUserRequest.CreatedBy,
 	}
-	if schoolID != uuid.Nil {
-		user.School.ID = &schoolID
+	if authRole == role.LEARNER {
+		user.School = &struct {
+			ID   *uuid.UUID
+			Name *string
+		}{
+			ID: &schoolID,
+		}
 	}
 
 	return user, nil

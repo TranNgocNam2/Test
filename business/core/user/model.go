@@ -18,6 +18,7 @@ type User struct {
 		ID   *uuid.UUID
 		Name *string
 	}
+	CreatedBy *string
 }
 
 func toCoreUser(dbUser sqlc.User) User {
@@ -28,7 +29,7 @@ func toCoreUser(dbUser sqlc.User) User {
 		Email:    *emailAddr,
 		Phone:    dbUser.Phone,
 		Gender:   dbUser.Gender,
-		Role:     dbUser.Role,
+		Role:     dbUser.AuthRole,
 		Photo:    dbUser.ProfilePhoto,
 	}
 }

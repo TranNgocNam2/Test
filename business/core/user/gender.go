@@ -1,9 +1,9 @@
 package user
 
 const (
-	MALE   = 1
-	FEMALE = 2
-	OTHER  = 3
+	MALE = iota
+	FEMALE
+	OTHER
 )
 
 func GetGenderStr(gender int16) string {

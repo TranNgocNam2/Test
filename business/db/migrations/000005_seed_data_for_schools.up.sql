@@ -52,7 +52,7 @@ VALUES
 (uuid_generate_v4 (), 'Trường THPT Trường Chinh', 'Số 01 DN 11, Phường Tân Hưng Thuận, Quận 12, TP. Hồ Chí Minh.', 761),
 (uuid_generate_v4 (), 'Trường THPT Thạnh Lộc', 'Số 116 Nguyễn Thị Sáu,Phường Thạnh Lộc, Quận 12, TP. Hồ Chí Minh.', 761),
 (uuid_generate_v4 (), 'Trường THPT An Lạc', 'Số 595 Kinh Dương Vương, Phường An Lạc, Quận Bình Tân, TP. Hồ Chí Minh.', 777),
-(uuid_generate_v4 (), 'Trường THPT Nguyễn Hữu Cảnh', 'Số 845 Hương Lộ 2, Phường Bình Trị Đông A, Quận Bình Tân, TP. Hồ Chí Minh.', 777),
+('3729211e-d63d-4ebf-abf6-9b209c28c2f6', 'Trường THPT Nguyễn Hữu Cảnh', 'Số 845 Hương Lộ 2, Phường Bình Trị Đông A, Quận Bình Tân, TP. Hồ Chí Minh.', 777),
 (uuid_generate_v4 (), 'Trường THPT Bình Tân', 'Số 117/4H Hồ Văn Long, Phường Tân Tạo, Quận Bình Tân, TP. Hồ Chí Minh.', 777),
 (uuid_generate_v4 (), 'Trường THPT Bình Hưng Hòa', 'Số 79/19 Đường số 4, Phường Bình Hưng Hòa, Quận Bình Tân, TP. Hồ Chí Minh.', 777),
 (uuid_generate_v4 (), 'Trường THPT Vĩnh Lộc', 'Số 87 Đường số 3, Phường Bình Hưng Hòa B, Quận Bình Tân, TP. Hồ Chí Minh.', 777),
