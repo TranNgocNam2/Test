@@ -90,7 +90,7 @@ func (c *Core) Update(ctx *gin.Context, updatedUser User) error {
 		String: *updatedUser.Phone,
 		Valid:  true,
 	}
-	if updatedUser.Phone != nil && *updatedUser.Phone != dbUser.Phone.String {
+	if updatedUser.Phone != nil && *updatedUser.Phone != *dbUser.Phone {
 		if _, err = c.queries.GetUserByPhone(ctx, phoneNumber); err == nil {
 			return ErrPhoneAlreadyExists
 		}

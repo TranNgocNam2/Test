@@ -7,38 +7,37 @@ package sqlc
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const insertSubject = `-- name: InsertSubject :exec
+const insertSubject = `-- name: InsertSubject :one
 INSERT INTO subjects (id, name, code, description, image_link, status,
-    time_per_session, sessions_per_week, created_by, updated_by,
-    created_at, updated_at)
+    time_per_session, sessions_per_week, created_by,
+    created_at)
 VALUES ($1::uuid, $2, $3, $4,
     $5, $6, $7,
-    $8, $9, $10,
-    $11, $12)
+    $8, $9,
+    $10)
+RETURNING id
 `
 
 type InsertSubjectParams struct {
-	ID              uuid.UUID      `db:"id" json:"id"`
-	Name            string         `db:"name" json:"name"`
-	Code            string         `db:"code" json:"code"`
-	Description     string         `db:"description" json:"description"`
-	ImageLink       string         `db:"image_link" json:"imageLink"`
-	Status          sql.NullInt16  `db:"status" json:"status"`
-	TimePerSession  int16          `db:"time_per_session" json:"timePerSession"`
-	SessionsPerWeek int16          `db:"sessions_per_week" json:"sessionsPerWeek"`
-	CreatedBy       string         `db:"created_by" json:"createdBy"`
-	UpdatedBy       sql.NullString `db:"updated_by" json:"updatedBy"`
-	CreatedAt       sql.NullTime   `db:"created_at" json:"createdAt"`
-	UpdatedAt       sql.NullTime   `db:"updated_at" json:"updatedAt"`
+	ID              uuid.UUID        `db:"id" json:"id"`
+	Name            string           `db:"name" json:"name"`
+	Code            string           `db:"code" json:"code"`
+	Description     string           `db:"description" json:"description"`
+	ImageLink       string           `db:"image_link" json:"imageLink"`
+	Status          int16            `db:"status" json:"status"`
+	TimePerSession  int16            `db:"time_per_session" json:"timePerSession"`
+	SessionsPerWeek int16            `db:"sessions_per_week" json:"sessionsPerWeek"`
+	CreatedBy       string           `db:"created_by" json:"createdBy"`
+	CreatedAt       pgtype.Timestamp `db:"created_at" json:"createdAt"`
 }
 
-func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) error {
-	_, err := q.db.ExecContext(ctx, insertSubject,
+func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, insertSubject,
 		arg.ID,
 		arg.Name,
 		arg.Code,
@@ -48,9 +47,9 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) er
 		arg.TimePerSession,
 		arg.SessionsPerWeek,
 		arg.CreatedBy,
-		arg.UpdatedBy,
 		arg.CreatedAt,
-		arg.UpdatedAt,
 	)
-	return err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }

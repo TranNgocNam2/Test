@@ -7,7 +7,6 @@ package sqlc
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -24,7 +23,7 @@ type CreateUserParams struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.ExecContext(ctx, createUser, arg.ID, arg.Email, arg.AuthRole)
+	_, err := q.db.Exec(ctx, createUser, arg.ID, arg.Email, arg.AuthRole)
 	return err
 }
 
@@ -34,7 +33,7 @@ WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -56,7 +55,7 @@ WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -77,8 +76,8 @@ SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, sc
 WHERE phone = $1
 `
 
-func (q *Queries) GetUserByPhone(ctx context.Context, phone sql.NullString) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByPhone, phone)
+func (q *Queries) GetUserByPhone(ctx context.Context, phone *string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByPhone, phone)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -106,17 +105,17 @@ WHERE id = $7
 `
 
 type UpdateUserParams struct {
-	FullName     sql.NullString `db:"full_name" json:"fullName"`
-	Email        string         `db:"email" json:"email"`
-	Phone        sql.NullString `db:"phone" json:"phone"`
-	Gender       sql.NullInt16  `db:"gender" json:"gender"`
-	SchoolID     uuid.NullUUID  `db:"school_id" json:"schoolId"`
-	ProfilePhoto sql.NullString `db:"profile_photo" json:"profilePhoto"`
-	ID           string         `db:"id" json:"id"`
+	FullName     *string       `db:"full_name" json:"fullName"`
+	Email        string        `db:"email" json:"email"`
+	Phone        *string       `db:"phone" json:"phone"`
+	Gender       *int16        `db:"gender" json:"gender"`
+	SchoolID     uuid.NullUUID `db:"school_id" json:"schoolId"`
+	ProfilePhoto *string       `db:"profile_photo" json:"profilePhoto"`
+	ID           string        `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser,
+	_, err := q.db.Exec(ctx, updateUser,
 		arg.FullName,
 		arg.Email,
 		arg.Phone,

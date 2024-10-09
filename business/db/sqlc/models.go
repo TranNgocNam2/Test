@@ -5,45 +5,44 @@
 package sqlc
 
 import (
-	"database/sql"
 	"encoding/json"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Assignment struct {
-	ID             uuid.UUID      `db:"id" json:"id"`
-	TranscriptID   uuid.UUID      `db:"transcript_id" json:"transcriptId"`
-	ClassTeacherID uuid.UUID      `db:"class_teacher_id" json:"classTeacherId"`
-	CreatedAt      time.Time      `db:"created_at" json:"createdAt"`
-	UpdatedAt      sql.NullTime   `db:"updated_at" json:"updatedAt"`
-	UpdatedBy      sql.NullString `db:"updated_by" json:"updatedBy"`
+	ID             uuid.UUID        `db:"id" json:"id"`
+	TranscriptID   uuid.UUID        `db:"transcript_id" json:"transcriptId"`
+	ClassTeacherID uuid.UUID        `db:"class_teacher_id" json:"classTeacherId"`
+	CreatedAt      pgtype.Timestamp `db:"created_at" json:"createdAt"`
+	UpdatedAt      pgtype.Timestamp `db:"updated_at" json:"updatedAt"`
+	UpdatedBy      *string          `db:"updated_by" json:"updatedBy"`
 }
 
 type Certificate struct {
-	ID               uuid.UUID     `db:"id" json:"id"`
-	LearnerID        string        `db:"learner_id" json:"learnerId"`
-	SpecializationID uuid.NullUUID `db:"specialization_id" json:"specializationId"`
-	SubjectID        uuid.NullUUID `db:"subject_id" json:"subjectId"`
-	Name             string        `db:"name" json:"name"`
-	Type             int32         `db:"type" json:"type"`
-	Status           int32         `db:"status" json:"status"`
-	CreatedAt        time.Time     `db:"created_at" json:"createdAt"`
+	ID               uuid.UUID        `db:"id" json:"id"`
+	LearnerID        string           `db:"learner_id" json:"learnerId"`
+	SpecializationID uuid.NullUUID    `db:"specialization_id" json:"specializationId"`
+	SubjectID        uuid.NullUUID    `db:"subject_id" json:"subjectId"`
+	Name             string           `db:"name" json:"name"`
+	Type             int32            `db:"type" json:"type"`
+	Status           int32            `db:"status" json:"status"`
+	CreatedAt        pgtype.Timestamp `db:"created_at" json:"createdAt"`
 }
 
 type Class struct {
-	ID               uuid.UUID `db:"id" json:"id"`
-	Code             string    `db:"code" json:"code"`
-	IsDraft          bool      `db:"is_draft" json:"isDraft"`
-	Password         string    `db:"password" json:"password"`
-	Name             string    `db:"name" json:"name"`
-	Link             string    `db:"link" json:"link"`
-	ProgramSubjectID uuid.UUID `db:"program_subject_id" json:"programSubjectId"`
-	StartTime        time.Time `db:"start_time" json:"startTime"`
-	EndTime          time.Time `db:"end_time" json:"endTime"`
-	CreatedBy        string    `db:"created_by" json:"createdBy"`
-	CreatedAt        time.Time `db:"created_at" json:"createdAt"`
+	ID               uuid.UUID        `db:"id" json:"id"`
+	Code             string           `db:"code" json:"code"`
+	IsDraft          bool             `db:"is_draft" json:"isDraft"`
+	Password         string           `db:"password" json:"password"`
+	Name             string           `db:"name" json:"name"`
+	Link             string           `db:"link" json:"link"`
+	ProgramSubjectID uuid.UUID        `db:"program_subject_id" json:"programSubjectId"`
+	StartTime        pgtype.Timestamp `db:"start_time" json:"startTime"`
+	EndTime          pgtype.Timestamp `db:"end_time" json:"endTime"`
+	CreatedBy        string           `db:"created_by" json:"createdBy"`
+	CreatedAt        pgtype.Timestamp `db:"created_at" json:"createdAt"`
 }
 
 type ClassLearner struct {
@@ -53,11 +52,11 @@ type ClassLearner struct {
 }
 
 type ClassTeacher struct {
-	ID        uuid.UUID `db:"id" json:"id"`
-	TeacherID string    `db:"teacher_id" json:"teacherId"`
-	ClassID   uuid.UUID `db:"class_id" json:"classId"`
-	CreatedAt time.Time `db:"created_at" json:"createdAt"`
-	CreatedBy string    `db:"created_by" json:"createdBy"`
+	ID        uuid.UUID        `db:"id" json:"id"`
+	TeacherID string           `db:"teacher_id" json:"teacherId"`
+	ClassID   uuid.UUID        `db:"class_id" json:"classId"`
+	CreatedAt pgtype.Timestamp `db:"created_at" json:"createdAt"`
+	CreatedBy string           `db:"created_by" json:"createdBy"`
 }
 
 type District struct {
@@ -81,9 +80,9 @@ type LearnerAttendance struct {
 }
 
 type LearnerSpecialization struct {
-	LearnerID        string       `db:"learner_id" json:"learnerId"`
-	SpecializationID uuid.UUID    `db:"specialization_id" json:"specializationId"`
-	JoinedAt         sql.NullTime `db:"joined_at" json:"joinedAt"`
+	LearnerID        string           `db:"learner_id" json:"learnerId"`
+	SpecializationID uuid.UUID        `db:"specialization_id" json:"specializationId"`
+	JoinedAt         pgtype.Timestamp `db:"joined_at" json:"joinedAt"`
 }
 
 type Material struct {
@@ -93,29 +92,29 @@ type Material struct {
 	Type      string          `db:"type" json:"type"`
 	Data      json.RawMessage `db:"data" json:"data"`
 	IsShared  bool            `db:"is_shared" json:"isShared"`
-	Name      sql.NullString  `db:"name" json:"name"`
+	Name      *string         `db:"name" json:"name"`
 }
 
 type Program struct {
-	ID          uuid.UUID      `db:"id" json:"id"`
-	Name        string         `db:"name" json:"name"`
-	StartDate   time.Time      `db:"start_date" json:"startDate"`
-	EndDate     time.Time      `db:"end_date" json:"endDate"`
-	CreatedBy   string         `db:"created_by" json:"createdBy"`
-	UpdatedBy   sql.NullString `db:"updated_by" json:"updatedBy"`
-	Description string         `db:"description" json:"description"`
-	CreatedAt   sql.NullTime   `db:"created_at" json:"createdAt"`
-	UpdatedAt   sql.NullTime   `db:"updated_at" json:"updatedAt"`
+	ID          uuid.UUID        `db:"id" json:"id"`
+	Name        string           `db:"name" json:"name"`
+	StartDate   pgtype.Date      `db:"start_date" json:"startDate"`
+	EndDate     pgtype.Date      `db:"end_date" json:"endDate"`
+	CreatedBy   string           `db:"created_by" json:"createdBy"`
+	UpdatedBy   *string          `db:"updated_by" json:"updatedBy"`
+	Description string           `db:"description" json:"description"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"createdAt"`
+	UpdatedAt   pgtype.Timestamp `db:"updated_at" json:"updatedAt"`
 }
 
 type ProgramSubject struct {
-	ID        uuid.UUID      `db:"id" json:"id"`
-	ProgramID uuid.UUID      `db:"program_id" json:"programId"`
-	SubjectID uuid.UUID      `db:"subject_id" json:"subjectId"`
-	CreatedBy string         `db:"created_by" json:"createdBy"`
-	UpdatedBy sql.NullString `db:"updated_by" json:"updatedBy"`
-	CreatedAt sql.NullTime   `db:"created_at" json:"createdAt"`
-	UpdatedAt sql.NullTime   `db:"updated_at" json:"updatedAt"`
+	ID        uuid.UUID        `db:"id" json:"id"`
+	ProgramID uuid.UUID        `db:"program_id" json:"programId"`
+	SubjectID uuid.UUID        `db:"subject_id" json:"subjectId"`
+	CreatedBy string           `db:"created_by" json:"createdBy"`
+	UpdatedBy *string          `db:"updated_by" json:"updatedBy"`
+	CreatedAt pgtype.Timestamp `db:"created_at" json:"createdAt"`
+	UpdatedAt pgtype.Timestamp `db:"updated_at" json:"updatedAt"`
 }
 
 type Province struct {
@@ -124,11 +123,11 @@ type Province struct {
 }
 
 type School struct {
-	ID         uuid.UUID    `db:"id" json:"id"`
-	Name       string       `db:"name" json:"name"`
-	Address    string       `db:"address" json:"address"`
-	DistrictID int32        `db:"district_id" json:"districtId"`
-	IsDeleted  sql.NullBool `db:"is_deleted" json:"isDeleted"`
+	ID         uuid.UUID `db:"id" json:"id"`
+	Name       string    `db:"name" json:"name"`
+	Address    string    `db:"address" json:"address"`
+	DistrictID int32     `db:"district_id" json:"districtId"`
+	IsDeleted  *bool     `db:"is_deleted" json:"isDeleted"`
 }
 
 type Session struct {
@@ -144,25 +143,25 @@ type Skill struct {
 }
 
 type Slot struct {
-	ID        uuid.UUID `db:"id" json:"id"`
-	SessionID uuid.UUID `db:"session_id" json:"sessionId"`
-	ClassID   uuid.UUID `db:"class_id" json:"classId"`
-	StartTime time.Time `db:"start_time" json:"startTime"`
-	EndTime   time.Time `db:"end_time" json:"endTime"`
+	ID        uuid.UUID        `db:"id" json:"id"`
+	SessionID uuid.UUID        `db:"session_id" json:"sessionId"`
+	ClassID   uuid.UUID        `db:"class_id" json:"classId"`
+	StartTime pgtype.Timestamp `db:"start_time" json:"startTime"`
+	EndTime   pgtype.Timestamp `db:"end_time" json:"endTime"`
 }
 
 type Specialization struct {
-	ID          uuid.UUID      `db:"id" json:"id"`
-	Name        string         `db:"name" json:"name"`
-	Code        string         `db:"code" json:"code"`
-	TimeAmount  float64        `db:"time_amount" json:"timeAmount"`
-	ImageLink   string         `db:"image_link" json:"imageLink"`
-	IsDrafted   sql.NullBool   `db:"is_drafted" json:"isDrafted"`
-	Description string         `db:"description" json:"description"`
-	CreatedBy   string         `db:"created_by" json:"createdBy"`
-	UpdatedBy   sql.NullString `db:"updated_by" json:"updatedBy"`
-	CreatedAt   sql.NullTime   `db:"created_at" json:"createdAt"`
-	UpdatedAt   sql.NullTime   `db:"updated_at" json:"updatedAt"`
+	ID          uuid.UUID        `db:"id" json:"id"`
+	Name        string           `db:"name" json:"name"`
+	Code        string           `db:"code" json:"code"`
+	TimeAmount  float64          `db:"time_amount" json:"timeAmount"`
+	ImageLink   string           `db:"image_link" json:"imageLink"`
+	IsDrafted   *bool            `db:"is_drafted" json:"isDrafted"`
+	Description string           `db:"description" json:"description"`
+	CreatedBy   string           `db:"created_by" json:"createdBy"`
+	UpdatedBy   *string          `db:"updated_by" json:"updatedBy"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"createdAt"`
+	UpdatedAt   pgtype.Timestamp `db:"updated_at" json:"updatedAt"`
 }
 
 type SpecializationSkill struct {
@@ -177,18 +176,18 @@ type SpecializationSubject struct {
 }
 
 type Subject struct {
-	ID              uuid.UUID      `db:"id" json:"id"`
-	Code            string         `db:"code" json:"code"`
-	Name            string         `db:"name" json:"name"`
-	TimePerSession  int16          `db:"time_per_session" json:"timePerSession"`
-	SessionsPerWeek int16          `db:"sessions_per_week" json:"sessionsPerWeek"`
-	ImageLink       string         `db:"image_link" json:"imageLink"`
-	Status          sql.NullInt16  `db:"status" json:"status"`
-	Description     string         `db:"description" json:"description"`
-	CreatedBy       string         `db:"created_by" json:"createdBy"`
-	UpdatedBy       sql.NullString `db:"updated_by" json:"updatedBy"`
-	CreatedAt       sql.NullTime   `db:"created_at" json:"createdAt"`
-	UpdatedAt       sql.NullTime   `db:"updated_at" json:"updatedAt"`
+	ID              uuid.UUID        `db:"id" json:"id"`
+	Code            string           `db:"code" json:"code"`
+	Name            string           `db:"name" json:"name"`
+	TimePerSession  int16            `db:"time_per_session" json:"timePerSession"`
+	SessionsPerWeek int16            `db:"sessions_per_week" json:"sessionsPerWeek"`
+	ImageLink       string           `db:"image_link" json:"imageLink"`
+	Status          int16            `db:"status" json:"status"`
+	Description     string           `db:"description" json:"description"`
+	CreatedBy       string           `db:"created_by" json:"createdBy"`
+	UpdatedBy       *string          `db:"updated_by" json:"updatedBy"`
+	CreatedAt       pgtype.Timestamp `db:"created_at" json:"createdAt"`
+	UpdatedAt       pgtype.Timestamp `db:"updated_at" json:"updatedAt"`
 }
 
 type SubjectSkill struct {
@@ -206,13 +205,13 @@ type Transcript struct {
 }
 
 type User struct {
-	ID           string         `db:"id" json:"id"`
-	FullName     sql.NullString `db:"full_name" json:"fullName"`
-	Email        string         `db:"email" json:"email"`
-	Phone        sql.NullString `db:"phone" json:"phone"`
-	Gender       sql.NullInt16  `db:"gender" json:"gender"`
-	AuthRole     int16          `db:"auth_role" json:"authRole"`
-	ProfilePhoto sql.NullString `db:"profile_photo" json:"profilePhoto"`
-	Status       int32          `db:"status" json:"status"`
-	SchoolID     uuid.NullUUID  `db:"school_id" json:"schoolId"`
+	ID           string        `db:"id" json:"id"`
+	FullName     *string       `db:"full_name" json:"fullName"`
+	Email        string        `db:"email" json:"email"`
+	Phone        *string       `db:"phone" json:"phone"`
+	Gender       *int16        `db:"gender" json:"gender"`
+	AuthRole     int16         `db:"auth_role" json:"authRole"`
+	ProfilePhoto *string       `db:"profile_photo" json:"profilePhoto"`
+	Status       int32         `db:"status" json:"status"`
+	SchoolID     uuid.NullUUID `db:"school_id" json:"schoolId"`
 }

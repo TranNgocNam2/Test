@@ -16,7 +16,7 @@ SELECT id, name, province_id FROM districts
 `
 
 func (q *Queries) GetDistrictsByProvince(ctx context.Context, provinceID int32) ([]District, error) {
-	rows, err := q.db.QueryContext(ctx, getDistrictsByProvince, provinceID)
+	rows, err := q.db.Query(ctx, getDistrictsByProvince, provinceID)
 	if err != nil {
 		return nil, err
 	}
@@ -28,9 +28,6 @@ func (q *Queries) GetDistrictsByProvince(ctx context.Context, provinceID int32) 
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
