@@ -93,6 +93,7 @@ type Material struct {
 	Type      string          `db:"type" json:"type"`
 	Data      json.RawMessage `db:"data" json:"data"`
 	IsShared  bool            `db:"is_shared" json:"isShared"`
+	Name      sql.NullString  `db:"name" json:"name"`
 }
 
 type Program struct {

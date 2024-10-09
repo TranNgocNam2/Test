@@ -24,4 +24,4 @@ sql:
               type: "UUID"
           - db_type: "json"
             go_type:
-                type: "json.RawMessage"
+              type: "json.RawMessage"
