@@ -105,13 +105,13 @@ WHERE id = $7
 `
 
 type UpdateUserParams struct {
-	FullName     *string       `db:"full_name" json:"fullName"`
-	Email        string        `db:"email" json:"email"`
-	Phone        *string       `db:"phone" json:"phone"`
-	Gender       *int16        `db:"gender" json:"gender"`
-	SchoolID     uuid.NullUUID `db:"school_id" json:"schoolId"`
-	ProfilePhoto *string       `db:"profile_photo" json:"profilePhoto"`
-	ID           string        `db:"id" json:"id"`
+	FullName     *string    `db:"full_name" json:"fullName"`
+	Email        string     `db:"email" json:"email"`
+	Phone        *string    `db:"phone" json:"phone"`
+	Gender       *int16     `db:"gender" json:"gender"`
+	SchoolID     *uuid.UUID `db:"school_id" json:"schoolId"`
+	ProfilePhoto *string    `db:"profile_photo" json:"profilePhoto"`
+	ID           string     `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {

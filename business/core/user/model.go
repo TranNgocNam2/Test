@@ -11,7 +11,7 @@ type User struct {
 	FullName *string
 	Email    mail.Address
 	Phone    *string
-	Gender   int16
+	Gender   *int16
 	Role     int16
 	Photo    *string
 	School   *struct {
@@ -27,7 +27,7 @@ func toCoreUser(dbUser sqlc.User) User {
 		FullName: dbUser.FullName,
 		Email:    *emailAddr,
 		Phone:    dbUser.Phone,
-		Gender:   *dbUser.Gender,
+		Gender:   dbUser.Gender,
 		Role:     dbUser.AuthRole,
 		Photo:    dbUser.ProfilePhoto,
 	}

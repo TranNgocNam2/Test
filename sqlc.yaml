@@ -17,7 +17,8 @@ sql:
             nullable: true
             go_type:
               import: "github.com/google/uuid"
-              type: "NullUUID"
+              pointer: true
+              type: "UUID"
           - db_type: "uuid"
             nullable: false
             go_type:

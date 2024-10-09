@@ -23,8 +23,8 @@ type Assignment struct {
 type Certificate struct {
 	ID               uuid.UUID        `db:"id" json:"id"`
 	LearnerID        string           `db:"learner_id" json:"learnerId"`
-	SpecializationID uuid.NullUUID    `db:"specialization_id" json:"specializationId"`
-	SubjectID        uuid.NullUUID    `db:"subject_id" json:"subjectId"`
+	SpecializationID *uuid.UUID       `db:"specialization_id" json:"specializationId"`
+	SubjectID        *uuid.UUID       `db:"subject_id" json:"subjectId"`
 	Name             string           `db:"name" json:"name"`
 	Type             int32            `db:"type" json:"type"`
 	Status           int32            `db:"status" json:"status"`
@@ -205,13 +205,13 @@ type Transcript struct {
 }
 
 type User struct {
-	ID           string        `db:"id" json:"id"`
-	FullName     *string       `db:"full_name" json:"fullName"`
-	Email        string        `db:"email" json:"email"`
-	Phone        *string       `db:"phone" json:"phone"`
-	Gender       *int16        `db:"gender" json:"gender"`
-	AuthRole     int16         `db:"auth_role" json:"authRole"`
-	ProfilePhoto *string       `db:"profile_photo" json:"profilePhoto"`
-	Status       int32         `db:"status" json:"status"`
-	SchoolID     uuid.NullUUID `db:"school_id" json:"schoolId"`
+	ID           string     `db:"id" json:"id"`
+	FullName     *string    `db:"full_name" json:"fullName"`
+	Email        string     `db:"email" json:"email"`
+	Phone        *string    `db:"phone" json:"phone"`
+	Gender       *int16     `db:"gender" json:"gender"`
+	AuthRole     int16      `db:"auth_role" json:"authRole"`
+	ProfilePhoto *string    `db:"profile_photo" json:"profilePhoto"`
+	Status       int32      `db:"status" json:"status"`
+	SchoolID     *uuid.UUID `db:"school_id" json:"schoolId"`
 }

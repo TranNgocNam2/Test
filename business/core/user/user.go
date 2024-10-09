@@ -3,7 +3,6 @@ package user
 import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
-	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -60,8 +59,8 @@ func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
 		return User{}, ErrUserNotFound
 	}
 	user := toCoreUser(dbUser)
-	if dbUser.SchoolID.Valid {
-		dbSchool, _ := c.queries.GetSchoolByID(ctx, dbUser.SchoolID.UUID)
+	if dbUser.SchoolID != nil {
+		dbSchool, _ := c.queries.GetSchoolByID(ctx, *dbUser.SchoolID)
 		user.School = &struct {
 			ID   *uuid.UUID
 			Name *string
@@ -86,47 +85,24 @@ func (c *Core) Update(ctx *gin.Context, updatedUser User) error {
 		}
 	}
 
-	phoneNumber := sql.NullString{
-		String: *updatedUser.Phone,
-		Valid:  true,
-	}
 	if updatedUser.Phone != nil && *updatedUser.Phone != *dbUser.Phone {
-		if _, err = c.queries.GetUserByPhone(ctx, phoneNumber); err == nil {
+		if _, err = c.queries.GetUserByPhone(ctx, updatedUser.Phone); err == nil {
 			return ErrPhoneAlreadyExists
 		}
 	}
 
-	schoolID := uuid.NullUUID{
-		UUID:  uuid.Nil,
-		Valid: false,
-	}
-
-	if updatedUser.School != nil {
-		schoolID = uuid.NullUUID{
-			UUID:  *updatedUser.School.ID,
-			Valid: true,
-		}
-	} else {
-		schoolID = dbUser.SchoolID
+	if updatedUser.School == nil {
+		updatedUser.School.ID = dbUser.SchoolID
 	}
 
 	var dbUserUpdate = sqlc.UpdateUserParams{
-		FullName: sql.NullString{
-			String: *updatedUser.FullName,
-			Valid:  true,
-		},
-		Email: updatedUser.Email.Address,
-		Phone: phoneNumber,
-		Gender: sql.NullInt16{
-			Int16: updatedUser.Gender,
-			Valid: true,
-		},
-		SchoolID: schoolID,
-		ProfilePhoto: sql.NullString{
-			String: *updatedUser.Photo,
-			Valid:  true,
-		},
-		ID: updatedUser.ID,
+		FullName:     updatedUser.FullName,
+		Email:        updatedUser.Email.Address,
+		Phone:        updatedUser.Phone,
+		Gender:       updatedUser.Gender,
+		SchoolID:     updatedUser.School.ID,
+		ProfilePhoto: updatedUser.Photo,
+		ID:           updatedUser.ID,
 	}
 
 	if err = c.queries.UpdateUser(ctx, dbUserUpdate); err != nil {
