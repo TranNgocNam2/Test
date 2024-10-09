@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"gitlab.com/innovia69420/kit/enum/role"
 	"go.uber.org/zap"
 )
 
@@ -38,68 +37,31 @@ func (c *Core) Create(ctx *gin.Context, newUser User) error {
 		return ErrEmailAlreadyExists
 	}
 
-	if _, err := c.queries.GetUserByPhone(ctx, newUser.Phone); err == nil {
-		return ErrPhoneAlreadyExists
-	}
-
 	if _, err := c.queries.GetUserByID(ctx, newUser.ID); err == nil {
 		return ErrUserAlreadyExist
 	}
 
 	var dbUser = sqlc.CreateUserParams{
-		ID:           newUser.ID,
-		FullName:     newUser.FullName,
-		Email:        newUser.Email.Address,
-		Phone:        newUser.Phone,
-		Gender:       newUser.Gender,
-		ProfilePhoto: newUser.Photo,
-		AuthRole:     newUser.Role,
+		ID:       newUser.ID,
+		Email:    newUser.Email.Address,
+		AuthRole: newUser.Role,
 	}
 
 	if err := c.queries.CreateUser(ctx, dbUser); err != nil {
 		return err
 	}
 
-	if dbUser.AuthRole == role.LEARNER {
-		dbLearner := sqlc.CreateLeanerParams{
-			ID:       dbUser.ID,
-			SchoolID: *newUser.School.ID,
-		}
-		if err := c.queries.CreateLeaner(ctx, dbLearner); err != nil {
-			return err
-		}
-	} else {
-		createdBy := sql.NullString{
-			String: *newUser.CreatedBy,
-			Valid:  false,
-		}
-		if newUser.CreatedBy != nil {
-			createdBy.Valid = true
-		}
-
-		dbStaff := sqlc.CreateStaffParams{
-			ID:        dbUser.ID,
-			Role:      dbUser.AuthRole,
-			CreatedBy: createdBy,
-		}
-		if err := c.queries.CreateStaff(ctx, dbStaff); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
-func (c *Core) GetUserByID(ctx *gin.Context) (User, error) {
-	id := ctx.Param("id")
+func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
 	dbUser, err := c.queries.GetUserByID(ctx, id)
 	if err != nil {
 		return User{}, ErrUserNotFound
 	}
 	user := toCoreUser(dbUser)
-	if user.Role == role.LEARNER {
-		dbLearner, _ := c.queries.GetLearnerByID(ctx, dbUser.ID)
-		dbSchool, _ := c.queries.GetSchoolByID(ctx, dbLearner.SchoolID)
+	if dbUser.SchoolID.Valid {
+		dbSchool, _ := c.queries.GetSchoolByID(ctx, dbUser.SchoolID.UUID)
 		user.School = &struct {
 			ID   *uuid.UUID
 			Name *string
@@ -110,4 +72,66 @@ func (c *Core) GetUserByID(ctx *gin.Context) (User, error) {
 	}
 
 	return user, nil
+}
+
+func (c *Core) Update(ctx *gin.Context, updatedUser User) error {
+	dbUser, err := c.queries.GetUserByID(ctx, updatedUser.ID)
+	if err != nil {
+		return ErrUserNotFound
+	}
+
+	if updatedUser.Email.Address != dbUser.Email {
+		if _, err = c.queries.GetUserByEmail(ctx, updatedUser.Email.Address); err == nil {
+			return ErrEmailAlreadyExists
+		}
+	}
+
+	phoneNumber := sql.NullString{
+		String: *updatedUser.Phone,
+		Valid:  true,
+	}
+	if updatedUser.Phone != nil && *updatedUser.Phone != dbUser.Phone.String {
+		if _, err = c.queries.GetUserByPhone(ctx, phoneNumber); err == nil {
+			return ErrPhoneAlreadyExists
+		}
+	}
+
+	schoolID := uuid.NullUUID{
+		UUID:  uuid.Nil,
+		Valid: false,
+	}
+
+	if updatedUser.School != nil {
+		schoolID = uuid.NullUUID{
+			UUID:  *updatedUser.School.ID,
+			Valid: true,
+		}
+	} else {
+		schoolID = dbUser.SchoolID
+	}
+
+	var dbUserUpdate = sqlc.UpdateUserParams{
+		FullName: sql.NullString{
+			String: *updatedUser.FullName,
+			Valid:  true,
+		},
+		Email: updatedUser.Email.Address,
+		Phone: phoneNumber,
+		Gender: sql.NullInt16{
+			Int16: updatedUser.Gender,
+			Valid: true,
+		},
+		SchoolID: schoolID,
+		ProfilePhoto: sql.NullString{
+			String: *updatedUser.Photo,
+			Valid:  true,
+		},
+		ID: updatedUser.ID,
+	}
+
+	if err = c.queries.UpdateUser(ctx, dbUserUpdate); err != nil {
+		return err
+	}
+
+	return nil
 }

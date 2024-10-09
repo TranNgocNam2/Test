@@ -5,7 +5,7 @@ CREATE table learner_specializations(
 
     CONSTRAINT fk_learners_specializations_learner
         FOREIGN KEY (learner_id)
-            REFERENCES learners(id) ON DELETE CASCADE,
+            REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_learners_specializations_specialization
         FOREIGN KEY (specialization_id)
             REFERENCES specializations(id) ON DELETE CASCADE

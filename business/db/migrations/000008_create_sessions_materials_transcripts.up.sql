@@ -17,6 +17,7 @@ CREATE table materials(
     type            character varying(20) NOT NULL,
     data            json NOT NULL,
     is_shared       bool NOT NULL DEFAULT false,
+    name            character varying(100),
 
     CONSTRAINT fk_material_session
         FOREIGN KEY (session_id)

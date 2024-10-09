@@ -25,7 +25,7 @@ CREATE table schools(
             REFERENCES districts(id) ON DELETE CASCADE
 );
 
-ALTER table learners
+ALTER table users
     ADD CONSTRAINT fk_learner_school
         FOREIGN KEY (school_id)
             REFERENCES schools(id) ON DELETE CASCADE;

@@ -35,8 +35,10 @@ type Certificate struct {
 type Class struct {
 	ID               uuid.UUID `db:"id" json:"id"`
 	Code             string    `db:"code" json:"code"`
+	IsDraft          bool      `db:"is_draft" json:"isDraft"`
 	Password         string    `db:"password" json:"password"`
 	Name             string    `db:"name" json:"name"`
+	Link             string    `db:"link" json:"link"`
 	ProgramSubjectID uuid.UUID `db:"program_subject_id" json:"programSubjectId"`
 	StartTime        time.Time `db:"start_time" json:"startTime"`
 	EndTime          time.Time `db:"end_time" json:"endTime"`
@@ -62,12 +64,6 @@ type District struct {
 	ID         int32  `db:"id" json:"id"`
 	Name       string `db:"name" json:"name"`
 	ProvinceID int32  `db:"province_id" json:"provinceId"`
-}
-
-type Learner struct {
-	ID       string    `db:"id" json:"id"`
-	Role     int16     `db:"role" json:"role"`
-	SchoolID uuid.UUID `db:"school_id" json:"schoolId"`
 }
 
 type LearnerAssignment struct {
@@ -179,13 +175,6 @@ type SpecializationSubject struct {
 	CreatedBy        string    `db:"created_by" json:"createdBy"`
 }
 
-type Staff struct {
-	ID        string         `db:"id" json:"id"`
-	Role      int16          `db:"role" json:"role"`
-	CreatedBy sql.NullString `db:"created_by" json:"createdBy"`
-	CreatedAt time.Time      `db:"created_at" json:"createdAt"`
-}
-
 type Subject struct {
 	ID              uuid.UUID      `db:"id" json:"id"`
 	Code            string         `db:"code" json:"code"`
@@ -216,12 +205,13 @@ type Transcript struct {
 }
 
 type User struct {
-	ID           string `db:"id" json:"id"`
-	FullName     string `db:"full_name" json:"fullName"`
-	Email        string `db:"email" json:"email"`
-	Phone        string `db:"phone" json:"phone"`
-	Gender       int16  `db:"gender" json:"gender"`
-	AuthRole     int16  `db:"auth_role" json:"authRole"`
-	ProfilePhoto string `db:"profile_photo" json:"profilePhoto"`
-	Status       int32  `db:"status" json:"status"`
+	ID           string         `db:"id" json:"id"`
+	FullName     sql.NullString `db:"full_name" json:"fullName"`
+	Email        string         `db:"email" json:"email"`
+	Phone        sql.NullString `db:"phone" json:"phone"`
+	Gender       sql.NullInt16  `db:"gender" json:"gender"`
+	AuthRole     int16          `db:"auth_role" json:"authRole"`
+	ProfilePhoto sql.NullString `db:"profile_photo" json:"profilePhoto"`
+	Status       int32          `db:"status" json:"status"`
+	SchoolID     uuid.NullUUID  `db:"school_id" json:"schoolId"`
 }

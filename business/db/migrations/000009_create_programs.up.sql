@@ -11,8 +11,8 @@ CREATE table programs(
 
     CONSTRAINT fk_programs_staff_updated_by
         FOREIGN KEY (updated_by)
-            REFERENCES staffs(id) ON DELETE CASCADE,
+            REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_programs_staff_created_by
         FOREIGN KEY (created_by)
-            REFERENCES staffs(id) ON DELETE CASCADE
+            REFERENCES users(id) ON DELETE CASCADE
 );

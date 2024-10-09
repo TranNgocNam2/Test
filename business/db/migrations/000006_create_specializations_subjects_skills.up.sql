@@ -12,9 +12,9 @@ CREATE table specializations(
     updated_at      timestamp,
 
     CONSTRAINT fk_specialization_staff_updated_by
-        FOREIGN KEY (updated_by) REFERENCES staffs(id) ON DELETE CASCADE,
+        FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_specialization_staff_created_by
-        FOREIGN KEY (created_by) REFERENCES staffs(id) ON DELETE CASCADE
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE table subjects(
@@ -33,10 +33,10 @@ CREATE table subjects(
 
     CONSTRAINT fk_subject_staff_updated_by
         FOREIGN KEY (updated_by)
-            REFERENCES staffs(id) ON DELETE CASCADE,
+            REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_subject_staff_created_by
         FOREIGN KEY (created_by)
-            REFERENCES staffs(id) ON DELETE CASCADE
+            REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE table specialization_subjects(
@@ -52,7 +52,7 @@ CREATE table specialization_subjects(
             REFERENCES subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_specialization_subjects_staff_created_by
         FOREIGN KEY (created_by)
-            REFERENCES staffs(id) ON DELETE CASCADE,
+            REFERENCES users(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_specialization_subjects UNIQUE (specialization_id, subject_id)
 );

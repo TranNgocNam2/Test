@@ -120,8 +120,8 @@ github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65EE=
 github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
-gitlab.com/innovia69420/kit v0.0.0-20241007123932-09085ff5cb70 h1:y7HerI9JGwLPzBdes4wYL5weLzUxTgnbFlXcB+i6gNg=
-gitlab.com/innovia69420/kit v0.0.0-20241007123932-09085ff5cb70/go.mod h1:EG2VODrzyGdeCTK0UmRyFRopXCWHzEvcIJNm9PzADdg=
+gitlab.com/innovia69420/kit v0.0.0-20241008170935-af24ade877ad h1:dy0G3RVlC6Rda7gZmPGlEMux7guX5Q82WC1gbCt6R+Y=
+gitlab.com/innovia69420/kit v0.0.0-20241008170935-af24ade877ad/go.mod h1:EG2VODrzyGdeCTK0UmRyFRopXCWHzEvcIJNm9PzADdg=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
 go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=
