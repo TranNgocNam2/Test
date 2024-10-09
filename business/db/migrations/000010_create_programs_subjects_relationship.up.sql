@@ -15,10 +15,10 @@ CREATE table program_subjects(
             REFERENCES subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_program_subjects_staff_created_by
         FOREIGN KEY (created_by)
-            REFERENCES staffs(id) ON DELETE CASCADE,
+            REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_program_subjects_staff_updated_by
         FOREIGN KEY (updated_by)
-            REFERENCES staffs(id) ON DELETE CASCADE,
+            REFERENCES users(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_program_subjects UNIQUE (program_id, subject_id)
 );

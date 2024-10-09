@@ -14,5 +14,6 @@ func UserRoutes(router *gin.Engine, app *app.Application) {
 	{
 		users.POST("", handlers.CreateUser())
 		users.GET("/:id", handlers.GetUserByID())
+		users.PUT("", handlers.UpdateUser())
 	}
 }

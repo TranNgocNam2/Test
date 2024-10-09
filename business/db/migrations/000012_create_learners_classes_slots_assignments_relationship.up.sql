@@ -4,11 +4,9 @@ CREATE table class_learners(
     class_id       uuid NOT NULL,
 
     CONSTRAINT fk_class_learners_learner
-        FOREIGN KEY (learner_id)
-            REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (learner_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_class_learners_class
-        FOREIGN KEY (class_id)
-            REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_class_learners UNIQUE (learner_id, class_id)
 );
@@ -20,11 +18,9 @@ CREATE table learner_attendances(
     status              int NOT NULL,
 
     CONSTRAINT fk_learner_attendances_class_learners
-        FOREIGN KEY (class_learner_id)
-            REFERENCES class_learners(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_learner_id) REFERENCES class_learners(id) ON DELETE CASCADE,
     CONSTRAINT fk_learner_attendances_slot
-        FOREIGN KEY (slot_id)
-            REFERENCES slots(id) ON DELETE CASCADE,
+        FOREIGN KEY (slot_id) REFERENCES slots(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_learner_attendances UNIQUE (class_learner_id, slot_id)
 );

@@ -3,6 +3,7 @@ package user
 import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
+	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -13,8 +14,8 @@ import (
 var (
 	ErrEmailAlreadyExists = errors.New("Email đã tồn tại trong hệ thống!")
 	ErrPhoneAlreadyExists = errors.New("Số điện thoại đã tồn tại trong hệ thống!")
-	ErrorUserAlreadyExist = errors.New("Người dùng đã tồn tại trong hệ thống!")
-	ErrorUserNotFound     = errors.New("Người dùng không tồn tại trong hệ thống!")
+	ErrUserAlreadyExist   = errors.New("Người dùng đã tồn tại trong hệ thống!")
+	ErrUserNotFound       = errors.New("Người dùng không tồn tại trong hệ thống!")
 )
 
 type Core struct {
@@ -36,35 +37,14 @@ func (c *Core) Create(ctx *gin.Context, newUser User) error {
 		return ErrEmailAlreadyExists
 	}
 
-	if _, err := c.queries.GetUserByPhone(ctx, newUser.Phone); err == nil {
-		return ErrPhoneAlreadyExists
-	}
-
 	if _, err := c.queries.GetUserByID(ctx, newUser.ID); err == nil {
-		return ErrorUserAlreadyExist
-	}
-
-	schoolID := uuid.NullUUID{
-		UUID:  uuid.Nil,
-		Valid: false,
-	}
-
-	if newUser.School != nil {
-		schoolID = uuid.NullUUID{
-			UUID:  *newUser.School.ID,
-			Valid: true,
-		}
+		return ErrUserAlreadyExist
 	}
 
 	var dbUser = sqlc.CreateUserParams{
-		ID:           newUser.ID,
-		FullName:     newUser.FullName,
-		Email:        newUser.Email.Address,
-		Phone:        newUser.Phone,
-		Gender:       newUser.Gender,
-		ProfilePhoto: newUser.Photo,
-		Role:         newUser.Role,
-		SchoolID:     schoolID,
+		ID:       newUser.ID,
+		Email:    newUser.Email.Address,
+		AuthRole: newUser.Role,
 	}
 
 	if err := c.queries.CreateUser(ctx, dbUser); err != nil {
@@ -74,25 +54,84 @@ func (c *Core) Create(ctx *gin.Context, newUser User) error {
 	return nil
 }
 
-func (c *Core) GetUserByID(ctx *gin.Context) (User, error) {
-	id := ctx.Param("id")
+func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
 	dbUser, err := c.queries.GetUserByID(ctx, id)
 	if err != nil {
-		return User{}, ErrorUserNotFound
+		return User{}, ErrUserNotFound
 	}
-
-	if !dbUser.SchoolID.Valid {
-		return toCoreUser(dbUser), nil
-	}
-
-	dbSchool, err := c.queries.GetSchoolByID(ctx, dbUser.SchoolID.UUID)
-	if err != nil {
-		return User{}, err
-	}
-
 	user := toCoreUser(dbUser)
-	user.School.ID = &dbSchool.ID
-	user.School.Name = &dbSchool.Name
+	if dbUser.SchoolID.Valid {
+		dbSchool, _ := c.queries.GetSchoolByID(ctx, dbUser.SchoolID.UUID)
+		user.School = &struct {
+			ID   *uuid.UUID
+			Name *string
+		}{
+			ID:   &dbSchool.ID,
+			Name: &dbSchool.Name,
+		}
+	}
 
 	return user, nil
+}
+
+func (c *Core) Update(ctx *gin.Context, updatedUser User) error {
+	dbUser, err := c.queries.GetUserByID(ctx, updatedUser.ID)
+	if err != nil {
+		return ErrUserNotFound
+	}
+
+	if updatedUser.Email.Address != dbUser.Email {
+		if _, err = c.queries.GetUserByEmail(ctx, updatedUser.Email.Address); err == nil {
+			return ErrEmailAlreadyExists
+		}
+	}
+
+	phoneNumber := sql.NullString{
+		String: *updatedUser.Phone,
+		Valid:  true,
+	}
+	if updatedUser.Phone != nil && *updatedUser.Phone != dbUser.Phone.String {
+		if _, err = c.queries.GetUserByPhone(ctx, phoneNumber); err == nil {
+			return ErrPhoneAlreadyExists
+		}
+	}
+
+	schoolID := uuid.NullUUID{
+		UUID:  uuid.Nil,
+		Valid: false,
+	}
+
+	if updatedUser.School != nil {
+		schoolID = uuid.NullUUID{
+			UUID:  *updatedUser.School.ID,
+			Valid: true,
+		}
+	} else {
+		schoolID = dbUser.SchoolID
+	}
+
+	var dbUserUpdate = sqlc.UpdateUserParams{
+		FullName: sql.NullString{
+			String: *updatedUser.FullName,
+			Valid:  true,
+		},
+		Email: updatedUser.Email.Address,
+		Phone: phoneNumber,
+		Gender: sql.NullInt16{
+			Int16: updatedUser.Gender,
+			Valid: true,
+		},
+		SchoolID: schoolID,
+		ProfilePhoto: sql.NullString{
+			String: *updatedUser.Photo,
+			Valid:  true,
+		},
+		ID: updatedUser.ID,
+	}
+
+	if err = c.queries.UpdateUser(ctx, dbUserUpdate); err != nil {
+		return err
+	}
+
+	return nil
 }
