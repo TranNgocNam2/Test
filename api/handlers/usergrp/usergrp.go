@@ -84,6 +84,11 @@ func (h *Handlers) UpdateUser() gin.HandlerFunc {
 			return
 		}
 
+		if err := validateUpdateUserRequest(updateUserRequest); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
 		updateUser, err := toCoreUpdateUser(updateUserRequest)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)

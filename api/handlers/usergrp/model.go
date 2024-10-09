@@ -12,13 +12,11 @@ import (
 )
 
 var (
-	ErrInvalidSchoolID      = errors.New("ID trường học không hợp lệ!")
-	ErrInvalidEmail         = errors.New("Email không hợp lệ!")
-	ErrInvalidPhoneNumber   = errors.New("Số điện thoại không hợp lệ!")
-	ErrUserCannotBeCreated  = errors.New("Không thể tạo người dùng!")
-	ErrUserCannotBeUpdated  = errors.New("Không thể cập nhật thông tin người dùng!")
-	ErrStaffCannotBeCreated = errors.New("Không thể tạo nhân viên!")
-	ErrNilSchool            = errors.New("Vui lòng cung cấp thông tin về trường học!")
+	ErrInvalidSchoolID     = errors.New("ID trường học không hợp lệ!")
+	ErrInvalidEmail        = errors.New("Email không hợp lệ!")
+	ErrInvalidPhoneNumber  = errors.New("Số điện thoại không hợp lệ!")
+	ErrUserCannotBeCreated = errors.New("Không thể tạo người dùng!")
+	ErrNilSchool           = errors.New("Vui lòng cung cấp thông tin về trường học!")
 )
 
 type UserResponse struct {
@@ -77,23 +75,11 @@ func toCoreNewUser(newUserRequest request.NewUser) (user.User, error) {
 		return user.User{}, ErrInvalidEmail
 	}
 
-	//if !user.IsValidPhoneNumber(newUserRequest.Phone) {
-	//	return user.User{}, ErrInvalidPhoneNumber
-	//}
-
 	user := user.User{
 		ID:    newUserRequest.ID,
 		Email: *emailAddr,
 		Role:  int16(authRole),
 	}
-	//if authRole == role.LEARNER {
-	//	user.School = &struct {
-	//		ID   *uuid.UUID
-	//		Name *string
-	//	}{
-	//		ID: &schoolID,
-	//	}
-	//}
 
 	return user, nil
 }
