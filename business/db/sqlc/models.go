@@ -183,7 +183,7 @@ type Subject struct {
 	TimePerSession  int16          `db:"time_per_session" json:"timePerSession"`
 	SessionsPerWeek int16          `db:"sessions_per_week" json:"sessionsPerWeek"`
 	ImageLink       string         `db:"image_link" json:"imageLink"`
-	IsDrafted       sql.NullBool   `db:"is_drafted" json:"isDrafted"`
+	Status          sql.NullInt16  `db:"status" json:"status"`
 	Description     string         `db:"description" json:"description"`
 	CreatedBy       string         `db:"created_by" json:"createdBy"`
 	UpdatedBy       sql.NullString `db:"updated_by" json:"updatedBy"`
