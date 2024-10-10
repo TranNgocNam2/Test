@@ -9,18 +9,19 @@ import (
 	"Backend/internal/config"
 	"Backend/internal/http"
 	"Backend/internal/middleware"
+	"context"
 	"fmt"
+	"io"
+	"os"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
-	"github.com/jmoiron/sqlx/reflectx"
 	"gitlab.com/innovia69420/kit/enum/message"
 	"gitlab.com/innovia69420/kit/file"
 	"gitlab.com/innovia69420/kit/logger"
-	"io"
-	"os"
-	"strings"
 )
 
 var WorkingDirectory string
@@ -55,31 +56,22 @@ func main() {
 	//Set up log
 	log := logger.Get(WorkingDirectory)
 	router.Use(logger.RequestLogger(log))
-	dbConn, err := sqlx.Connect("pgx", cfg.DatabaseUrl)
+
+	dbPool, err := pgxpool.New(context.Background(), cfg.DatabaseUrl)
 	if err != nil {
 		fmt.Println(err)
 		log.Fatal(message.FailedConnectDatabase)
 		return
 	}
-
-	dbConn.Mapper = reflectx.NewMapperTagFunc("db",
-		nil,
-		func(s string) string {
-			return strings.ToLower(s)
-		})
-
-	defer func(dbConn *sqlx.DB) {
-		err := dbConn.Close()
-		if err != nil {
-			log.Fatal(message.FailedCloseDatabase)
-		}
-	}(dbConn)
+	defer dbPool.Close()
+	pgxDb := stdlib.OpenDBFromPool(dbPool)
+	sqlxDb := sqlx.NewDb(pgxDb, "pgx")
 
 	a := app.Application{
 		Config:  cfg,
 		Logger:  log,
-		Db:      dbConn,
-		Queries: sqlc.New(dbConn),
+		Db:      sqlxDb,
+		Queries: sqlc.New(dbPool),
 	}
 
 	// Load all routes

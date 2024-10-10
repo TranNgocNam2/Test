@@ -24,7 +24,7 @@ type CreateSchoolParams struct {
 }
 
 func (q *Queries) CreateSchool(ctx context.Context, arg CreateSchoolParams) error {
-	_, err := q.db.ExecContext(ctx, createSchool,
+	_, err := q.db.Exec(ctx, createSchool,
 		arg.ID,
 		arg.Name,
 		arg.Address,
@@ -40,7 +40,7 @@ WHERE id = $1::uuid
 `
 
 func (q *Queries) DeleteSchool(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteSchool, id)
+	_, err := q.db.Exec(ctx, deleteSchool, id)
 	return err
 }
 
@@ -50,7 +50,7 @@ WHERE id = $1::uuid AND is_deleted = false
 `
 
 func (q *Queries) GetSchoolByID(ctx context.Context, id uuid.UUID) (School, error) {
-	row := q.db.QueryRowContext(ctx, getSchoolByID, id)
+	row := q.db.QueryRow(ctx, getSchoolByID, id)
 	var i School
 	err := row.Scan(
 		&i.ID,
@@ -69,7 +69,7 @@ AND is_deleted = false
 `
 
 func (q *Queries) GetSchoolsByDistrictID(ctx context.Context, districtID int32) ([]School, error) {
-	rows, err := q.db.QueryContext(ctx, getSchoolsByDistrictID, districtID)
+	rows, err := q.db.Query(ctx, getSchoolsByDistrictID, districtID)
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +87,6 @@ func (q *Queries) GetSchoolsByDistrictID(ctx context.Context, districtID int32) 
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -111,7 +108,7 @@ type UpdateSchoolParams struct {
 }
 
 func (q *Queries) UpdateSchool(ctx context.Context, arg UpdateSchoolParams) error {
-	_, err := q.db.ExecContext(ctx, updateSchool,
+	_, err := q.db.Exec(ctx, updateSchool,
 		arg.Name,
 		arg.Address,
 		arg.DistrictID,

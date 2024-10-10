@@ -39,7 +39,7 @@ func toUserResponse(user user.User) UserResponse {
 		FullName: *user.FullName,
 		Email:    user.Email.Address,
 		Phone:    *user.Phone,
-		Gender:   user.Gender,
+		Gender:   *user.Gender,
 		Role:     user.Role,
 		Photo:    *user.Photo,
 	}
@@ -109,12 +109,14 @@ func toCoreUpdateUser(updateUserRequest request.UpdateUser) (user.User, error) {
 		return user.User{}, ErrInvalidPhoneNumber
 	}
 
+	gender := int16(*updateUserRequest.Gender)
+
 	user := user.User{
 		ID:       updateUserRequest.ID,
 		FullName: &updateUserRequest.FullName,
 		Email:    *emailAddr,
 		Phone:    &updateUserRequest.Phone,
-		Gender:   int16(*updateUserRequest.Gender),
+		Gender:   &gender,
 		Role:     int16(authRole),
 		Photo:    &updateUserRequest.Photo,
 	}
