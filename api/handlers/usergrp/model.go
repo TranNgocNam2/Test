@@ -85,7 +85,7 @@ func toCoreNewUser(newUserRequest request.NewUser) (user.User, error) {
 }
 func validateNewUserRequest(newUserRequest request.NewUser) error {
 	if err := validate.Check(newUserRequest); err != nil {
-		return fmt.Errorf(validate.ErrValidation.Error(), err)
+		return err
 	}
 	return nil
 }

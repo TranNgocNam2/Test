@@ -2,13 +2,13 @@ CREATE table specializations(
     id              uuid PRIMARY KEY,
     name            character varying(100) NOT NULL,
     code            character varying(10) NOT NULL,
-    time_amount     float NOT NULL,
-    image_link      character varying(50) NOT NULL,
-    status          smallint  CHECK (status in (0, 1)) NOT NULL,
-    description     text NOT NULL,
+    time_amount     float,
+    image_link      character varying(50),
+    status          smallint DEFAULT 0 CHECK (status in (0, 1)) NOT NULL,
+    description     text,
     created_by      character varying(50) NOT NULL,
     updated_by      character varying(50),
-    created_at      timestamp DEFAULT now(),
+    created_at      timestamp DEFAULT now() NOT NULL,
     updated_at      timestamp,
 
     CONSTRAINT fk_specialization_staff_updated_by
@@ -40,6 +40,7 @@ CREATE table subjects(
 );
 
 CREATE table specialization_subjects(
+    id                      uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     specialization_id       uuid NOT NULL,
     subject_id              uuid NOT NULL,
     created_by              character varying(50) NOT NULL,
@@ -63,6 +64,7 @@ CREATE table skills(
 );
 
 CREATE table specialization_skills(
+    id                  uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     specialization_id   uuid NOT NULL,
     skill_id            uuid NOT NULL,
 
@@ -76,6 +78,7 @@ CREATE table specialization_skills(
 );
 
 CREATE table subject_skills(
+    id              uuid PRIMARY KEY,
     subject_id      uuid NOT NULL,
     skill_id        uuid NOT NULL,
 

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"Backend/business/db/sqlc"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -8,6 +9,10 @@ import (
 	"gitlab.com/innovia69420/kit/enum/message"
 	"gitlab.com/innovia69420/kit/web"
 	"strings"
+)
+
+var (
+	ErrInvalidUser = errors.New("Người dùng không hợp lệ!")
 )
 
 func CheckApiKeyAndRequestID(apiKey string) gin.HandlerFunc {
@@ -29,4 +34,16 @@ func CheckApiKeyAndRequestID(apiKey string) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func AuthorizeUser(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return "", ErrInvalidUser
+	}
+	user, err := queries.GetUserByID(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil {
+		return "", ErrInvalidUser
+	}
+
+	return user.ID, nil
 }

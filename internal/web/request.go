@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"io"
 	"strings"
 )
 
 var (
 	InvalidPayload        = errors.New("Dữ liệu không hợp lệ: %s!")
 	UnableToDecodePayload = errors.New("Không thể giải mã dữ liệu: %s!")
+	EmptyPayload          = errors.New("Dữ liệu không được trống!")
 )
 
 type validator interface {
@@ -22,9 +24,13 @@ type validator interface {
 // If the provided value is a struct then it is checked for validation tags.
 // If the value implements a validate function, it is executed.
 func Decode(c *gin.Context, val any) error {
+
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(val); err != nil {
+		if err == io.EOF {
+			return EmptyPayload
+		}
 		start := strings.Index(err.Error(), `"`) + 1
 		end := strings.LastIndex(err.Error(), `"`)
 
