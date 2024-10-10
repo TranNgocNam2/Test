@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -25,4 +26,47 @@ type CreateSpecializationSubjectsParams struct {
 func (q *Queries) CreateSpecializationSubjects(ctx context.Context, arg CreateSpecializationSubjectsParams) error {
 	_, err := q.db.Exec(ctx, createSpecializationSubjects, arg.SpecializationID, arg.SubjectIds, arg.CreatedBy)
 	return err
+}
+
+const getSubjectsBySpecialization = `-- name: GetSubjectsBySpecialization :many
+SELECT subjects.id, subjects.name, subjects.code, subjects.image_link, subjects.created_at, subjects.updated_at
+FROM specialization_subjects
+JOIN subjects ON specialization_subjects.subject_id = subjects.id
+WHERE specialization_subjects.specialization_id = $1::uuid
+`
+
+type GetSubjectsBySpecializationRow struct {
+	ID        uuid.UUID  `db:"id" json:"id"`
+	Name      string     `db:"name" json:"name"`
+	Code      string     `db:"code" json:"code"`
+	ImageLink string     `db:"image_link" json:"imageLink"`
+	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
+}
+
+func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]GetSubjectsBySpecializationRow, error) {
+	rows, err := q.db.Query(ctx, getSubjectsBySpecialization, specializationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSubjectsBySpecializationRow
+	for rows.Next() {
+		var i GetSubjectsBySpecializationRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Code,
+			&i.ImageLink,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

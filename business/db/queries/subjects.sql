@@ -10,4 +10,4 @@ RETURNING id;
 
 
 -- name: GetSubjectsByIDs :many
-SELECT * FROM subjects WHERE id IN(sqlc.arg(subject_ids)::uuid[]) AND status = 1;
+SELECT * FROM subjects WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]) AND status = 1;

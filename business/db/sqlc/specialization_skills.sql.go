@@ -25,3 +25,30 @@ func (q *Queries) CreateSpecializationSkills(ctx context.Context, arg CreateSpec
 	_, err := q.db.Exec(ctx, createSpecializationSkills, arg.SpecializationID, arg.SkillIds)
 	return err
 }
+
+const getSkillsBySpecialization = `-- name: GetSkillsBySpecialization :many
+SELECT skills.id, skills.name
+FROM specialization_skills
+JOIN skills ON specialization_skills.skill_id = skills.id
+WHERE specialization_skills.specialization_id = $1::uuid
+`
+
+func (q *Queries) GetSkillsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]Skill, error) {
+	rows, err := q.db.Query(ctx, getSkillsBySpecialization, specializationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Skill
+	for rows.Next() {
+		var i Skill
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

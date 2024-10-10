@@ -12,7 +12,7 @@ import (
 )
 
 const getSkillsByIDs = `-- name: GetSkillsByIDs :many
-SELECT id, name FROM skills WHERE id IN($1::uuid[])
+SELECT id, name FROM skills WHERE id = ANY($1::uuid[])
 `
 
 func (q *Queries) GetSkillsByIDs(ctx context.Context, skillIds []uuid.UUID) ([]Skill, error) {

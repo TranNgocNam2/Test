@@ -39,3 +39,49 @@ func (q *Queries) CreateSpecialization(ctx context.Context, arg CreateSpecializa
 	)
 	return err
 }
+
+const getSpecializationByCode = `-- name: GetSpecializationByCode :one
+SELECT id, name, code, time_amount, image_link, status, description, created_by, updated_by, created_at, updated_at FROM specializations WHERE code = $1
+`
+
+func (q *Queries) GetSpecializationByCode(ctx context.Context, code string) (Specialization, error) {
+	row := q.db.QueryRow(ctx, getSpecializationByCode, code)
+	var i Specialization
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Code,
+		&i.TimeAmount,
+		&i.ImageLink,
+		&i.Status,
+		&i.Description,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSpecializationByID = `-- name: GetSpecializationByID :one
+SELECT id, name, code, time_amount, image_link, status, description, created_by, updated_by, created_at, updated_at FROM specializations WHERE id = $1
+`
+
+func (q *Queries) GetSpecializationByID(ctx context.Context, id uuid.UUID) (Specialization, error) {
+	row := q.db.QueryRow(ctx, getSpecializationByID, id)
+	var i Specialization
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Code,
+		&i.TimeAmount,
+		&i.ImageLink,
+		&i.Status,
+		&i.Description,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

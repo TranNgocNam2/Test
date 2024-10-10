@@ -189,7 +189,7 @@ type Subject struct {
 	Description     string     `db:"description" json:"description"`
 	CreatedBy       string     `db:"created_by" json:"createdBy"`
 	UpdatedBy       *string    `db:"updated_by" json:"updatedBy"`
-	CreatedAt       *time.Time `db:"created_at" json:"createdAt"`
+	CreatedAt       time.Time  `db:"created_at" json:"createdAt"`
 	UpdatedAt       *time.Time `db:"updated_at" json:"updatedAt"`
 }
 

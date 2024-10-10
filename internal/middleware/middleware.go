@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"Backend/business/db/sqlc"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -34,16 +33,4 @@ func CheckApiKeyAndRequestID(apiKey string) gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-func AuthorizeUser(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
-	if ctx.GetHeader(header.XUserId) == "" {
-		return "", ErrInvalidUser
-	}
-	user, err := queries.GetUserByID(ctx, ctx.GetHeader(header.XUserId))
-	if err != nil {
-		return "", ErrInvalidUser
-	}
-
-	return user.ID, nil
 }

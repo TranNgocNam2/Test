@@ -3,7 +3,6 @@ package usergrp
 import (
 	"Backend/business/core/user"
 	"Backend/internal/validate"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gitlab.com/innovia69420/kit/enum/role"
@@ -133,7 +132,7 @@ func toCoreUpdateUser(updateUserRequest request.UpdateUser) (user.User, error) {
 
 func validateUpdateUserRequest(updateUserRequest request.UpdateUser) error {
 	if err := validate.Check(updateUserRequest); err != nil {
-		return fmt.Errorf(validate.ErrValidation.Error(), err)
+		return err
 	}
 	return nil
 }

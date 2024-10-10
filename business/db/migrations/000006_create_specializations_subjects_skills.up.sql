@@ -3,7 +3,7 @@ CREATE table specializations(
     name            character varying(100) NOT NULL,
     code            character varying(10) NOT NULL,
     time_amount     float,
-    image_link      character varying(50),
+    image_link      text,
     status          smallint DEFAULT 0 CHECK (status in (0, 1)) NOT NULL,
     description     text,
     created_by      character varying(50) NOT NULL,
@@ -28,7 +28,7 @@ CREATE table subjects(
     description             text NOT NULL,
     created_by              character varying(50) NOT NULL,
     updated_by              character varying(50),
-    created_at              timestamp DEFAULT now(),
+    created_at              timestamp DEFAULT now() NOT NULL,
     updated_at              timestamp,
 
     CONSTRAINT fk_subject_staff_updated_by

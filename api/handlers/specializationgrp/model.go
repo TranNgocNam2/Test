@@ -4,7 +4,6 @@ import (
 	"Backend/business/core/specialization"
 	"Backend/internal/slice"
 	"Backend/internal/validate"
-	"fmt"
 	"github.com/google/uuid"
 	"gitlab.com/innovia69420/kit/web/request"
 	"time"
@@ -24,12 +23,11 @@ type SpecializationResponse struct {
 		Name *string    `json:"name,omitempty"`
 	} `json:"skills,omitempty"`
 	Subjects []*struct {
-		ID            *uuid.UUID `json:"id,omitempty"`
-		Name          *string    `json:"name,omitempty"`
-		Image         *string    `json:"image,omitempty"`
-		Code          *string    `json:"code,omitempty"`
-		LastUpdated   *time.Time `json:"lastUpdated,omitempty"`
-		TotalSessions *int16     `json:"totalSessions,omitempty"`
+		ID          *uuid.UUID `json:"id,omitempty"`
+		Name        *string    `json:"name,omitempty"`
+		Image       *string    `json:"image,omitempty"`
+		Code        *string    `json:"code,omitempty"`
+		LastUpdated time.Time  `json:"lastUpdated,omitempty"`
 	} `json:"subjects,omitempty"`
 }
 
@@ -71,21 +69,19 @@ func toCoreNewSpecialization(newSpecialization request.NewSpecialization) (speci
 
 	if subjectIDs != nil {
 		specialization.Subjects = make([]*struct {
-			ID            *uuid.UUID
-			Name          *string
-			Image         *string
-			Code          *string
-			LastUpdated   time.Time
-			TotalSessions *int16
+			ID          *uuid.UUID
+			Name        *string
+			Image       *string
+			Code        *string
+			LastUpdated time.Time
 		}, len(subjectIDs))
 		for i, id := range subjectIDs {
 			specialization.Subjects[i] = &struct {
-				ID            *uuid.UUID
-				Name          *string
-				Image         *string
-				Code          *string
-				LastUpdated   time.Time
-				TotalSessions *int16
+				ID          *uuid.UUID
+				Name        *string
+				Image       *string
+				Code        *string
+				LastUpdated time.Time
 			}{
 				ID: &id,
 			}
@@ -97,7 +93,65 @@ func toCoreNewSpecialization(newSpecialization request.NewSpecialization) (speci
 
 func validateNewSpecializationRequest(newSpecializationRequest request.NewSpecialization) error {
 	if err := validate.Check(newSpecializationRequest); err != nil {
-		return fmt.Errorf(validate.ErrValidation.Error(), err)
+		return err
 	}
 	return nil
+}
+
+func toResponseSpecialization(specialization specialization.Specialization) SpecializationResponse {
+	response := SpecializationResponse{
+		ID:          specialization.ID,
+		Name:        specialization.Name,
+		Code:        specialization.Code,
+		Status:      specialization.Status,
+		Description: specialization.Description,
+		TimeAmount:  *specialization.TimeAmount,
+		Image:       *specialization.Image,
+		CreatedAt:   specialization.CreatedAt,
+	}
+
+	if specialization.Skills != nil {
+		response.Skills = make([]*struct {
+			ID   *uuid.UUID `json:"id,omitempty"`
+			Name *string    `json:"name,omitempty"`
+		}, len(specialization.Skills))
+
+		for i, skill := range specialization.Skills {
+			response.Skills[i] = &struct {
+				ID   *uuid.UUID `json:"id,omitempty"`
+				Name *string    `json:"name,omitempty"`
+			}{
+				ID:   skill.ID,
+				Name: skill.Name,
+			}
+		}
+	}
+
+	if specialization.Subjects != nil {
+		response.Subjects = make([]*struct {
+			ID          *uuid.UUID `json:"id,omitempty"`
+			Name        *string    `json:"name,omitempty"`
+			Image       *string    `json:"image,omitempty"`
+			Code        *string    `json:"code,omitempty"`
+			LastUpdated time.Time  `json:"lastUpdated,omitempty"`
+		}, len(specialization.Subjects))
+
+		for i, subject := range specialization.Subjects {
+			response.Subjects[i] = &struct {
+				ID          *uuid.UUID `json:"id,omitempty"`
+				Name        *string    `json:"name,omitempty"`
+				Image       *string    `json:"image,omitempty"`
+				Code        *string    `json:"code,omitempty"`
+				LastUpdated time.Time  `json:"lastUpdated,omitempty"`
+			}{
+				ID:          subject.ID,
+				Name:        subject.Name,
+				Image:       subject.Image,
+				Code:        subject.Code,
+				LastUpdated: subject.LastUpdated,
+			}
+		}
+	}
+
+	return response
 }
