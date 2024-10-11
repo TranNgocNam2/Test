@@ -114,18 +114,24 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Specialization, error) {
 	}
 	if dbSpecSubjects != nil {
 		for _, subject := range dbSpecSubjects {
+			totalSession, err := c.queries.CountSessionsBySubjectID(ctx, subject.ID)
+			if err != nil {
+				return Specialization{}, err
+			}
 			spec.Subjects = append(spec.Subjects, &struct {
-				ID          *uuid.UUID
-				Name        *string
-				Image       *string
-				Code        *string
-				LastUpdated time.Time
+				ID           *uuid.UUID
+				Name         *string
+				Image        *string
+				Code         *string
+				LastUpdated  time.Time
+				TotalSession *int64
 			}{
-				ID:          &subject.ID,
-				Name:        &subject.Name,
-				Image:       &subject.ImageLink,
-				Code:        &subject.Code,
-				LastUpdated: subject.CreatedAt,
+				ID:           &subject.ID,
+				Name:         &subject.Name,
+				Image:        &subject.ImageLink,
+				Code:         &subject.Code,
+				LastUpdated:  subject.CreatedAt,
+				TotalSession: &totalSession,
 			})
 		}
 	}

@@ -23,11 +23,12 @@ type SpecializationResponse struct {
 		Name *string    `json:"name,omitempty"`
 	} `json:"skills,omitempty"`
 	Subjects []*struct {
-		ID          *uuid.UUID `json:"id,omitempty"`
-		Name        *string    `json:"name,omitempty"`
-		Image       *string    `json:"image,omitempty"`
-		Code        *string    `json:"code,omitempty"`
-		LastUpdated time.Time  `json:"lastUpdated,omitempty"`
+		ID           *uuid.UUID `json:"id,omitempty"`
+		Name         *string    `json:"name,omitempty"`
+		Image        *string    `json:"image,omitempty"`
+		Code         *string    `json:"code,omitempty"`
+		LastUpdated  time.Time  `json:"lastUpdated,omitempty"`
+		TotalSession *int64     `json:"totalSession,omitempty"`
 	} `json:"subjects,omitempty"`
 }
 
@@ -69,19 +70,21 @@ func toCoreNewSpecialization(newSpecialization request.NewSpecialization) (speci
 
 	if subjectIDs != nil {
 		specialization.Subjects = make([]*struct {
-			ID          *uuid.UUID
-			Name        *string
-			Image       *string
-			Code        *string
-			LastUpdated time.Time
+			ID           *uuid.UUID
+			Name         *string
+			Image        *string
+			Code         *string
+			LastUpdated  time.Time
+			TotalSession *int64
 		}, len(subjectIDs))
 		for i, id := range subjectIDs {
 			specialization.Subjects[i] = &struct {
-				ID          *uuid.UUID
-				Name        *string
-				Image       *string
-				Code        *string
-				LastUpdated time.Time
+				ID           *uuid.UUID
+				Name         *string
+				Image        *string
+				Code         *string
+				LastUpdated  time.Time
+				TotalSession *int64
 			}{
 				ID: &id,
 			}
@@ -129,26 +132,29 @@ func toResponseSpecialization(specialization specialization.Specialization) Spec
 
 	if specialization.Subjects != nil {
 		response.Subjects = make([]*struct {
-			ID          *uuid.UUID `json:"id,omitempty"`
-			Name        *string    `json:"name,omitempty"`
-			Image       *string    `json:"image,omitempty"`
-			Code        *string    `json:"code,omitempty"`
-			LastUpdated time.Time  `json:"lastUpdated,omitempty"`
+			ID           *uuid.UUID `json:"id,omitempty"`
+			Name         *string    `json:"name,omitempty"`
+			Image        *string    `json:"image,omitempty"`
+			Code         *string    `json:"code,omitempty"`
+			LastUpdated  time.Time  `json:"lastUpdated,omitempty"`
+			TotalSession *int64     `json:"totalSession,omitempty"`
 		}, len(specialization.Subjects))
 
 		for i, subject := range specialization.Subjects {
 			response.Subjects[i] = &struct {
-				ID          *uuid.UUID `json:"id,omitempty"`
-				Name        *string    `json:"name,omitempty"`
-				Image       *string    `json:"image,omitempty"`
-				Code        *string    `json:"code,omitempty"`
-				LastUpdated time.Time  `json:"lastUpdated,omitempty"`
+				ID           *uuid.UUID `json:"id,omitempty"`
+				Name         *string    `json:"name,omitempty"`
+				Image        *string    `json:"image,omitempty"`
+				Code         *string    `json:"code,omitempty"`
+				LastUpdated  time.Time  `json:"lastUpdated,omitempty"`
+				TotalSession *int64     `json:"totalSession,omitempty"`
 			}{
-				ID:          subject.ID,
-				Name:        subject.Name,
-				Image:       subject.Image,
-				Code:        subject.Code,
-				LastUpdated: subject.LastUpdated,
+				ID:           subject.ID,
+				Name:         subject.Name,
+				Image:        subject.Image,
+				Code:         subject.Code,
+				LastUpdated:  subject.LastUpdated,
+				TotalSession: subject.TotalSession,
 			}
 		}
 	}

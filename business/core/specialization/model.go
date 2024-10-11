@@ -20,12 +20,13 @@ type Specialization struct {
 		Name *string
 	}
 	Subjects []*struct {
-		ID          *uuid.UUID
-		Name        *string
-		Image       *string
-		Code        *string
-		LastUpdated time.Time
-	} `json:"subjects,omitempty"`
+		ID           *uuid.UUID
+		Name         *string
+		Image        *string
+		Code         *string
+		LastUpdated  time.Time
+		TotalSession *int64
+	}
 }
 
 func toCoreSpecialization(dbSpec sqlc.Specialization) Specialization {

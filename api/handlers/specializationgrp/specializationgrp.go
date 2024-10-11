@@ -79,6 +79,9 @@ func (h *Handlers) GetSpecializationByID() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
+				errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+			case
 				errors.Is(err, specialization.ErrSpecNotFound),
 				errors.Is(err, specialization.ErrSkillNotFound),
 				errors.Is(err, specialization.ErrSubjectNotFound):
