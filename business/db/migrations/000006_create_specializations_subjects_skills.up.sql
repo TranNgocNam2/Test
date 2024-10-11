@@ -24,7 +24,7 @@ CREATE table subjects(
     time_per_session        smallint NOT NULL,
     sessions_per_week       smallint NOT NULL,
     image_link              character varying(50) NOT NULL,
-    status                  smallint  CHECK (status in (0, 1)) NOT NULL,
+    status                  smallint CHECK (status in (0, 1)) DEFAULT 0 NOT NULL,
     description             text NOT NULL,
     created_by              character varying(50) NOT NULL,
     updated_by              character varying(50),
@@ -32,11 +32,9 @@ CREATE table subjects(
     updated_at              timestamp,
 
     CONSTRAINT fk_subject_staff_updated_by
-        FOREIGN KEY (updated_by)
-            REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_subject_staff_created_by
-        FOREIGN KEY (created_by)
-            REFERENCES users(id) ON DELETE CASCADE
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE table specialization_subjects(
@@ -46,14 +44,11 @@ CREATE table specialization_subjects(
     created_by              character varying(50) NOT NULL,
 
     CONSTRAINT fk_specialization_subjects_specialization
-        FOREIGN KEY (specialization_id)
-            REFERENCES specializations(id) ON DELETE CASCADE,
+        FOREIGN KEY (specialization_id) REFERENCES specializations(id) ON DELETE CASCADE,
     CONSTRAINT fk_specialization_subjects_subject
-        FOREIGN KEY (subject_id)
-            REFERENCES subjects(id) ON DELETE CASCADE,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_specialization_subjects_staff_created_by
-        FOREIGN KEY (created_by)
-            REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_specialization_subjects UNIQUE (specialization_id, subject_id)
 );
@@ -69,10 +64,9 @@ CREATE table specialization_skills(
     skill_id            uuid NOT NULL,
 
     CONSTRAINT fk_specialization_skills_specialization
-        FOREIGN KEY (specialization_id)
-            REFERENCES specializations(id) ON DELETE CASCADE,
+        FOREIGN KEY (specialization_id) REFERENCES specializations(id) ON DELETE CASCADE,
     CONSTRAINT fk_specialization_skills_skill
-        FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
+    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_specialization_skills UNIQUE (specialization_id, skill_id)
 );
@@ -83,11 +77,9 @@ CREATE table subject_skills(
     skill_id        uuid NOT NULL,
 
     CONSTRAINT fk_subject_skills_subject
-        FOREIGN KEY (subject_id)
-            REFERENCES specializations(id) ON DELETE CASCADE,
+        FOREIGN KEY (subject_id) REFERENCES specializations(id) ON DELETE CASCADE,
     CONSTRAINT fk_subject_skills_skill
-        FOREIGN KEY (skill_id)
-            REFERENCES skills(id) ON DELETE CASCADE,
+        FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_subject_skills UNIQUE (subject_id, skill_id)
 );
