@@ -156,7 +156,7 @@ type Specialization struct {
 	Code        string           `db:"code" json:"code"`
 	TimeAmount  float64          `db:"time_amount" json:"timeAmount"`
 	ImageLink   string           `db:"image_link" json:"imageLink"`
-	IsDrafted   *bool            `db:"is_drafted" json:"isDrafted"`
+	Status      int16            `db:"status" json:"status"`
 	Description string           `db:"description" json:"description"`
 	CreatedBy   string           `db:"created_by" json:"createdBy"`
 	UpdatedBy   *string          `db:"updated_by" json:"updatedBy"`

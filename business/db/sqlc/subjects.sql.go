@@ -53,3 +53,8 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 	err := row.Scan(&id)
 	return id, err
 }
+
+type InsertSubjectSkillParams struct {
+	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
+	SkillID   uuid.UUID `db:"skill_id" json:"skillId"`
+}

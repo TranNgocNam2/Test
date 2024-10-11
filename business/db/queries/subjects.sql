@@ -8,3 +8,6 @@ VALUES (sqlc.arg(id)::uuid, sqlc.arg(name), sqlc.arg(code), sqlc.arg(description
     sqlc.arg(created_at))
 RETURNING id;
 
+-- name: InsertSubjectSkill :copyfrom
+INSERT INTO subject_skills (subject_id, skill_id)
+VALUES ($1, $2);
