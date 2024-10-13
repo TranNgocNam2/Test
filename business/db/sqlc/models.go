@@ -154,10 +154,10 @@ type Specialization struct {
 	ID          uuid.UUID        `db:"id" json:"id"`
 	Name        string           `db:"name" json:"name"`
 	Code        string           `db:"code" json:"code"`
-	TimeAmount  float64          `db:"time_amount" json:"timeAmount"`
-	ImageLink   string           `db:"image_link" json:"imageLink"`
+	TimeAmount  *float64         `db:"time_amount" json:"timeAmount"`
+	ImageLink   *string          `db:"image_link" json:"imageLink"`
 	Status      int16            `db:"status" json:"status"`
-	Description string           `db:"description" json:"description"`
+	Description *string          `db:"description" json:"description"`
 	CreatedBy   string           `db:"created_by" json:"createdBy"`
 	UpdatedBy   *string          `db:"updated_by" json:"updatedBy"`
 	CreatedAt   pgtype.Timestamp `db:"created_at" json:"createdAt"`
@@ -165,11 +165,13 @@ type Specialization struct {
 }
 
 type SpecializationSkill struct {
+	ID               uuid.UUID `db:"id" json:"id"`
 	SpecializationID uuid.UUID `db:"specialization_id" json:"specializationId"`
 	SkillID          uuid.UUID `db:"skill_id" json:"skillId"`
 }
 
 type SpecializationSubject struct {
+	ID               uuid.UUID `db:"id" json:"id"`
 	SpecializationID uuid.UUID `db:"specialization_id" json:"specializationId"`
 	SubjectID        uuid.UUID `db:"subject_id" json:"subjectId"`
 	CreatedBy        string    `db:"created_by" json:"createdBy"`
@@ -191,6 +193,7 @@ type Subject struct {
 }
 
 type SubjectSkill struct {
+	ID        uuid.UUID `db:"id" json:"id"`
 	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
 	SkillID   uuid.UUID `db:"skill_id" json:"skillId"`
 }

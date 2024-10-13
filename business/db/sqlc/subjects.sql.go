@@ -12,6 +12,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteSubjectSkills = `-- name: DeleteSubjectSkills :exec
+DELETE FROM subject_skills WHERE subject_id = $1
+`
+
+func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSubjectSkills, subjectID)
+	return err
+}
+
 const insertSubject = `-- name: InsertSubject :one
 INSERT INTO subjects (id, name, code, description, image_link, status,
     time_per_session, sessions_per_week, created_by,
@@ -55,6 +64,7 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 }
 
 type InsertSubjectSkillParams struct {
+	ID        uuid.UUID `db:"id" json:"id"`
 	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
 	SkillID   uuid.UUID `db:"skill_id" json:"skillId"`
 }

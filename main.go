@@ -65,13 +65,13 @@ func main() {
 	}
 	defer dbPool.Close()
 	pgxDb := stdlib.OpenDBFromPool(dbPool)
-	sqlxDb := sqlx.NewDb(pgxDb, "pgx")
 
 	a := app.Application{
 		Config:  cfg,
 		Logger:  log,
-		Db:      sqlxDb,
+		Db:      sqlx.NewDb(pgxDb, "pgx"),
 		Queries: sqlc.New(dbPool),
+		Pool:    dbPool,
 	}
 
 	// Load all routes

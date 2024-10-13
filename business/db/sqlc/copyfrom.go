@@ -29,6 +29,7 @@ func (r *iteratorForInsertSubjectSkill) Next() bool {
 
 func (r iteratorForInsertSubjectSkill) Values() ([]interface{}, error) {
 	return []interface{}{
+		r.rows[0].ID,
 		r.rows[0].SubjectID,
 		r.rows[0].SkillID,
 	}, nil
@@ -39,5 +40,5 @@ func (r iteratorForInsertSubjectSkill) Err() error {
 }
 
 func (q *Queries) InsertSubjectSkill(ctx context.Context, arg []InsertSubjectSkillParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"subject_skills"}, []string{"subject_id", "skill_id"}, &iteratorForInsertSubjectSkill{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"subject_skills"}, []string{"id", "subject_id", "skill_id"}, &iteratorForInsertSubjectSkill{rows: arg})
 }

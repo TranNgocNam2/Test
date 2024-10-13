@@ -9,5 +9,8 @@ VALUES (sqlc.arg(id)::uuid, sqlc.arg(name), sqlc.arg(code), sqlc.arg(description
 RETURNING id;
 
 -- name: InsertSubjectSkill :copyfrom
-INSERT INTO subject_skills (subject_id, skill_id)
-VALUES ($1, $2);
+INSERT INTO subject_skills (id, subject_id, skill_id)
+VALUES ($1, $2, $3);
+
+-- name: DeleteSubjectSkills :exec
+DELETE FROM subject_skills WHERE subject_id = sqlc.arg(subject_id);
