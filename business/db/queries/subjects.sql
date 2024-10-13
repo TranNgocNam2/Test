@@ -14,3 +14,6 @@ VALUES ($1, $2, $3);
 
 -- name: DeleteSubjectSkills :exec
 DELETE FROM subject_skills WHERE subject_id = sqlc.arg(subject_id);
+
+-- name: GetSubjectsByIDs :many
+SELECT * FROM subjects WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]) AND status = 1;

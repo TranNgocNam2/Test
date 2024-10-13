@@ -7,9 +7,9 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const deleteSubjectSkills = `-- name: DeleteSubjectSkills :exec
@@ -19,6 +19,43 @@ DELETE FROM subject_skills WHERE subject_id = $1
 func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteSubjectSkills, subjectID)
 	return err
+}
+
+const getSubjectsByIDs = `-- name: GetSubjectsByIDs :many
+SELECT id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, updated_by, created_at, updated_at FROM subjects WHERE id = ANY($1::uuid[]) AND status = 1
+`
+
+func (q *Queries) GetSubjectsByIDs(ctx context.Context, subjectIds []uuid.UUID) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, getSubjectsByIDs, subjectIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Subject
+	for rows.Next() {
+		var i Subject
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.TimePerSession,
+			&i.SessionsPerWeek,
+			&i.ImageLink,
+			&i.Status,
+			&i.Description,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const insertSubject = `-- name: InsertSubject :one
@@ -33,16 +70,16 @@ RETURNING id
 `
 
 type InsertSubjectParams struct {
-	ID              uuid.UUID        `db:"id" json:"id"`
-	Name            string           `db:"name" json:"name"`
-	Code            string           `db:"code" json:"code"`
-	Description     string           `db:"description" json:"description"`
-	ImageLink       string           `db:"image_link" json:"imageLink"`
-	Status          int16            `db:"status" json:"status"`
-	TimePerSession  int16            `db:"time_per_session" json:"timePerSession"`
-	SessionsPerWeek int16            `db:"sessions_per_week" json:"sessionsPerWeek"`
-	CreatedBy       string           `db:"created_by" json:"createdBy"`
-	CreatedAt       pgtype.Timestamp `db:"created_at" json:"createdAt"`
+	ID              uuid.UUID `db:"id" json:"id"`
+	Name            string    `db:"name" json:"name"`
+	Code            string    `db:"code" json:"code"`
+	Description     string    `db:"description" json:"description"`
+	ImageLink       string    `db:"image_link" json:"imageLink"`
+	Status          int16     `db:"status" json:"status"`
+	TimePerSession  int16     `db:"time_per_session" json:"timePerSession"`
+	SessionsPerWeek int16     `db:"sessions_per_week" json:"sessionsPerWeek"`
+	CreatedBy       string    `db:"created_by" json:"createdBy"`
+	CreatedAt       time.Time `db:"created_at" json:"createdAt"`
 }
 
 func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (uuid.UUID, error) {

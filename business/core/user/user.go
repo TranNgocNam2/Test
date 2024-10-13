@@ -25,7 +25,7 @@ type Core struct {
 
 func NewCore(app *app.Application) *Core {
 	return &Core{
-		db:      app.Db,
+		db:      app.DB,
 		queries: app.Queries,
 		logger:  app.Logger,
 	}
