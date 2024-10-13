@@ -40,6 +40,15 @@ func (q *Queries) CreateSpecialization(ctx context.Context, arg CreateSpecializa
 	return err
 }
 
+const deleteSpecialization = `-- name: DeleteSpecialization :exec
+DELETE FROM specializations WHERE id = $1 AND status = 0
+`
+
+func (q *Queries) DeleteSpecialization(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSpecialization, id)
+	return err
+}
+
 const getSpecializationByCode = `-- name: GetSpecializationByCode :one
 SELECT id, name, code, time_amount, image_link, status, description, created_by, updated_by, created_at, updated_at FROM specializations WHERE code = $1
 `
@@ -84,4 +93,50 @@ func (q *Queries) GetSpecializationByID(ctx context.Context, id uuid.UUID) (Spec
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateSpecialization = `-- name: UpdateSpecialization :exec
+UPDATE specializations SET name = $1, code = $2, status = $3, time_amount = $4,
+        image_link = $5, description = $6, updated_at = NOW(), updated_by = $7
+WHERE id = $8
+`
+
+type UpdateSpecializationParams struct {
+	Name        string    `db:"name" json:"name"`
+	Code        string    `db:"code" json:"code"`
+	Status      int16     `db:"status" json:"status"`
+	TimeAmount  *float64  `db:"time_amount" json:"timeAmount"`
+	ImageLink   *string   `db:"image_link" json:"imageLink"`
+	Description *string   `db:"description" json:"description"`
+	UpdatedBy   *string   `db:"updated_by" json:"updatedBy"`
+	ID          uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateSpecialization(ctx context.Context, arg UpdateSpecializationParams) error {
+	_, err := q.db.Exec(ctx, updateSpecialization,
+		arg.Name,
+		arg.Code,
+		arg.Status,
+		arg.TimeAmount,
+		arg.ImageLink,
+		arg.Description,
+		arg.UpdatedBy,
+		arg.ID,
+	)
+	return err
+}
+
+const updateSpecializationStatus = `-- name: UpdateSpecializationStatus :exec
+UPDATE specializations SET status = 2, updated_at = NOW(), updated_by = $1
+WHERE id = $2
+`
+
+type UpdateSpecializationStatusParams struct {
+	UpdatedBy *string   `db:"updated_by" json:"updatedBy"`
+	ID        uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateSpecializationStatus(ctx context.Context, arg UpdateSpecializationStatusParams) error {
+	_, err := q.db.Exec(ctx, updateSpecializationStatus, arg.UpdatedBy, arg.ID)
+	return err
 }

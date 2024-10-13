@@ -2,5 +2,6 @@ package specialization
 
 const (
 	Draft = iota
-	Active
+	Public
+	Delete
 )

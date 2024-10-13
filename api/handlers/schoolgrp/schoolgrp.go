@@ -27,7 +27,7 @@ func (h *Handlers) CreateSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var newSchool request.NewSchool
 		if err := web.Decode(ctx, &newSchool); err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
@@ -50,7 +50,7 @@ func (h *Handlers) UpdateSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var updatedSchool request.UpdateSchool
 		if err := web.Decode(ctx, &updatedSchool); err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
@@ -124,7 +124,7 @@ func (h *Handlers) GetSchoolByID() gin.HandlerFunc {
 	}
 }
 
-func (h *Handlers) GetSchoolPaginated() gin.HandlerFunc {
+func (h *Handlers) GetSchools() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		pageInfo, err := page.Parse(ctx)
 		if err != nil {
@@ -143,10 +143,10 @@ func (h *Handlers) GetSchoolPaginated() gin.HandlerFunc {
 
 		orderBy, err := parseOrder(ctx)
 		if err != nil {
-			orderBy = order.NewBy("name", order.ASC)
+			orderBy = order.NewBy(filterByName, order.ASC)
 		}
 
-		schools := h.school.GetSchoolsPaginated(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		schools := h.school.Query(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		total := h.school.Count(ctx, filter)
 		result := page.NewPageResponse(toSchoolsResponse(schools), total, pageInfo.Number, pageInfo.Size)
 

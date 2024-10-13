@@ -8,3 +8,15 @@ SELECT * FROM specializations WHERE code = sqlc.arg(code);
 
 -- name: GetSpecializationByID :one
 SELECT * FROM specializations WHERE id = sqlc.arg(id);
+
+-- name: UpdateSpecialization :exec
+UPDATE specializations SET name = sqlc.arg(name), code = sqlc.arg(code), status = sqlc.arg(status), time_amount = sqlc.arg(time_amount),
+        image_link = sqlc.arg(image_link), description = sqlc.arg(description), updated_at = NOW(), updated_by = sqlc.arg(updated_by)
+WHERE id = sqlc.arg(id);
+
+-- name: UpdateSpecializationStatus :exec
+UPDATE specializations SET status = 2, updated_at = NOW(), updated_by = sqlc.arg(updated_by)
+WHERE id = sqlc.arg(id);
+
+-- name: DeleteSpecialization :exec
+DELETE FROM specializations WHERE id = sqlc.arg(id) AND status = 0;

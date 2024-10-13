@@ -4,7 +4,7 @@ CREATE table specializations(
     code            character varying(10) NOT NULL,
     time_amount     float,
     image_link      text,
-    status          smallint DEFAULT 0 CHECK (status in (0, 1)) NOT NULL,
+    status          smallint DEFAULT 0 CHECK (status in (0, 1, 2)) NOT NULL,
     description     text,
     created_by      character varying(50) NOT NULL,
     updated_by      character varying(50),

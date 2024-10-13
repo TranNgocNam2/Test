@@ -12,6 +12,18 @@ import (
 	"github.com/google/uuid"
 )
 
+const countSubjectsBySpecializationID = `-- name: CountSubjectsBySpecializationID :one
+SELECT COUNT(*) FROM specialization_subjects
+WHERE specialization_id = $1::uuid
+`
+
+func (q *Queries) CountSubjectsBySpecializationID(ctx context.Context, specializationID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countSubjectsBySpecializationID, specializationID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createSpecializationSubjects = `-- name: CreateSpecializationSubjects :exec
 INSERT INTO specialization_subjects (specialization_id, subject_id, created_by)
 SELECT $1::uuid, unnest($2::uuid[]), $3::varchar
@@ -25,6 +37,15 @@ type CreateSpecializationSubjectsParams struct {
 
 func (q *Queries) CreateSpecializationSubjects(ctx context.Context, arg CreateSpecializationSubjectsParams) error {
 	_, err := q.db.Exec(ctx, createSpecializationSubjects, arg.SpecializationID, arg.SubjectIds, arg.CreatedBy)
+	return err
+}
+
+const deleteSpecializationSubjects = `-- name: DeleteSpecializationSubjects :exec
+DELETE FROM specialization_subjects WHERE specialization_id = $1::uuid
+`
+
+func (q *Queries) DeleteSpecializationSubjects(ctx context.Context, specializationID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSpecializationSubjects, specializationID)
 	return err
 }
 

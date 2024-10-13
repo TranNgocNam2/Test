@@ -7,3 +7,10 @@ SELECT subjects.id, subjects.name, subjects.code, subjects.image_link, subjects.
 FROM specialization_subjects
 JOIN subjects ON specialization_subjects.subject_id = subjects.id
 WHERE specialization_subjects.specialization_id = sqlc.arg(specialization_id)::uuid;
+
+-- name: CountSubjectsBySpecializationID :one
+SELECT COUNT(*) FROM specialization_subjects
+WHERE specialization_id = sqlc.arg(specialization_id)::uuid;
+
+-- name: DeleteSpecializationSubjects :exec
+DELETE FROM specialization_subjects WHERE specialization_id = sqlc.arg(specialization_id)::uuid;

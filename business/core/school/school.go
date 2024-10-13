@@ -106,7 +106,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (School, error) {
 	return toCoreSchool(school), nil
 }
 
-func (c *Core) GetSchoolsPaginated(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []School {
+func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []School {
 	if err := filter.Validate(); err != nil {
 		c.logger.Error(err.Error())
 		return nil
