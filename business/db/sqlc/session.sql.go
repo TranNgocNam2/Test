@@ -21,3 +21,29 @@ func (q *Queries) CountSessionsBySubjectID(ctx context.Context, subjectID uuid.U
 	err := row.Scan(&count)
 	return count, err
 }
+
+const upsertSession = `-- name: UpsertSession :exec
+INSERT INTO sessions(id, subject_id, index, name)
+VALUES($1::uuid, $2::uuid, $3, $4)
+ON CONFLICT (id)
+DO UPDATE SET
+    index = EXCLUDED.index,
+    name = EXCLUDED.name
+`
+
+type UpsertSessionParams struct {
+	ID        uuid.UUID `db:"id" json:"id"`
+	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
+	Index     int32     `db:"index" json:"index"`
+	Name      string    `db:"name" json:"name"`
+}
+
+func (q *Queries) UpsertSession(ctx context.Context, arg UpsertSessionParams) error {
+	_, err := q.db.Exec(ctx, upsertSession,
+		arg.ID,
+		arg.SubjectID,
+		arg.Index,
+		arg.Name,
+	)
+	return err
+}

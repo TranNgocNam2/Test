@@ -9,13 +9,13 @@ import (
 	"context"
 )
 
-// iteratorForInsertSubjectSkill implements pgx.CopyFromSource.
-type iteratorForInsertSubjectSkill struct {
-	rows                 []InsertSubjectSkillParams
+// iteratorForInsertMaterial implements pgx.CopyFromSource.
+type iteratorForInsertMaterial struct {
+	rows                 []InsertMaterialParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForInsertSubjectSkill) Next() bool {
+func (r *iteratorForInsertMaterial) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -27,18 +27,22 @@ func (r *iteratorForInsertSubjectSkill) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForInsertSubjectSkill) Values() ([]interface{}, error) {
+func (r iteratorForInsertMaterial) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].ID,
-		r.rows[0].SubjectID,
-		r.rows[0].SkillID,
+		r.rows[0].SessionID,
+		r.rows[0].Index,
+		r.rows[0].Type,
+		r.rows[0].IsShared,
+		r.rows[0].Name,
+		r.rows[0].Data,
 	}, nil
 }
 
-func (r iteratorForInsertSubjectSkill) Err() error {
+func (r iteratorForInsertMaterial) Err() error {
 	return nil
 }
 
-func (q *Queries) InsertSubjectSkill(ctx context.Context, arg []InsertSubjectSkillParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"subject_skills"}, []string{"id", "subject_id", "skill_id"}, &iteratorForInsertSubjectSkill{rows: arg})
+func (q *Queries) InsertMaterial(ctx context.Context, arg []InsertMaterialParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"materials"}, []string{"id", "session_id", "index", "type", "is_shared", "name", "data"}, &iteratorForInsertMaterial{rows: arg})
 }

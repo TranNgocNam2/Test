@@ -1,1 +1,18 @@
 package subjectgrp
+
+import (
+	"Backend/business/core/subject"
+	"Backend/internal/app"
+
+	"github.com/gin-gonic/gin"
+)
+
+func SubjectRoutes(router *gin.Engine, app *app.Application) {
+	core := subject.NewCore(app)
+	handlers := New(core)
+	subjects := router.Group("/subjects")
+	{
+		subjects.POST("", handlers.CreateSubject())
+		subjects.PUT("/:id", handlers.UpdateSubject())
+	}
+}

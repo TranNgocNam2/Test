@@ -8,12 +8,29 @@ VALUES (sqlc.arg(id)::uuid, sqlc.arg(name), sqlc.arg(code), sqlc.arg(description
     sqlc.arg(created_at))
 RETURNING id;
 
--- name: InsertSubjectSkill :copyfrom
-INSERT INTO subject_skills (id, subject_id, skill_id)
-VALUES ($1, $2, $3);
-
 -- name: DeleteSubjectSkills :exec
 DELETE FROM subject_skills WHERE subject_id = sqlc.arg(subject_id);
 
 -- name: GetSubjectsByIDs :many
-SELECT * FROM subjects WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]) AND status = 1;
+SELECT *
+FROM subjects
+WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]) AND status = 1;
+
+-- name: GetSubjectByCode :one
+SELECT *
+FROM subjects
+WHERE code = sqlc.arg(code);
+
+-- name: UpdateSubject :exec
+UPDATE subjects
+SET name = sqlc.arg(name),
+    code = sqlc.arg(code),
+    description = sqlc.arg(description),
+    status = sqlc.arg(status),
+    image_link = sqlc.arg(image_link),
+    updated_by = sqlc.arg(updated_by),
+    updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id)::uuid;
+
+-- name: GetSubjectById :one
+SELECT * FROM subjects WHERE id = sqlc.arg(id)::uuid;

@@ -3,8 +3,10 @@ package user
 import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -21,6 +23,7 @@ type Core struct {
 	db      *sqlx.DB
 	queries *sqlc.Queries
 	logger  *zap.Logger
+	pool    *pgxpool.Pool
 }
 
 func NewCore(app *app.Application) *Core {
@@ -28,6 +31,7 @@ func NewCore(app *app.Application) *Core {
 		db:      app.DB,
 		queries: app.Queries,
 		logger:  app.Logger,
+		pool:    app.Pool,
 	}
 }
 
