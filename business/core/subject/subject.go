@@ -4,13 +4,16 @@ import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/middleware"
+	"Backend/internal/slice"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
+	"gitlab.com/innovia69420/kit/web/request"
 	"go.uber.org/zap"
 )
 
@@ -35,9 +38,12 @@ var (
 	ErrSubjectNotFound  = errors.New("Môn học không có trong hệ thống!")
 	ErrCodeAlreadyExist = errors.New("Mã môn đã tồn tại!")
 	ErrSkillRequired    = errors.New("Môn học cần có ít nhất một kĩ năng!")
+	ErrInvalidSkillId   = errors.New("Skill id không phải định dạng uuid!")
+	ErrInvalidSessions  = errors.New("Số lượng session cho môn học không hợp lệ!")
+	ErrInvalidMaterials = errors.New("Buổi học phải có ít nhất 1 nội dung!")
 )
 
-func (c *Core) Create(ctx *gin.Context, subject Subject) (string, error) {
+func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, error) {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return "", err
@@ -47,9 +53,11 @@ func (c *Core) Create(ctx *gin.Context, subject Subject) (string, error) {
 		return "", ErrCodeAlreadyExist
 	}
 
+	subjectId := uuid.New()
 	subjectArgs := sqlc.InsertSubjectParams{
-		ID:              uuid.New(),
+		ID:              subjectId,
 		Name:            subject.Name,
+		Code:            subject.Code,
 		Description:     subject.Description,
 		ImageLink:       subject.Image,
 		Status:          Draft,
@@ -72,18 +80,28 @@ func (c *Core) Create(ctx *gin.Context, subject Subject) (string, error) {
 		return "", err
 	}
 
-	_, err = qtx.GetSkillsByIDs(ctx, subject.Skills)
+	skills, err := slice.GetUUIDs(subject.Skills)
 	if err != nil {
+		return "", ErrInvalidSkillId
+	}
+
+	dbSkills, err := qtx.GetSkillsByIDs(ctx, skills)
+	if err != nil || len(dbSkills) == 0 {
 		return "", ErrSkillNotFound
 	}
 
-	subjectSkillArgs := sqlc.InsertSubjectSkillsParams{
-		SubjectID: id,
-		SkillIds:  subject.Skills,
+	var subSkillsParams []sqlc.InsertSubjectSkillParams
+	for _, skillId := range skills {
+		param := sqlc.InsertSubjectSkillParams{
+			ID:        uuid.New(),
+			SubjectID: id,
+			SkillID:   skillId,
+		}
+
+		subSkillsParams = append(subSkillsParams, param)
 	}
 
-	err = qtx.InsertSubjectSkills(ctx, subjectSkillArgs)
-	if err != nil {
+	if _, err = qtx.InsertSubjectSkill(ctx, subSkillsParams); err != nil {
 		return "", err
 	}
 	tx.Commit(ctx)
@@ -91,10 +109,33 @@ func (c *Core) Create(ctx *gin.Context, subject Subject) (string, error) {
 	return id.String(), nil
 }
 
-func (c *Core) UpdateDraft(ctx *gin.Context, s SubjectDraft) error {
+func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UUID) error {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
+	}
+
+	subject, err := c.queries.GetSubjectById(ctx, id)
+	if err != nil {
+		return ErrSubjectNotFound
+	}
+
+	totalSessions := len(s.Sessions)
+	if *s.Status == Published {
+		if totalSessions%int(subject.SessionsPerWeek) != 0 || totalSessions == 0 {
+			return ErrInvalidSessions
+		}
+
+		for _, session := range s.Sessions {
+			if len(session.Materials) == 0 {
+				return ErrInvalidMaterials
+			}
+		}
+	}
+
+	skills, err := slice.GetUUIDs(s.Skills)
+	if err != nil {
+		return ErrInvalidSkillId
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -109,11 +150,11 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s SubjectDraft) error {
 
 	subParams := sqlc.UpdateSubjectParams{
 		Name:        s.Name,
-		Code:        s.Code,
+		Code:        subject.Code,
 		Description: s.Description,
-		Status:      int16(s.Status),
+		Status:      int16(*s.Status),
 		ImageLink:   s.Image,
-		ID:          s.ID,
+		ID:          id,
 		UpdatedBy:   &staffId,
 		UpdatedAt:   &now,
 	}
@@ -122,28 +163,37 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s SubjectDraft) error {
 		return err
 	}
 
-	if _, err = qtx.GetSkillsByIDs(ctx, s.Skills); err == nil {
+	if dbSkills, err := qtx.GetSkillsByIDs(ctx, skills); err != nil || len(dbSkills) == 0 {
 		return ErrSkillNotFound
 	}
 
-	if err := qtx.DeleteSubjectSkills(ctx, s.ID); err != nil {
+	if err := qtx.DeleteSubjectSkills(ctx, id); err != nil {
 		return err
 	}
 
-	subjectSkillArgs := sqlc.InsertSubjectSkillsParams{
-		SubjectID: s.ID,
-		SkillIds:  s.Skills,
+	var subSkillsParams []sqlc.InsertSubjectSkillParams
+	for _, skillId := range skills {
+		param := sqlc.InsertSubjectSkillParams{
+			ID:        uuid.New(),
+			SubjectID: id,
+			SkillID:   skillId,
+		}
+
+		subSkillsParams = append(subSkillsParams, param)
 	}
 
-	err = qtx.InsertSubjectSkills(ctx, subjectSkillArgs)
-	if err != nil {
+	if _, err = qtx.InsertSubjectSkill(ctx, subSkillsParams); err != nil {
 		return err
 	}
 
 	for _, session := range s.Sessions {
+		sessionId, err := uuid.Parse(session.ID)
+		if err != nil {
+			return fmt.Errorf("Session với id: %s, không đúng định dạng", sessionId)
+		}
 		sessionParams := sqlc.UpsertSessionParams{
-			ID:        session.ID,
-			SubjectID: s.ID,
+			ID:        sessionId,
+			SubjectID: id,
 			Index:     int32(session.Index),
 			Name:      session.Name,
 		}
@@ -152,16 +202,20 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s SubjectDraft) error {
 			return err
 		}
 
-		if err := qtx.DeleteSessionMaterials(ctx, session.ID); err != nil {
+		if err := qtx.DeleteSessionMaterials(ctx, sessionId); err != nil {
 			return err
 		}
 
 		var materialParams []sqlc.InsertMaterialParams
 
 		for _, material := range session.Materials {
+			materialId, err := uuid.Parse(material.ID)
+			if err != nil {
+				return fmt.Errorf("Material với id: %s, không đúng định dạng", material.ID)
+			}
 			param := sqlc.InsertMaterialParams{
-				ID:        material.ID,
-				SessionID: session.ID,
+				ID:        materialId,
+				SessionID: sessionId,
 				Index:     int32(material.Index),
 				IsShared:  material.IsShared,
 				Name:      &material.Name,
@@ -183,10 +237,15 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s SubjectDraft) error {
 	return nil
 }
 
-func (c *Core) UpdatePublished(ctx *gin.Context, s SubjectPulished) error {
+func (c *Core) UpdatePublished(ctx *gin.Context, s request.UpdateSubject, id uuid.UUID) error {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
+	}
+
+	skills, err := slice.GetUUIDs(s.Skills)
+	if err != nil {
+		return ErrInvalidSkillId
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -203,7 +262,7 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s SubjectPulished) error {
 		Description: s.Description,
 		Status:      Published,
 		ImageLink:   s.Image,
-		ID:          s.ID,
+		ID:          id,
 		UpdatedBy:   &staffId,
 		UpdatedAt:   &now,
 	}
@@ -212,20 +271,26 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s SubjectPulished) error {
 		return err
 	}
 
-	if _, err = qtx.GetSkillsByIDs(ctx, s.Skills); err == nil {
+	if dbSkills, err := qtx.GetSkillsByIDs(ctx, skills); err != nil || len(dbSkills) == 0 {
 		return ErrSkillNotFound
 	}
 
-	if err = qtx.DeleteSubjectSkills(ctx, s.ID); err != nil {
+	if err = qtx.DeleteSubjectSkills(ctx, id); err != nil {
 		return err
 	}
 
-	subjectSkillArgs := sqlc.InsertSubjectSkillsParams{
-		SubjectID: s.ID,
-		SkillIds:  s.Skills,
+	var subSkillsParams []sqlc.InsertSubjectSkillParams
+	for _, skillId := range skills {
+		param := sqlc.InsertSubjectSkillParams{
+			ID:        uuid.New(),
+			SubjectID: id,
+			SkillID:   skillId,
+		}
+
+		subSkillsParams = append(subSkillsParams, param)
 	}
 
-	if err = qtx.InsertSubjectSkills(ctx, subjectSkillArgs); err != nil {
+	if _, err = qtx.InsertSubjectSkill(ctx, subSkillsParams); err != nil {
 		return err
 	}
 

@@ -6,22 +6,11 @@
 package sqlc
 
 import (
-	"context"
-
 	"github.com/google/uuid"
 )
 
-const insertSubjectSkills = `-- name: InsertSubjectSkills :exec
-INSERT INTO subject_skills (subject_id, skill_id)
-SELECT $1::uuid, unnest($2::uuid[])
-`
-
-type InsertSubjectSkillsParams struct {
-	SubjectID uuid.UUID   `db:"subject_id" json:"subjectId"`
-	SkillIds  []uuid.UUID `db:"skill_ids" json:"skillIds"`
-}
-
-func (q *Queries) InsertSubjectSkills(ctx context.Context, arg InsertSubjectSkillsParams) error {
-	_, err := q.db.Exec(ctx, insertSubjectSkills, arg.SubjectID, arg.SkillIds)
-	return err
+type InsertSubjectSkillParams struct {
+	ID        uuid.UUID `db:"id" json:"id"`
+	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
+	SkillID   uuid.UUID `db:"skill_id" json:"skillId"`
 }

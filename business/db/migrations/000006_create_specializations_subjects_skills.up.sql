@@ -77,7 +77,7 @@ CREATE table subject_skills(
     skill_id        uuid NOT NULL,
 
     CONSTRAINT fk_subject_skills_subject
-        FOREIGN KEY (subject_id) REFERENCES specializations(id) ON DELETE CASCADE,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_subject_skills_skill
         FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
 

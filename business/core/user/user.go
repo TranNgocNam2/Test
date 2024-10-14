@@ -77,8 +77,8 @@ func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
 	return user, nil
 }
 
-func (c *Core) Update(ctx *gin.Context, updatedUser User) error {
-	dbUser, err := c.queries.GetUserByID(ctx, updatedUser.ID)
+func (c *Core) Update(ctx *gin.Context, id string, updatedUser UpdateUser) error {
+	dbUser, err := c.queries.GetUserByID(ctx, id)
 	if err != nil {
 		return ErrUserNotFound
 	}
@@ -89,24 +89,24 @@ func (c *Core) Update(ctx *gin.Context, updatedUser User) error {
 		}
 	}
 
-	if updatedUser.Phone != nil && *updatedUser.Phone != *dbUser.Phone {
-		if _, err = c.queries.GetUserByPhone(ctx, updatedUser.Phone); err == nil {
+	if updatedUser.Phone != "" && updatedUser.Phone != *dbUser.Phone {
+		if _, err = c.queries.GetUserByPhone(ctx, &updatedUser.Phone); err == nil {
 			return ErrPhoneAlreadyExists
 		}
 	}
 
-	if updatedUser.School == nil {
-		updatedUser.School.ID = dbUser.SchoolID
+	if updatedUser.SchoolID == nil {
+		updatedUser.SchoolID = dbUser.SchoolID
 	}
 
 	var dbUserUpdate = sqlc.UpdateUserParams{
-		FullName:     updatedUser.FullName,
+		FullName:     &updatedUser.FullName,
 		Email:        updatedUser.Email.Address,
-		Phone:        updatedUser.Phone,
-		Gender:       updatedUser.Gender,
-		SchoolID:     updatedUser.School.ID,
-		ProfilePhoto: updatedUser.Photo,
-		ID:           updatedUser.ID,
+		Phone:        &updatedUser.Phone,
+		Gender:       &updatedUser.Gender,
+		SchoolID:     updatedUser.SchoolID,
+		ProfilePhoto: &updatedUser.Photo,
+		ID:           dbUser.ID,
 	}
 
 	if err = c.queries.UpdateUser(ctx, dbUserUpdate); err != nil {
