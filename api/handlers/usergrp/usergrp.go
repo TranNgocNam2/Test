@@ -78,6 +78,8 @@ func (h *Handlers) GetUserByID() gin.HandlerFunc {
 
 func (h *Handlers) UpdateUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userID := ctx.Param("id")
+
 		var updateUserRequest request.UpdateUser
 		if err := web.Decode(ctx, &updateUserRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
@@ -95,7 +97,7 @@ func (h *Handlers) UpdateUser() gin.HandlerFunc {
 			return
 		}
 
-		err = h.user.Update(ctx, updateUser)
+		err = h.user.Update(ctx, userID, updateUser)
 		if err != nil {
 			switch {
 			case
