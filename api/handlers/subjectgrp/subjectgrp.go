@@ -125,3 +125,26 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 		}
 	}
 }
+
+func (h *Handlers) GetSubjectById() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		res, err := h.subject.GetById(ctx, id)
+		if errors.Is(err, subject.ErrSubjectNotFound) {
+			web.Respond(ctx, nil, http.StatusNotFound, err)
+			return
+		}
+
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusInternalServerError, err)
+			return
+		}
+
+		web.Respond(ctx, res, http.StatusOK, nil)
+	}
+}

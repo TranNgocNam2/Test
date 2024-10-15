@@ -14,5 +14,6 @@ func SubjectRoutes(router *gin.Engine, app *app.Application) {
 	{
 		subjects.POST("", handlers.CreateSubject())
 		subjects.PUT("/:id", handlers.UpdateSubject())
+		subjects.GET("/:id", handlers.GetSubjectById())
 	}
 }

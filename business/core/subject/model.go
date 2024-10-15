@@ -7,6 +7,7 @@ import (
 )
 
 type Subject struct {
+	ID             uuid.UUID
 	Name           string
 	Code           string
 	Description    string
@@ -14,26 +15,24 @@ type Subject struct {
 	TimePerSession int
 	SessionPerWeek int
 	Skills         []uuid.UUID
+	TotalSessions  int
 }
 
-type SubjectDraft struct {
-	ID          uuid.UUID
-	Name        string
-	Code        string
-	Description string
-	Image       string
-	Status      int
-	Skills      []uuid.UUID
-	Sessions    []Session
+type SubjectDetail struct {
+	ID            uuid.UUID
+	Name          string
+	Code          string
+	Description   string
+	Image         string
+	Status        int
+	Skills        []Skill
+	Sessions      []Session
+	TotalSessions int
 }
 
-type SubjectPulished struct {
-	ID          uuid.UUID
-	Name        string
-	Code        string
-	Description string
-	Image       string
-	Skills      []uuid.UUID
+type Skill struct {
+	ID   uuid.UUID
+	Name string
 }
 
 type Session struct {

@@ -34,13 +34,14 @@ func NewCore(app *app.Application) *Core {
 }
 
 var (
-	ErrSkillNotFound    = errors.New("Kỹ năng không có trong hệ thống!")
-	ErrSubjectNotFound  = errors.New("Môn học không có trong hệ thống!")
-	ErrCodeAlreadyExist = errors.New("Mã môn đã tồn tại!")
-	ErrSkillRequired    = errors.New("Môn học cần có ít nhất một kĩ năng!")
-	ErrInvalidSkillId   = errors.New("Skill id không phải định dạng uuid!")
-	ErrInvalidSessions  = errors.New("Số lượng session cho môn học không hợp lệ!")
-	ErrInvalidMaterials = errors.New("Buổi học phải có ít nhất 1 nội dung!")
+	ErrSkillNotFound       = errors.New("Kỹ năng không có trong hệ thống!")
+	ErrSubjectNotFound     = errors.New("Môn học không có trong hệ thống!")
+	ErrCodeAlreadyExist    = errors.New("Mã môn đã tồn tại!")
+	ErrSkillRequired       = errors.New("Môn học cần có ít nhất một kĩ năng!")
+	ErrInvalidSkillId      = errors.New("Skill id không phải định dạng uuid!")
+	ErrInvalidSessions     = errors.New("Số lượng session cho môn học không hợp lệ!")
+	ErrInvalidMaterials    = errors.New("Buổi học phải có ít nhất 1 nội dung!")
+	ErrInvalidMaterialType = errors.New("Material có type không phù hợp!")
 )
 
 func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, error) {
@@ -150,7 +151,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 
 	subParams := sqlc.UpdateSubjectParams{
 		Name:        s.Name,
-		Code:        subject.Code,
+		Code:        s.Code,
 		Description: s.Description,
 		Status:      int16(*s.Status),
 		ImageLink:   s.Image,
@@ -209,10 +210,15 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 		var materialParams []sqlc.InsertMaterialParams
 
 		for _, material := range session.Materials {
+			if !IsTypeValid(material.Type) {
+				return ErrInvalidMaterialType
+			}
+
 			materialId, err := uuid.Parse(material.ID)
 			if err != nil {
 				return fmt.Errorf("Material với id: %s, không đúng định dạng", material.ID)
 			}
+
 			param := sqlc.InsertMaterialParams{
 				ID:        materialId,
 				SessionID: sessionId,
@@ -299,6 +305,74 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s request.UpdateSubject, id uui
 	}
 
 	return nil
+}
+
+func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
+	var result SubjectDetail
+	subject, err := c.queries.GetSubjectById(ctx, id)
+	if err != nil {
+		return nil, ErrSubjectNotFound
+	}
+
+	totalSessions, err := c.queries.CountSessionsBySubjectID(ctx, id)
+	if err != nil {
+		totalSessions = 0
+	}
+
+	result.ID = subject.ID
+	result.Name = subject.Name
+	result.Code = subject.Code
+	result.Description = subject.Description
+	result.Image = subject.ImageLink
+	result.Status = int(subject.Status)
+	result.TotalSessions = int(totalSessions)
+
+	dbSkills, err := c.queries.GetSkillsBySubjectID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, dbSkill := range dbSkills {
+		skill := Skill{
+			ID:   dbSkill.ID,
+			Name: dbSkill.Name,
+		}
+
+		result.Skills = append(result.Skills, skill)
+	}
+
+	dbSessions, err := c.queries.GetSessionsBySubjectID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, dbSession := range dbSessions {
+		materials, err := c.queries.GetMaterialsBySessionID(ctx, dbSession.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		session := Session{
+			ID:    dbSession.ID,
+			Name:  dbSession.Name,
+			Index: int(dbSession.Index),
+		}
+
+		for _, dbMaterial := range materials {
+			material := Material{
+				ID:       dbMaterial.ID,
+				Name:     *dbMaterial.Name,
+				Index:    int(dbMaterial.Index),
+				IsShared: dbMaterial.IsShared,
+				Data:     dbMaterial.Data,
+			}
+
+			session.Materials = append(session.Materials, material)
+		}
+
+		result.Sessions = append(result.Sessions, session)
+	}
+	return &result, nil
 }
 
 func (c *Core) GetStatus(ctx *gin.Context, id uuid.UUID) (int, error) {

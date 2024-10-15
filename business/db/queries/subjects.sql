@@ -33,4 +33,6 @@ SET name = sqlc.arg(name),
 WHERE id = sqlc.arg(id)::uuid;
 
 -- name: GetSubjectById :one
-SELECT * FROM subjects WHERE id = sqlc.arg(id)::uuid;
+SELECT *
+FROM subjects WHERE id = sqlc.arg(id)::uuid;
+

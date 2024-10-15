@@ -48,7 +48,8 @@ func (q *Queries) GetSubjectByCode(ctx context.Context, code string) (Subject, e
 }
 
 const getSubjectById = `-- name: GetSubjectById :one
-SELECT id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, updated_by, created_at, updated_at FROM subjects WHERE id = $1::uuid
+SELECT id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, updated_by, created_at, updated_at
+FROM subjects WHERE id = $1::uuid
 `
 
 func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, error) {

@@ -9,3 +9,6 @@ DO UPDATE SET
 
 -- name: CountSessionsBySubjectID :one
 SELECT count(*) FROM sessions WHERE subject_id = sqlc.arg(subject_id);
+
+-- name: GetSessionsBySubjectID :many
+SELECT * FROM sessions WHERE subject_id = sqlc.arg(subject_id);

@@ -22,6 +22,35 @@ func (q *Queries) CountSessionsBySubjectID(ctx context.Context, subjectID uuid.U
 	return count, err
 }
 
+const getSessionsBySubjectID = `-- name: GetSessionsBySubjectID :many
+SELECT id, subject_id, index, name FROM sessions WHERE subject_id = $1
+`
+
+func (q *Queries) GetSessionsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]Session, error) {
+	rows, err := q.db.Query(ctx, getSessionsBySubjectID, subjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Session
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(
+			&i.ID,
+			&i.SubjectID,
+			&i.Index,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertSession = `-- name: UpsertSession :exec
 INSERT INTO sessions(id, subject_id, index, name)
 VALUES($1::uuid, $2::uuid, $3, $4)

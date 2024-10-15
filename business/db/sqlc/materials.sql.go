@@ -21,6 +21,38 @@ func (q *Queries) DeleteSessionMaterials(ctx context.Context, sessionID uuid.UUI
 	return err
 }
 
+const getMaterialsBySessionID = `-- name: GetMaterialsBySessionID :many
+SELECT id, session_id, index, type, data, is_shared, name from materials WHERE session_id = $1
+`
+
+func (q *Queries) GetMaterialsBySessionID(ctx context.Context, sessionID uuid.UUID) ([]Material, error) {
+	rows, err := q.db.Query(ctx, getMaterialsBySessionID, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Material
+	for rows.Next() {
+		var i Material
+		if err := rows.Scan(
+			&i.ID,
+			&i.SessionID,
+			&i.Index,
+			&i.Type,
+			&i.Data,
+			&i.IsShared,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 type InsertMaterialParams struct {
 	ID        uuid.UUID       `db:"id" json:"id"`
 	SessionID uuid.UUID       `db:"session_id" json:"sessionId"`
