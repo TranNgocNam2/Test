@@ -128,7 +128,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Specialization, error) {
 			}{
 				ID:           &subject.ID,
 				Name:         &subject.Name,
-				Image:        &subject.ImageLink,
+				Image:        subject.ImageLink,
 				Code:         &subject.Code,
 				LastUpdated:  subject.CreatedAt,
 				TotalSession: &totalSession,

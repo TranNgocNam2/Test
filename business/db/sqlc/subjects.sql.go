@@ -141,7 +141,7 @@ type InsertSubjectParams struct {
 	ID              uuid.UUID `db:"id" json:"id"`
 	Name            string    `db:"name" json:"name"`
 	Code            string    `db:"code" json:"code"`
-	Description     string    `db:"description" json:"description"`
+	Description     *string   `db:"description" json:"description"`
 	ImageLink       *string   `db:"image_link" json:"imageLink"`
 	Status          int16     `db:"status" json:"status"`
 	TimePerSession  int16     `db:"time_per_session" json:"timePerSession"`
@@ -183,7 +183,7 @@ WHERE id = $8::uuid
 type UpdateSubjectParams struct {
 	Name        string     `db:"name" json:"name"`
 	Code        string     `db:"code" json:"code"`
-	Description string     `db:"description" json:"description"`
+	Description *string    `db:"description" json:"description"`
 	Status      int16      `db:"status" json:"status"`
 	ImageLink   *string    `db:"image_link" json:"imageLink"`
 	UpdatedBy   *string    `db:"updated_by" json:"updatedBy"`

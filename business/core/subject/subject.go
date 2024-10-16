@@ -62,7 +62,7 @@ func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, err
 		ID:              subjectId,
 		Name:            subject.Name,
 		Code:            subject.Code,
-		Description:     subject.Description,
+		Description:     &subject.Description,
 		ImageLink:       &subject.Image,
 		Status:          Draft,
 		TimePerSession:  int16(subject.TimePerSession),
@@ -155,7 +155,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 	subParams := sqlc.UpdateSubjectParams{
 		Name:        s.Name,
 		Code:        s.Code,
-		Description: s.Description,
+		Description: &s.Description,
 		Status:      int16(*s.Status),
 		ImageLink:   &s.Image,
 		ID:          id,
@@ -268,7 +268,7 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s request.UpdateSubject, id uui
 	subParams := sqlc.UpdateSubjectParams{
 		Name:        s.Name,
 		Code:        s.Code,
-		Description: s.Description,
+		Description: &s.Description,
 		Status:      Published,
 		ImageLink:   &s.Image,
 		ID:          id,
@@ -325,7 +325,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 	result.ID = subject.ID
 	result.Name = subject.Name
 	result.Code = subject.Code
-	result.Description = subject.Description
+	result.Description = *subject.Description
 	result.Image = *subject.ImageLink
 	result.Status = int(subject.Status)
 	result.TotalSessions = int(totalSessions)
@@ -420,7 +420,6 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	}
 
 	var subjects []Subject
-
 	for _, dbSubject := range dbSubjects {
 		subject := toCoreSubject(dbSubject)
 		dbSubjectSkills, err := c.queries.GetSkillsBySubjectID(ctx, dbSubject.ID)

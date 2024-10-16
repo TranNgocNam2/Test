@@ -186,7 +186,7 @@ type Subject struct {
 	SessionsPerWeek int16      `db:"sessions_per_week" json:"sessionsPerWeek"`
 	ImageLink       *string    `db:"image_link" json:"imageLink"`
 	Status          int16      `db:"status" json:"status"`
-	Description     string     `db:"description" json:"description"`
+	Description     *string    `db:"description" json:"description"`
 	CreatedBy       string     `db:"created_by" json:"createdBy"`
 	UpdatedBy       *string    `db:"updated_by" json:"updatedBy"`
 	CreatedAt       time.Time  `db:"created_at" json:"createdAt"`

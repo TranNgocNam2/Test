@@ -8,15 +8,15 @@ import (
 )
 
 type Subject struct {
-	ID             uuid.UUID
-	Name           string
-	Code           string
-	Description    string
-	Image          string
-	TimePerSession int16
-	SessionPerWeek int16
-	Skills         []Skill
-	TotalSessions  int
+	ID             uuid.UUID `json:"id"`
+	Name           string    `json:"name"`
+	Code           string    `json:"code"`
+	Description    *string   `json:"description,omitempty"`
+	Image          *string   `json:"image,omitempty"`
+	TimePerSession int16     `json:"timePerSession"`
+	SessionPerWeek int16     `json:"sessionPerWeek"`
+	Skills         []Skill   `json:"skills,omitempty"`
+	TotalSessions  int       `json:"totalSessions"`
 }
 
 type SubjectDetail struct {
@@ -57,7 +57,7 @@ func toCoreSubject(dbSubject sqlc.Subject) Subject {
 		Name:           dbSubject.Name,
 		Code:           dbSubject.Code,
 		Description:    dbSubject.Description,
-		Image:          *dbSubject.ImageLink,
+		Image:          dbSubject.ImageLink,
 		TimePerSession: dbSubject.TimePerSession,
 		SessionPerWeek: dbSubject.SessionsPerWeek,
 	}
