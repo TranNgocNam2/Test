@@ -52,5 +52,8 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 	if len(wc) > 0 {
 		buf.WriteString(" WHERE ")
 		buf.WriteString(strings.Join(wc, " AND "))
+		buf.WriteString(" AND status != 3")
+	} else {
+		buf.WriteString(" WHERE status != 3")
 	}
 }

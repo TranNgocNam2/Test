@@ -23,7 +23,7 @@ func (q *Queries) CountSessionsBySubjectID(ctx context.Context, subjectID uuid.U
 }
 
 const getSessionsBySubjectID = `-- name: GetSessionsBySubjectID :many
-SELECT id, subject_id, index, name FROM sessions WHERE subject_id = $1
+SELECT id, subject_id, index, name FROM sessions WHERE subject_id = $1 ORDER BY index
 `
 
 func (q *Queries) GetSessionsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]Session, error) {

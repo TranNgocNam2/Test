@@ -14,7 +14,7 @@ import (
 
 const deleteSubject = `-- name: DeleteSubject :exec
 UPDATE subjects SET status = 2, updated_at = NOW(), updated_by = $1
-WHERE id = $2 AND status = 0
+WHERE id = $2
 `
 
 type DeleteSubjectParams struct {

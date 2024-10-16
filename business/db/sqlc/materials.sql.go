@@ -22,7 +22,7 @@ func (q *Queries) DeleteSessionMaterials(ctx context.Context, sessionID uuid.UUI
 }
 
 const getMaterialsBySessionID = `-- name: GetMaterialsBySessionID :many
-SELECT id, session_id, index, type, data, is_shared, name from materials WHERE session_id = $1
+SELECT id, session_id, index, type, data, is_shared, name from materials WHERE session_id = $1 ORDER BY index
 `
 
 func (q *Queries) GetMaterialsBySessionID(ctx context.Context, sessionID uuid.UUID) ([]Material, error) {
