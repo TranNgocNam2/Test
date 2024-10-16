@@ -114,8 +114,10 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 			}
 
 			web.Respond(ctx, nil, http.StatusOK, nil)
+			return
+		}
 
-		} else if status == subject.Published {
+		if status == subject.Published {
 			if err = h.subject.UpdatePublished(ctx, request, id); err != nil {
 				switch {
 				case
@@ -130,7 +132,9 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 			}
 
 			web.Respond(ctx, nil, http.StatusOK, nil)
+			return
 		}
+		web.Respond(ctx, nil, http.StatusInternalServerError, err)
 	}
 }
 
