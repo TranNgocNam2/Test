@@ -20,6 +20,16 @@ type User struct {
 	}
 }
 
+type UpdateUser struct {
+	FullName string
+	Role     *int
+	Email    mail.Address
+	Phone    string
+	Gender   int16
+	Photo    string
+	SchoolID *uuid.UUID
+}
+
 func toCoreUser(dbUser sqlc.User) User {
 	emailAddr, _ := mail.ParseAddress(dbUser.Email)
 	return User{

@@ -2,6 +2,8 @@ package main
 
 import (
 	"Backend/api/handlers/schoolgrp"
+	"Backend/api/handlers/specializationgrp"
+	"Backend/api/handlers/subjectgrp"
 	"Backend/api/handlers/testgrp"
 	"Backend/api/handlers/usergrp"
 	"Backend/business/db/sqlc"
@@ -64,14 +66,14 @@ func main() {
 		return
 	}
 	defer dbPool.Close()
-	pgxDb := stdlib.OpenDBFromPool(dbPool)
-	sqlxDb := sqlx.NewDb(pgxDb, "pgx")
+	db := sqlx.NewDb(stdlib.OpenDBFromPool(dbPool), "pgx")
 
 	a := app.Application{
 		Config:  cfg,
 		Logger:  log,
-		Db:      sqlxDb,
+		DB:      db,
 		Queries: sqlc.New(dbPool),
+		Pool:    dbPool,
 	}
 
 	// Load all routes
@@ -92,4 +94,6 @@ func LoadRoutes(router *gin.Engine, app *app.Application) {
 	router.Use(middleware.CheckApiKeyAndRequestID(app.Config.ApiKey))
 	usergrp.UserRoutes(router, app)
 	schoolgrp.SchoolRoutes(router, app)
+	specializationgrp.SpecializationRoutes(router, app)
+	subjectgrp.SubjectRoutes(router, app)
 }

@@ -3,7 +3,6 @@ package usergrp
 import (
 	"Backend/business/core/user"
 	"Backend/internal/validate"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gitlab.com/innovia69420/kit/enum/role"
@@ -85,55 +84,49 @@ func toCoreNewUser(newUserRequest request.NewUser) (user.User, error) {
 }
 func validateNewUserRequest(newUserRequest request.NewUser) error {
 	if err := validate.Check(newUserRequest); err != nil {
-		return fmt.Errorf(validate.ErrValidation.Error(), err)
+		return err
 	}
 	return nil
 }
 
-func toCoreUpdateUser(updateUserRequest request.UpdateUser) (user.User, error) {
+func toCoreUpdateUser(updateUserRequest request.UpdateUser) (user.UpdateUser, error) {
 	authRole := *updateUserRequest.Role
 	if authRole == role.LEARNER && updateUserRequest.SchoolID == nil {
-		return user.User{}, ErrNilSchool
+		return user.UpdateUser{}, ErrNilSchool
 	}
 
 	schoolID, err := uuid.Parse(*updateUserRequest.SchoolID)
 	if err != nil && updateUserRequest.SchoolID != nil {
-		return user.User{}, ErrInvalidSchoolID
+		return user.UpdateUser{}, ErrInvalidSchoolID
 	}
 
 	emailAddr, err := mail.ParseAddress(updateUserRequest.Email)
 	if err != nil {
-		return user.User{}, ErrInvalidEmail
+		return user.UpdateUser{}, ErrInvalidEmail
 	}
+
 	if !user.IsValidPhoneNumber(updateUserRequest.Phone) {
-		return user.User{}, ErrInvalidPhoneNumber
+		return user.UpdateUser{}, ErrInvalidPhoneNumber
 	}
 
-	gender := int16(*updateUserRequest.Gender)
-
-	user := user.User{
-		ID:       updateUserRequest.ID,
-		FullName: &updateUserRequest.FullName,
+	user := user.UpdateUser{
+		FullName: updateUserRequest.FullName,
 		Email:    *emailAddr,
-		Phone:    &updateUserRequest.Phone,
-		Gender:   &gender,
-		Role:     int16(authRole),
-		Photo:    &updateUserRequest.Photo,
+		Phone:    updateUserRequest.Phone,
+		Gender:   int16(*updateUserRequest.Gender),
+		Role:     updateUserRequest.Role,
+		Photo:    updateUserRequest.Photo,
 	}
 	if authRole == role.LEARNER {
-		user.School = &struct {
-			ID   *uuid.UUID
-			Name *string
-		}{
-			ID: &schoolID,
-		}
+		user.SchoolID = &schoolID
 	}
+
 	return user, nil
 }
 
 func validateUpdateUserRequest(updateUserRequest request.UpdateUser) error {
 	if err := validate.Check(updateUserRequest); err != nil {
-		return fmt.Errorf(validate.ErrValidation.Error(), err)
+		return err
 	}
 	return nil
 }

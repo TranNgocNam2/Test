@@ -6,12 +6,12 @@ require (
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator/v10 v10.22.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.19.0
-	gitlab.com/innovia69420/kit v0.0.0-20241009063408-435827a40491
+	gitlab.com/innovia69420/kit v0.0.0-20241014201406-88df71b5f9c5
 	go.uber.org/zap v1.27.0
 )
 

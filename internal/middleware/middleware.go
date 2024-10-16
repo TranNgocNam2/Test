@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+var (
+	ErrInvalidUser = errors.New("Người dùng không hợp lệ!")
+)
+
 func CheckApiKeyAndRequestID(apiKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 

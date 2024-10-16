@@ -24,9 +24,13 @@ func Respond(ctx *gin.Context, data interface{}, httpStatus int, err error) {
 		web.NotFoundError(ctx, err)
 		break
 
+	case http.StatusUnauthorized:
+		web.UnauthorizedError(ctx, err)
+		break
+
 	case http.StatusBadRequest:
 		if data != nil {
-			web.ValidationError(ctx, err, data)
+			web.ValidationError(ctx, err)
 			break
 		}
 		web.BadRequestError(ctx, err)

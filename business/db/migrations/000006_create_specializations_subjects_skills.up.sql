@@ -4,7 +4,7 @@ CREATE table specializations(
     code            character varying(10) NOT NULL,
     time_amount     float,
     image_link      text,
-    status          smallint DEFAULT 0 CHECK (status in (0, 1)) NOT NULL,
+    status          smallint DEFAULT 0 CHECK (status in (0, 1, 2)) NOT NULL,
     description     text,
     created_by      character varying(50) NOT NULL,
     updated_by      character varying(50),
@@ -23,9 +23,9 @@ CREATE table subjects(
     name                    character varying(100) NOT NULL,
     time_per_session        smallint NOT NULL,
     sessions_per_week       smallint NOT NULL,
-    image_link              character varying(50) NOT NULL,
-    status                  smallint CHECK (status in (0, 1)) DEFAULT 0 NOT NULL,
-    description             text NOT NULL,
+    image_link              text,
+    status                  smallint CHECK (status in (0, 1, 2)) DEFAULT 0 NOT NULL,
+    description             text,
     created_by              character varying(50) NOT NULL,
     updated_by              character varying(50),
     created_at              timestamp DEFAULT now() NOT NULL,
@@ -77,7 +77,7 @@ CREATE table subject_skills(
     skill_id        uuid NOT NULL,
 
     CONSTRAINT fk_subject_skills_subject
-        FOREIGN KEY (subject_id) REFERENCES specializations(id) ON DELETE CASCADE,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_subject_skills_skill
         FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
 
