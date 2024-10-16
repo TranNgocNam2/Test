@@ -20,35 +20,35 @@ type Subject struct {
 }
 
 type SubjectDetail struct {
-	ID            uuid.UUID
-	Name          string
-	Code          string
-	Description   string
-	Image         string
-	Status        int
-	Skills        []Skill
-	Sessions      []Session
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	Code          string    `json:"code"`
+	Description   string    `json:"description"`
+	Image         string    `json:"image"`
+	Status        int       `json:"status"`
+	Skills        []Skill   `json:"skills"`
+	Sessions      []Session `json:"sessions"`
 	TotalSessions int
 }
 
 type Skill struct {
-	ID   uuid.UUID
-	Name string
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 type Session struct {
-	ID        uuid.UUID
-	Name      string
-	Index     int
-	Materials []Material
+	ID        uuid.UUID  `json:"id"`
+	Name      string     `json:"name"`
+	Index     int        `json:"index"`
+	Materials []Material `json:"materials"`
 }
 
 type Material struct {
-	ID       uuid.UUID
-	Name     string
-	Index    int
-	IsShared bool
-	Data     json.RawMessage
+	ID       uuid.UUID       `json:"id"`
+	Name     string          `json:"name"`
+	Index    int             `json:"index"`
+	IsShared bool            `json:"isShared"`
+	Data     json.RawMessage `json:"data"`
 }
 
 func toCoreSubject(dbSubject sqlc.Subject) Subject {

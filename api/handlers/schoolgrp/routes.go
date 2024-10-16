@@ -16,7 +16,7 @@ func SchoolRoutes(router *gin.Engine, app *app.Application) {
 		schools.GET("/:id", handlers.GetSchoolByID())
 		schools.DELETE("/:id", handlers.DeleteSchool())
 		schools.PUT("/:id", handlers.UpdateSchool())
-		schools.GET("", handlers.GetSchoolPaginated())
+		schools.GET("", handlers.GetSchools())
 	}
 
 	provinces := router.Group("/provinces")

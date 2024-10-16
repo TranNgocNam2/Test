@@ -13,6 +13,8 @@ func SpecializationRoutes(router *gin.Engine, app *app.Application) {
 	{
 		specializations.POST("", handlers.CreateSpecialization())
 		specializations.GET("/:id", handlers.GetSpecializationByID())
-		//specializations.PUT("", handlers.UpdateUser())
+		specializations.GET("", handlers.GetSpecializations())
+		specializations.PUT("/:id", handlers.UpdateSpecialization())
+		specializations.DELETE("/:id", handlers.DeleteSpecialization())
 	}
 }

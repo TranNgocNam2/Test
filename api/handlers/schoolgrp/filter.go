@@ -6,10 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	filterByName = "name"
+)
+
 func parseFilter(ctx *gin.Context) (school.QueryFilter, error) {
-	const (
-		filterByName = "name"
-	)
 
 	var filter school.QueryFilter
 

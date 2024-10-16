@@ -26,6 +26,15 @@ func (q *Queries) CreateSpecializationSkills(ctx context.Context, arg CreateSpec
 	return err
 }
 
+const deleteSpecializationSkills = `-- name: DeleteSpecializationSkills :exec
+DELETE FROM specialization_skills WHERE specialization_id = $1::uuid
+`
+
+func (q *Queries) DeleteSpecializationSkills(ctx context.Context, specializationID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSpecializationSkills, specializationID)
+	return err
+}
+
 const getSkillsBySpecialization = `-- name: GetSkillsBySpecialization :many
 SELECT skills.id, skills.name
 FROM specialization_skills
