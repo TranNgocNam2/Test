@@ -1,6 +1,7 @@
 package subject
 
 import (
+	"Backend/business/db/sqlc"
 	"encoding/json"
 
 	"github.com/google/uuid"
@@ -12,9 +13,9 @@ type Subject struct {
 	Code           string
 	Description    string
 	Image          string
-	TimePerSession int
-	SessionPerWeek int
-	Skills         []uuid.UUID
+	TimePerSession int16
+	SessionPerWeek int16
+	Skills         []Skill
 	TotalSessions  int
 }
 
@@ -48,4 +49,16 @@ type Material struct {
 	Index    int
 	IsShared bool
 	Data     json.RawMessage
+}
+
+func toCoreSubject(dbSubject sqlc.Subject) Subject {
+	return Subject{
+		ID:             dbSubject.ID,
+		Name:           dbSubject.Name,
+		Code:           dbSubject.Code,
+		Description:    dbSubject.Description,
+		Image:          *dbSubject.ImageLink,
+		TimePerSession: dbSubject.TimePerSession,
+		SessionPerWeek: dbSubject.SessionsPerWeek,
+	}
 }

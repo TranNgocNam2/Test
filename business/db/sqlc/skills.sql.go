@@ -36,36 +36,22 @@ func (q *Queries) GetSkillsByIDs(ctx context.Context, skillIds []uuid.UUID) ([]S
 }
 
 const getSkillsBySubjectID = `-- name: GetSkillsBySubjectID :many
-SELECT s.id, name, ss.id, subject_id, skill_id
+SELECT s.id, s.name
 FROM skills s
 JOIN subject_skills ss ON ss.skill_id = s.id
 WHERE ss.subject_id = $1
 `
 
-type GetSkillsBySubjectIDRow struct {
-	ID        uuid.UUID `db:"id" json:"id"`
-	Name      string    `db:"name" json:"name"`
-	ID_2      uuid.UUID `db:"id_2" json:"id2"`
-	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
-	SkillID   uuid.UUID `db:"skill_id" json:"skillId"`
-}
-
-func (q *Queries) GetSkillsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]GetSkillsBySubjectIDRow, error) {
+func (q *Queries) GetSkillsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]Skill, error) {
 	rows, err := q.db.Query(ctx, getSkillsBySubjectID, subjectID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetSkillsBySubjectIDRow
+	var items []Skill
 	for rows.Next() {
-		var i GetSkillsBySubjectIDRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.ID_2,
-			&i.SubjectID,
-			&i.SkillID,
-		); err != nil {
+		var i Skill
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -36,3 +36,7 @@ WHERE id = sqlc.arg(id)::uuid;
 SELECT *
 FROM subjects WHERE id = sqlc.arg(id)::uuid;
 
+-- name: DeleteSubject :exec
+UPDATE subjects SET status = 2, updated_at = NOW(), updated_by = sqlc.arg(updated_by)
+WHERE id = sqlc.arg(id) AND status = 0;
+

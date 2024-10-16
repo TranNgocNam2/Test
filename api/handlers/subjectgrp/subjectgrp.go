@@ -2,13 +2,20 @@ package subjectgrp
 
 import (
 	"Backend/business/core/subject"
+	"Backend/internal/middleware"
+	"Backend/internal/order"
+	"Backend/internal/page"
 	"Backend/internal/web"
-	"errors"
+	"github.com/pkg/errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gitlab.com/innovia69420/kit/web/request"
+)
+
+var (
+	ErrSubjectIDInvalid = errors.New("ID môn học không hợp lệ!")
 )
 
 type Handlers struct {
@@ -62,7 +69,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrSubjectIDInvalid)
 			return
 		}
 
@@ -130,7 +137,7 @@ func (h *Handlers) GetSubjectById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrSubjectIDInvalid)
 			return
 		}
 
@@ -146,5 +153,67 @@ func (h *Handlers) GetSubjectById() gin.HandlerFunc {
 		}
 
 		web.Respond(ctx, res, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) GetSubjects() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		pageInfo, err := page.Parse(ctx)
+		if err != nil {
+			pageInfo = page.Page{
+				Number: 1,
+				Size:   10,
+			}
+		}
+
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = subject.QueryFilter{
+				Name:   nil,
+				Code:   nil,
+				Status: subject.Draft,
+			}
+		}
+
+		orderBy, err := parseOrder(ctx)
+		if err != nil {
+			orderBy = order.NewBy(filterByCode, order.ASC)
+		}
+
+		subjects := h.subject.Query(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		total := h.subject.Count(ctx, filter)
+		result := page.NewPageResponse(subjects, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, result, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) DeleteSubject() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subjectID, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrSubjectIDInvalid)
+			return
+		}
+
+		err = h.subject.Delete(ctx, subjectID)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, subject.ErrSubjectNotFound):
+
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
 	}
 }

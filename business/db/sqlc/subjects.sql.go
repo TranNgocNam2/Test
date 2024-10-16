@@ -12,6 +12,21 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteSubject = `-- name: DeleteSubject :exec
+UPDATE subjects SET status = 2, updated_at = NOW(), updated_by = $1
+WHERE id = $2 AND status = 0
+`
+
+type DeleteSubjectParams struct {
+	UpdatedBy *string   `db:"updated_by" json:"updatedBy"`
+	ID        uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteSubject(ctx context.Context, arg DeleteSubjectParams) error {
+	_, err := q.db.Exec(ctx, deleteSubject, arg.UpdatedBy, arg.ID)
+	return err
+}
+
 const deleteSubjectSkills = `-- name: DeleteSubjectSkills :exec
 DELETE FROM subject_skills WHERE subject_id = $1
 `
@@ -127,7 +142,7 @@ type InsertSubjectParams struct {
 	Name            string    `db:"name" json:"name"`
 	Code            string    `db:"code" json:"code"`
 	Description     string    `db:"description" json:"description"`
-	ImageLink       string    `db:"image_link" json:"imageLink"`
+	ImageLink       *string   `db:"image_link" json:"imageLink"`
 	Status          int16     `db:"status" json:"status"`
 	TimePerSession  int16     `db:"time_per_session" json:"timePerSession"`
 	SessionsPerWeek int16     `db:"sessions_per_week" json:"sessionsPerWeek"`
@@ -170,7 +185,7 @@ type UpdateSubjectParams struct {
 	Code        string     `db:"code" json:"code"`
 	Description string     `db:"description" json:"description"`
 	Status      int16      `db:"status" json:"status"`
-	ImageLink   string     `db:"image_link" json:"imageLink"`
+	ImageLink   *string    `db:"image_link" json:"imageLink"`
 	UpdatedBy   *string    `db:"updated_by" json:"updatedBy"`
 	UpdatedAt   *time.Time `db:"updated_at" json:"updatedAt"`
 	ID          uuid.UUID  `db:"id" json:"id"`
