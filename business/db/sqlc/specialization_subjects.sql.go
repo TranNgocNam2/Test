@@ -60,7 +60,7 @@ type GetSubjectsBySpecializationRow struct {
 	ID        uuid.UUID  `db:"id" json:"id"`
 	Name      string     `db:"name" json:"name"`
 	Code      string     `db:"code" json:"code"`
-	ImageLink string     `db:"image_link" json:"imageLink"`
+	ImageLink *string    `db:"image_link" json:"imageLink"`
 	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
 	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
 }

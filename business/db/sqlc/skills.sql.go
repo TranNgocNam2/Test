@@ -34,3 +34,30 @@ func (q *Queries) GetSkillsByIDs(ctx context.Context, skillIds []uuid.UUID) ([]S
 	}
 	return items, nil
 }
+
+const getSkillsBySubjectID = `-- name: GetSkillsBySubjectID :many
+SELECT s.id, s.name
+FROM skills s
+JOIN subject_skills ss ON ss.skill_id = s.id
+WHERE ss.subject_id = $1
+`
+
+func (q *Queries) GetSkillsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]Skill, error) {
+	rows, err := q.db.Query(ctx, getSkillsBySubjectID, subjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Skill
+	for rows.Next() {
+		var i Skill
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

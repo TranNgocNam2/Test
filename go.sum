@@ -120,8 +120,14 @@ github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65EE=
 github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
-gitlab.com/innovia69420/kit v0.0.0-20241013171500-d3dc94090906 h1:mGq3/ep1y57ie0ZoHieRdCnNy55ahSc62V0BN5sAvas=
-gitlab.com/innovia69420/kit v0.0.0-20241013171500-d3dc94090906/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
+gitlab.com/innovia69420/kit v0.0.0-20241014092508-c73b51a857ee h1:fcq4Zenk2WkkblzgV5oUFjh60tGxUejQ98ErityvHbk=
+gitlab.com/innovia69420/kit v0.0.0-20241014092508-c73b51a857ee/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
+gitlab.com/innovia69420/kit v0.0.0-20241014144335-86d847526cc7 h1:gelhOCvA0L9ZOTab5E2Gl3iWfdDo//CKrt+8bfRS27w=
+gitlab.com/innovia69420/kit v0.0.0-20241014144335-86d847526cc7/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
+gitlab.com/innovia69420/kit v0.0.0-20241014201158-51b4f17bcc7a h1:YRxVDGYbbCnT5yoOGfouGh5UiC6dQ9rtszdinVHG5oY=
+gitlab.com/innovia69420/kit v0.0.0-20241014201158-51b4f17bcc7a/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
+gitlab.com/innovia69420/kit v0.0.0-20241014201406-88df71b5f9c5 h1:/spQpMP9WtAKbKuG2SvuYtCvLYRgESmI83p1brph4jw=
+gitlab.com/innovia69420/kit v0.0.0-20241014201406-88df71b5f9c5/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
 go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=

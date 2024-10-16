@@ -3,6 +3,7 @@ package main
 import (
 	"Backend/api/handlers/schoolgrp"
 	"Backend/api/handlers/specializationgrp"
+	"Backend/api/handlers/subjectgrp"
 	"Backend/api/handlers/testgrp"
 	"Backend/api/handlers/usergrp"
 	"Backend/business/db/sqlc"
@@ -71,8 +72,8 @@ func main() {
 		Config:  cfg,
 		Logger:  log,
 		DB:      db,
-		Pool:    dbPool,
 		Queries: sqlc.New(dbPool),
+		Pool:    dbPool,
 	}
 
 	// Load all routes
@@ -94,4 +95,5 @@ func LoadRoutes(router *gin.Engine, app *app.Application) {
 	usergrp.UserRoutes(router, app)
 	schoolgrp.SchoolRoutes(router, app)
 	specializationgrp.SpecializationRoutes(router, app)
+	subjectgrp.SubjectRoutes(router, app)
 }

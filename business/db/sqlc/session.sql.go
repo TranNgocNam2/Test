@@ -21,3 +21,58 @@ func (q *Queries) CountSessionsBySubjectID(ctx context.Context, subjectID uuid.U
 	err := row.Scan(&count)
 	return count, err
 }
+
+const getSessionsBySubjectID = `-- name: GetSessionsBySubjectID :many
+SELECT id, subject_id, index, name FROM sessions WHERE subject_id = $1 ORDER BY index
+`
+
+func (q *Queries) GetSessionsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]Session, error) {
+	rows, err := q.db.Query(ctx, getSessionsBySubjectID, subjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Session
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(
+			&i.ID,
+			&i.SubjectID,
+			&i.Index,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const upsertSession = `-- name: UpsertSession :exec
+INSERT INTO sessions(id, subject_id, index, name)
+VALUES($1::uuid, $2::uuid, $3, $4)
+ON CONFLICT (id)
+DO UPDATE SET
+    index = EXCLUDED.index,
+    name = EXCLUDED.name
+`
+
+type UpsertSessionParams struct {
+	ID        uuid.UUID `db:"id" json:"id"`
+	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
+	Index     int32     `db:"index" json:"index"`
+	Name      string    `db:"name" json:"name"`
+}
+
+func (q *Queries) UpsertSession(ctx context.Context, arg UpsertSessionParams) error {
+	_, err := q.db.Exec(ctx, upsertSession,
+		arg.ID,
+		arg.SubjectID,
+		arg.Index,
+		arg.Name,
+	)
+	return err
+}
