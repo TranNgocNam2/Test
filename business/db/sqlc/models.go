@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Assignment struct {
@@ -97,15 +96,15 @@ type Material struct {
 }
 
 type Program struct {
-	ID          uuid.UUID   `db:"id" json:"id"`
-	Name        string      `db:"name" json:"name"`
-	StartDate   pgtype.Date `db:"start_date" json:"startDate"`
-	EndDate     pgtype.Date `db:"end_date" json:"endDate"`
-	CreatedBy   string      `db:"created_by" json:"createdBy"`
-	UpdatedBy   *string     `db:"updated_by" json:"updatedBy"`
-	Description string      `db:"description" json:"description"`
-	CreatedAt   *time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt   *time.Time  `db:"updated_at" json:"updatedAt"`
+	ID          uuid.UUID  `db:"id" json:"id"`
+	Name        string     `db:"name" json:"name"`
+	StartDate   time.Time  `db:"start_date" json:"startDate"`
+	EndDate     time.Time  `db:"end_date" json:"endDate"`
+	CreatedBy   string     `db:"created_by" json:"createdBy"`
+	UpdatedBy   *string    `db:"updated_by" json:"updatedBy"`
+	Description string     `db:"description" json:"description"`
+	CreatedAt   time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt   *time.Time `db:"updated_at" json:"updatedAt"`
 }
 
 type ProgramSubject struct {
@@ -114,7 +113,7 @@ type ProgramSubject struct {
 	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
 	CreatedBy string     `db:"created_by" json:"createdBy"`
 	UpdatedBy *string    `db:"updated_by" json:"updatedBy"`
-	CreatedAt *time.Time `db:"created_at" json:"createdAt"`
+	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
 	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
 }
 

@@ -6,7 +6,7 @@ CREATE table programs(
     created_by      character varying(50) NOT NULL,
     updated_by      character varying(50),
     description     text NOT NULL,
-    created_at      timestamp DEFAULT now(),
+    created_at      timestamp NOT NULL DEFAULT now(),
     updated_at      timestamp,
 
     CONSTRAINT fk_programs_staff_updated_by

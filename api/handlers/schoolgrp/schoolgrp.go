@@ -27,7 +27,7 @@ func (h *Handlers) CreateSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var newSchool request.NewSchool
 		if err := web.Decode(ctx, &newSchool); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
@@ -50,7 +50,7 @@ func (h *Handlers) UpdateSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var updatedSchool request.UpdateSchool
 		if err := web.Decode(ctx, &updatedSchool); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 

@@ -23,7 +23,7 @@ func (h *Handlers) CreateUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var newUserRequest request.NewUser
 		if err := web.Decode(ctx, &newUserRequest); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 

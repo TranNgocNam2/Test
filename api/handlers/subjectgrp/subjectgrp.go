@@ -33,7 +33,7 @@ func (h *Handlers) CreateSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request request.NewSubject
 		if err := web.Decode(ctx, &request); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
@@ -76,7 +76,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 
 		var request request.UpdateSubject
 		if err := web.Decode(ctx, &request); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
