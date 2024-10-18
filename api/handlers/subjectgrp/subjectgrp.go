@@ -33,7 +33,7 @@ func (h *Handlers) CreateSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request request.NewSubject
 		if err := web.Decode(ctx, &request); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
@@ -51,7 +51,11 @@ func (h *Handlers) CreateSubject() gin.HandlerFunc {
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
 
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
 			default:
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)
 				return
@@ -76,7 +80,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 
 		var request request.UpdateSubject
 		if err := web.Decode(ctx, &request); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
@@ -106,7 +110,11 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 
 					web.Respond(ctx, nil, http.StatusBadRequest, err)
 					return
+				case
+					errors.Is(err, middleware.ErrInvalidUser):
 
+					web.Respond(ctx, nil, http.StatusUnauthorized, err)
+					return
 				default:
 					web.Respond(ctx, nil, http.StatusInternalServerError, err)
 					return

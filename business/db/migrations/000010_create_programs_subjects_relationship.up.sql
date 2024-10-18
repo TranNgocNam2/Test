@@ -4,7 +4,7 @@ CREATE table program_subjects(
     subject_id              uuid NOT NULL,
     created_by              character varying(50) NOT NULL,
     updated_by              character varying(50),
-    created_at              timestamp DEFAULT now(),
+    created_at              timestamp NOT NULL DEFAULT now(),
     updated_at              timestamp,
 
     CONSTRAINT fk_program_subjects_program

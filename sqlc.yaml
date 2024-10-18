@@ -35,3 +35,6 @@ sql:
           - db_type: "json"
             go_type:
               type: "json.RawMessage"
+          - db_type: "date"
+            go_type:
+              type: "time.Time"

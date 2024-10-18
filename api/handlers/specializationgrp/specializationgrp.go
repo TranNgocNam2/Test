@@ -31,7 +31,7 @@ func (h *Handlers) CreateSpecialization() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var newSpecRequest request.NewSpecialization
 		if err := web.Decode(ctx, &newSpecRequest); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
@@ -83,7 +83,7 @@ func (h *Handlers) UpdateSpecialization() gin.HandlerFunc {
 
 		var updateSpecRequest request.UpdateSpecialization
 		if err := web.Decode(ctx, &updateSpecRequest); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
