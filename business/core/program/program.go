@@ -117,14 +117,6 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateProgram UpdateProgra
 	return nil
 }
 
-//func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) error {
-//	_, err := c.queries.GetProgramByID(ctx, id)
-//	if err != nil {
-//		return ErrProgramNotFound
-//	}
-//	return nil
-//}
-
 func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []Program {
 	if err := filter.Validate(); err != nil {
 		return nil
