@@ -42,7 +42,7 @@ func (h *Handlers) CreateSpecialization() gin.HandlerFunc {
 
 		newSpec := toCoreNewSpecialization(newSpecRequest)
 
-		err := h.specialization.Create(ctx, newSpec)
+		id, err := h.specialization.Create(ctx, newSpec)
 		if err != nil {
 			switch {
 			case
@@ -65,7 +65,10 @@ func (h *Handlers) CreateSpecialization() gin.HandlerFunc {
 			}
 		}
 
-		web.Respond(ctx, nil, http.StatusOK, nil)
+		resData := map[string]uuid.UUID{
+			"id": id,
+		}
+		web.Respond(ctx, resData, http.StatusOK, nil)
 	}
 }
 

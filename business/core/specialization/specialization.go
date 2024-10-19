@@ -39,14 +39,14 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
-func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) error {
+func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) (uuid.UUID, error) {
 	staffID, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
 	if _, err = c.queries.GetSpecializationByCode(ctx, newSpec.Code); err == nil {
-		return ErrSpecCodeAlreadyExist
+		return uuid.Nil, ErrSpecCodeAlreadyExist
 	}
 
 	var dbSpec = sqlc.CreateSpecializationParams{
@@ -60,10 +60,10 @@ func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) error {
 	}
 
 	if err = c.queries.CreateSpecialization(ctx, dbSpec); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
-	return nil
+	return dbSpec.ID, nil
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
