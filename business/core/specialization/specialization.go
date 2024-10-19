@@ -39,14 +39,14 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
-func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) error {
+func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) (uuid.UUID, error) {
 	staffID, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
 	if _, err = c.queries.GetSpecializationByCode(ctx, newSpec.Code); err == nil {
-		return ErrSpecCodeAlreadyExist
+		return uuid.Nil, ErrSpecCodeAlreadyExist
 	}
 
 	var dbSpec = sqlc.CreateSpecializationParams{
@@ -59,28 +59,11 @@ func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) error {
 		CreatedBy:   staffID,
 	}
 
-	tx, err := c.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	qtx := c.queries.WithTx(tx)
-
-	if err = qtx.CreateSpecialization(ctx, dbSpec); err != nil {
-		return err
+	if err = c.queries.CreateSpecialization(ctx, dbSpec); err != nil {
+		return uuid.Nil, err
 	}
 
-	if err = processSpecSkills(ctx, qtx, dbSpec.ID, newSpec.Skills); err != nil {
-		return err
-	}
-
-	if err = processSpecSubjects(ctx, qtx, dbSpec.ID, newSpec.Subjects, staffID); err != nil {
-		return err
-	}
-
-	tx.Commit(ctx)
-	return nil
+	return dbSpec.ID, nil
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {

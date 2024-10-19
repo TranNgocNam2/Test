@@ -37,8 +37,6 @@ type NewSpecialization struct {
 	Description *string
 	TimeAmount  *float64
 	Image       *string
-	Skills      []uuid.UUID
-	Subjects    []uuid.UUID
 }
 
 type UpdateSpecialization struct {
