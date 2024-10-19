@@ -49,7 +49,7 @@ func (h *Handlers) CreateProgram() gin.HandlerFunc {
 			return
 		}
 
-		err = h.program.Create(ctx, newProgram)
+		id, err := h.program.Create(ctx, newProgram)
 		if err != nil {
 			switch {
 			case
@@ -62,7 +62,10 @@ func (h *Handlers) CreateProgram() gin.HandlerFunc {
 			}
 		}
 
-		web.Respond(ctx, nil, http.StatusOK, nil)
+		data := map[string]uuid.UUID{
+			"id": id,
+		}
+		web.Respond(ctx, data, http.StatusOK, nil)
 	}
 }
 
