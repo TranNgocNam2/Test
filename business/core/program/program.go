@@ -39,10 +39,10 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
-func (c *Core) Create(ctx *gin.Context, newProgram NewProgram) error {
+func (c *Core) Create(ctx *gin.Context, newProgram NewProgram) (uuid.UUID, error) {
 	staffID, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
 	dbProgram := sqlc.CreateProgramParams{
@@ -54,9 +54,9 @@ func (c *Core) Create(ctx *gin.Context, newProgram NewProgram) error {
 		Description: newProgram.Description,
 	}
 	if err = c.queries.CreateProgram(ctx, dbProgram); err != nil {
-		return err
+		return uuid.Nil, err
 	}
-	return nil
+	return dbProgram.ID, nil
 }
 
 func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateProgram UpdateProgram) error {
