@@ -151,28 +151,15 @@ func toSpecializationsResponse(specializations []specialization.Specialization) 
 
 }
 
-func toCoreNewSpecialization(newSpecialization request.NewSpecialization) (specialization.NewSpecialization, error) {
-	skillIDs, err := slice.GetUUIDs(newSpecialization.Skills)
-	if err != nil {
-		return specialization.NewSpecialization{}, ErrSkillIDsInvalid
-	}
-
-	subjectIDs, err := slice.GetUUIDs(newSpecialization.Subjects)
-	if err != nil {
-		return specialization.NewSpecialization{}, ErrSubjectIDsInvalid
-	}
-	specialization := specialization.NewSpecialization{
+func toCoreNewSpecialization(newSpecialization request.NewSpecialization) specialization.NewSpecialization {
+	return specialization.NewSpecialization{
 		ID:          uuid.New(),
 		Name:        newSpecialization.Name,
 		Code:        newSpecialization.Code,
 		Description: &newSpecialization.Description,
 		TimeAmount:  &newSpecialization.TimeAmount,
 		Image:       &newSpecialization.Image,
-		Skills:      skillIDs,
-		Subjects:    subjectIDs,
 	}
-
-	return specialization, nil
 }
 
 func validateNewSpecializationRequest(newSpecializationRequest request.NewSpecialization) error {

@@ -40,13 +40,9 @@ func (h *Handlers) CreateSpecialization() gin.HandlerFunc {
 			return
 		}
 
-		newSpec, err := toCoreNewSpecialization(newSpecRequest)
-		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
-			return
-		}
+		newSpec := toCoreNewSpecialization(newSpecRequest)
 
-		err = h.specialization.Create(ctx, newSpec)
+		err := h.specialization.Create(ctx, newSpec)
 		if err != nil {
 			switch {
 			case

@@ -59,27 +59,10 @@ func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) error {
 		CreatedBy:   staffID,
 	}
 
-	tx, err := c.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	qtx := c.queries.WithTx(tx)
-
-	if err = qtx.CreateSpecialization(ctx, dbSpec); err != nil {
+	if err = c.queries.CreateSpecialization(ctx, dbSpec); err != nil {
 		return err
 	}
 
-	if err = processSpecSkills(ctx, qtx, dbSpec.ID, newSpec.Skills); err != nil {
-		return err
-	}
-
-	if err = processSpecSubjects(ctx, qtx, dbSpec.ID, newSpec.Subjects, staffID); err != nil {
-		return err
-	}
-
-	tx.Commit(ctx)
 	return nil
 }
 

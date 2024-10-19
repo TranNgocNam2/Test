@@ -11,7 +11,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.19.0
-	gitlab.com/innovia69420/kit v0.0.0-20241017170916-7eb6a4978fed
+	gitlab.com/innovia69420/kit v0.0.0-20241019050331-5fdc4f16b32e
 	go.uber.org/zap v1.27.0
 )
 
