@@ -119,14 +119,14 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 		return err
 	}
 
-	subject, err := c.queries.GetSubjectById(ctx, id)
+	_, err = c.queries.GetSubjectById(ctx, id)
 	if err != nil {
 		return ErrSubjectNotFound
 	}
 
 	totalSessions := len(s.Sessions)
 	if *s.Status == Published {
-		if totalSessions%int(subject.SessionsPerWeek) != 0 || totalSessions == 0 {
+		if totalSessions == 0 {
 			return ErrInvalidSessions
 		}
 
