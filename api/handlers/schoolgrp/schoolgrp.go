@@ -5,12 +5,19 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
-	"errors"
+	"github.com/pkg/errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gitlab.com/innovia69420/kit/web/request"
+)
+
+var (
+	ErrInvalidSchoolID   = errors.New("ID trường học không hợp lệ!")
+	ErrInvalidDistrictID = errors.New("ID quận/huyện không hợp lệ!")
+	ErrInvalidProvinceID = errors.New("ID tỉnh/thành phố không hợp lệ!")
 )
 
 type Handlers struct {
@@ -36,18 +43,28 @@ func (h *Handlers) CreateSchool() gin.HandlerFunc {
 			return
 		}
 
-		err := h.school.Create(ctx, toCoreNewSchool(newSchool))
+		id, err := h.school.Create(ctx, toCoreNewSchool(newSchool))
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusInternalServerError, err)
 			return
 		}
 
-		web.Respond(ctx, nil, http.StatusOK, nil)
+		data := map[string]uuid.UUID{
+			"id": id,
+		}
+
+		web.Respond(ctx, data, http.StatusOK, nil)
 	}
 }
 
 func (h *Handlers) UpdateSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrInvalidSchoolID)
+			return
+		}
+
 		var updatedSchool request.UpdateSchool
 		if err := web.Decode(ctx, &updatedSchool); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
@@ -59,12 +76,9 @@ func (h *Handlers) UpdateSchool() gin.HandlerFunc {
 			return
 		}
 
-		err := h.school.Update(ctx, toCoreUpdateSchool(updatedSchool))
+		err = h.school.Update(ctx, id, toCoreUpdateSchool(updatedSchool))
 		if err != nil {
 			switch {
-			case errors.Is(err, school.ErrInvalidID):
-				web.Respond(ctx, nil, http.StatusBadRequest, err)
-				return
 			case errors.Is(err, school.ErrSchoolNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
@@ -80,12 +94,15 @@ func (h *Handlers) UpdateSchool() gin.HandlerFunc {
 
 func (h *Handlers) DeleteSchool() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		err := h.school.Delete(ctx)
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrInvalidSchoolID)
+			return
+		}
+
+		err = h.school.Delete(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, school.ErrInvalidID):
-				web.Respond(ctx, nil, http.StatusBadRequest, err)
-				return
 			case errors.Is(err, school.ErrSchoolNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
@@ -156,16 +173,16 @@ func (h *Handlers) GetSchools() gin.HandlerFunc {
 
 func (h *Handlers) GetSchoolsByDistrict() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		schools, err := h.school.GetSchoolsByDistrictID(ctx)
+		id, err := strconv.Atoi(ctx.Param("id"))
 		if err != nil {
-			switch {
-			case errors.Is(err, school.ErrInvalidID):
-				web.Respond(ctx, nil, http.StatusBadRequest, err)
-				return
-			default:
-				web.Respond(ctx, nil, http.StatusInternalServerError, err)
-				return
-			}
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrInvalidDistrictID)
+			return
+		}
+
+		schools, err := h.school.GetSchoolsByDistrictID(ctx, id)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusInternalServerError, err)
+			return
 		}
 
 		web.Respond(ctx, toSchoolsResponse(schools), http.StatusOK, nil)
@@ -186,7 +203,13 @@ func (h *Handlers) GetProvinces() gin.HandlerFunc {
 
 func (h *Handlers) GetDistrictsByProvince() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		districts, err := h.school.GetDistrictsByProvinceID(ctx)
+		id, err := strconv.Atoi(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrInvalidProvinceID)
+			return
+		}
+
+		districts, err := h.school.GetDistrictsByProvinceID(ctx, id)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusInternalServerError, err)
 			return
