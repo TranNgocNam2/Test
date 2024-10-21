@@ -46,6 +46,7 @@ type Session struct {
 type Material struct {
 	ID       uuid.UUID       `json:"id"`
 	Name     string          `json:"name"`
+	Type     string          `json:"type"`
 	Index    int             `json:"index"`
 	IsShared bool            `json:"isShared"`
 	Data     json.RawMessage `json:"data"`

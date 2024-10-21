@@ -365,6 +365,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 			material := Material{
 				ID:       dbMaterial.ID,
 				Name:     *dbMaterial.Name,
+				Type:     dbMaterial.Type,
 				Index:    int(dbMaterial.Index),
 				IsShared: dbMaterial.IsShared,
 				Data:     dbMaterial.Data,
