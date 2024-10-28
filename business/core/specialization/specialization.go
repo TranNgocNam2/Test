@@ -72,7 +72,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		return Details{}, ErrSpecNotFound
 	}
 
-	if dbSpec.Status == Draft || dbSpec.Status == Delete {
+	if dbSpec.Status == Draft || dbSpec.Status == Deleted {
 		if _, err = middleware.AuthorizeStaff(ctx, c.queries); err != nil {
 			return Details{}, err
 		}
@@ -135,7 +135,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateSpec UpdateSpecializ
 
 	var dbUpdateSpecialization sqlc.UpdateSpecializationParams
 
-	if dbSpec.Status == Public {
+	if dbSpec.Status == Published {
 		dbUpdateSpecialization = sqlc.UpdateSpecializationParams{
 			ID:          id,
 			TimeAmount:  &updateSpec.TimeAmount,
@@ -284,7 +284,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		}
 	}
 
-	if dbSpec.Status == Public {
+	if dbSpec.Status == Published {
 		if err = qtx.UpdateSpecializationStatus(ctx, sqlc.UpdateSpecializationStatusParams{
 			UpdatedBy: &staffID,
 			ID:        dbSpec.ID,

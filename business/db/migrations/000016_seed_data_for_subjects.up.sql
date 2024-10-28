@@ -1,7 +1,7 @@
-INSERT INTO subjects(id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, created_at)
-values('3c1a1849-198a-415e-a136-ad06e114e2bb', 'SEP', 'Capstone Project', 3, 2,
-'https://notalinkbutalink.com',
-1,'Loren ipsum', 'google-oauth2|103166434261305612273', NOW());
+INSERT INTO subjects(id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by)
+values('3c1a1849-198a-415e-a136-ad06e114e2bb', 'SEP', 'Lập Trình Machine Learning với Teachable Machine', 2, 2,
+'https://notalinkbutalink.com', 1,
+'Khung Chương Trình: Lập Trình Machine Learning với Teachable Machine', 'google-oauth2|103166434261305612273');
 
 INSERT INTO subjects(id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, created_at)
 values('d7fe9772-8ed9-4e96-a274-ebe793d5cb66', 'PRN', 'Programming with .NET', 3, 2,

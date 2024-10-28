@@ -23,3 +23,7 @@ WHERE email = sqlc.arg(email);
 -- name: GetUserByPhone :one
 SELECT * FROM users
 WHERE phone = sqlc.arg(phone);
+
+-- name: GetTeacherByID :one
+SELECT * FROM users
+WHERE id = sqlc.arg(id) AND auth_role = 2;

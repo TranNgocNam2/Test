@@ -6,7 +6,6 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -15,7 +14,7 @@ import (
 )
 
 var (
-	ErrProgramIDInvalid = errors.New("ID khoá học không hợp lệ!")
+	ErrProgramIDInvalid = errors.New("Mã chương trình học không hợp lệ!")
 )
 
 type Handlers struct {
@@ -37,8 +36,6 @@ func (h *Handlers) CreateProgram() gin.HandlerFunc {
 		}
 
 		if err := validateNewProgramRequest(newProgramRequest); err != nil {
-			fmt.Println(err)
-
 			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}

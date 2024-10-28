@@ -16,6 +16,7 @@ type Assignment struct {
 	TranscriptID   uuid.UUID  `db:"transcript_id" json:"transcriptId"`
 	ClassTeacherID uuid.UUID  `db:"class_teacher_id" json:"classTeacherId"`
 	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
+	CreatedBy      string     `db:"created_by" json:"createdBy"`
 	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
 	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
 }
@@ -32,17 +33,18 @@ type Certificate struct {
 }
 
 type Class struct {
-	ID               uuid.UUID `db:"id" json:"id"`
-	Code             string    `db:"code" json:"code"`
-	IsDraft          bool      `db:"is_draft" json:"isDraft"`
-	Password         string    `db:"password" json:"password"`
-	Name             string    `db:"name" json:"name"`
-	Link             string    `db:"link" json:"link"`
-	ProgramSubjectID uuid.UUID `db:"program_subject_id" json:"programSubjectId"`
-	StartTime        time.Time `db:"start_time" json:"startTime"`
-	EndTime          time.Time `db:"end_time" json:"endTime"`
-	CreatedBy        string    `db:"created_by" json:"createdBy"`
-	CreatedAt        time.Time `db:"created_at" json:"createdAt"`
+	ID               uuid.UUID  `db:"id" json:"id"`
+	Code             string     `db:"code" json:"code"`
+	Password         string     `db:"password" json:"password"`
+	Name             string     `db:"name" json:"name"`
+	Link             *string    `db:"link" json:"link"`
+	ProgramSubjectID uuid.UUID  `db:"program_subject_id" json:"programSubjectId"`
+	StartDate        time.Time  `db:"start_date" json:"startDate"`
+	EndDate          *time.Time `db:"end_date" json:"endDate"`
+	CreatedBy        string     `db:"created_by" json:"createdBy"`
+	CreatedAt        time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt        *time.Time `db:"updated_at" json:"updatedAt"`
+	UpdatedBy        *string    `db:"updated_by" json:"updatedBy"`
 }
 
 type ClassLearner struct {
@@ -66,10 +68,10 @@ type District struct {
 }
 
 type LearnerAssignment struct {
-	ID            uuid.UUID `db:"id" json:"id"`
-	ClassLernerID uuid.UUID `db:"class_lerner_id" json:"classLernerId"`
-	AssignmentID  uuid.UUID `db:"assignment_id" json:"assignmentId"`
-	Grade         float64   `db:"grade" json:"grade"`
+	ID             uuid.UUID `db:"id" json:"id"`
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	AssignmentID   uuid.UUID `db:"assignment_id" json:"assignmentId"`
+	Grade          float64   `db:"grade" json:"grade"`
 }
 
 type LearnerAttendance struct {
@@ -143,11 +145,13 @@ type Skill struct {
 }
 
 type Slot struct {
-	ID        uuid.UUID `db:"id" json:"id"`
-	SessionID uuid.UUID `db:"session_id" json:"sessionId"`
-	ClassID   uuid.UUID `db:"class_id" json:"classId"`
-	StartTime time.Time `db:"start_time" json:"startTime"`
-	EndTime   time.Time `db:"end_time" json:"endTime"`
+	ID        uuid.UUID  `db:"id" json:"id"`
+	SessionID uuid.UUID  `db:"session_id" json:"sessionId"`
+	ClassID   uuid.UUID  `db:"class_id" json:"classId"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	Index     int32      `db:"index" json:"index"`
+	TeacherID *string    `db:"teacher_id" json:"teacherId"`
 }
 
 type Specialization struct {

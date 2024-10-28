@@ -50,6 +50,61 @@ func (q *Queries) DeleteProgramSubjects(ctx context.Context, programID uuid.UUID
 	return err
 }
 
+const getProgramSubject = `-- name: GetProgramSubject :one
+SELECT ps.id, p.start_date, p.end_date, s.sessions_per_week, s.time_per_session
+FROM programs p
+JOIN  program_subjects ps ON p.id = ps.program_id
+JOIN subjects s ON ps.subject_id = s.id
+WHERE ps.program_id = $1::uuid
+AND ps.subject_id = $2::uuid
+AND s.status = 1
+`
+
+type GetProgramSubjectParams struct {
+	ProgramID uuid.UUID `db:"program_id" json:"programId"`
+	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
+}
+
+type GetProgramSubjectRow struct {
+	ID              uuid.UUID `db:"id" json:"id"`
+	StartDate       time.Time `db:"start_date" json:"startDate"`
+	EndDate         time.Time `db:"end_date" json:"endDate"`
+	SessionsPerWeek int16     `db:"sessions_per_week" json:"sessionsPerWeek"`
+	TimePerSession  int16     `db:"time_per_session" json:"timePerSession"`
+}
+
+func (q *Queries) GetProgramSubject(ctx context.Context, arg GetProgramSubjectParams) (GetProgramSubjectRow, error) {
+	row := q.db.QueryRow(ctx, getProgramSubject, arg.ProgramID, arg.SubjectID)
+	var i GetProgramSubjectRow
+	err := row.Scan(
+		&i.ID,
+		&i.StartDate,
+		&i.EndDate,
+		&i.SessionsPerWeek,
+		&i.TimePerSession,
+	)
+	return i, err
+}
+
+const getProgramSubjectByID = `-- name: GetProgramSubjectByID :one
+SELECT id, program_id, subject_id, created_by, updated_by, created_at, updated_at FROM program_subjects WHERE id = $1::uuid
+`
+
+func (q *Queries) GetProgramSubjectByID(ctx context.Context, id uuid.UUID) (ProgramSubject, error) {
+	row := q.db.QueryRow(ctx, getProgramSubjectByID, id)
+	var i ProgramSubject
+	err := row.Scan(
+		&i.ID,
+		&i.ProgramID,
+		&i.SubjectID,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getSubjectsByProgram = `-- name: GetSubjectsByProgram :many
 SELECT subjects.id, subjects.name, subjects.code, subjects.image_link, subjects.created_at, subjects.updated_at
 FROM program_subjects JOIN subjects ON program_subjects.subject_id = subjects.id

@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrInvalidStartDate = errors.New("Thời gian bắt đầu khoá học không hợp lệ!")
-	ErrInvalidEndDate   = errors.New("Thời gian kết thúc khoá học không hợp lệ!")
+	ErrInvalidStartDate = errors.New("Thời gian bắt đầu chương trình học không hợp lệ!")
+	ErrInvalidEndDate   = errors.New("Thời gian kết thúc chương trình học không hợp lệ!")
 	ErrInvalidSubjects  = errors.New("Danh sách môn học không hợp lệ!")
 )
 

@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	ErrProgramNotFound     = errors.New("Không tìm thấy khoá học!")
-	ErrCannotUpdateProgram = errors.New("Không thể cập nhật khoá học!")
+	ErrProgramNotFound     = errors.New("Không tìm thấy chương trình học!")
+	ErrCannotUpdateProgram = errors.New("Không thể cập nhật chương trình học!")
 	ErrSubjectNotFound     = errors.New("Môn học không có trong hệ thống!")
-	ErrCannotDeleteProgram = errors.New("Không thể xóa khoá học!")
+	ErrCannotDeleteProgram = errors.New("Không thể xóa chương trình học!")
 )
 
 type Core struct {
