@@ -22,7 +22,6 @@ CREATE table subjects(
     code                    character varying(10) NOT NULL,
     name                    character varying(100) NOT NULL,
     time_per_session        smallint NOT NULL,
-    sessions_per_week       smallint NOT NULL,
     image_link              text,
     status                  smallint CHECK (status in (0, 1, 2)) DEFAULT 0 NOT NULL,
     description             text,

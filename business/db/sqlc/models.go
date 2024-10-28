@@ -178,18 +178,17 @@ type SpecializationSubject struct {
 }
 
 type Subject struct {
-	ID              uuid.UUID  `db:"id" json:"id"`
-	Code            string     `db:"code" json:"code"`
-	Name            string     `db:"name" json:"name"`
-	TimePerSession  int16      `db:"time_per_session" json:"timePerSession"`
-	SessionsPerWeek int16      `db:"sessions_per_week" json:"sessionsPerWeek"`
-	ImageLink       *string    `db:"image_link" json:"imageLink"`
-	Status          int16      `db:"status" json:"status"`
-	Description     *string    `db:"description" json:"description"`
-	CreatedBy       string     `db:"created_by" json:"createdBy"`
-	UpdatedBy       *string    `db:"updated_by" json:"updatedBy"`
-	CreatedAt       time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt       *time.Time `db:"updated_at" json:"updatedAt"`
+	ID             uuid.UUID  `db:"id" json:"id"`
+	Code           string     `db:"code" json:"code"`
+	Name           string     `db:"name" json:"name"`
+	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
+	ImageLink      *string    `db:"image_link" json:"imageLink"`
+	Status         int16      `db:"status" json:"status"`
+	Description    *string    `db:"description" json:"description"`
+	CreatedBy      string     `db:"created_by" json:"createdBy"`
+	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
+	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
 }
 
 type SubjectSkill struct {
@@ -199,12 +198,13 @@ type SubjectSkill struct {
 }
 
 type Transcript struct {
-	ID         uuid.UUID `db:"id" json:"id"`
-	SubjectID  uuid.UUID `db:"subject_id" json:"subjectId"`
-	Name       string    `db:"name" json:"name"`
-	MinGrade   float64   `db:"min_grade" json:"minGrade"`
-	MaxGrade   float64   `db:"max_grade" json:"maxGrade"`
-	Percentage float64   `db:"percentage" json:"percentage"`
+	ID            uuid.UUID `db:"id" json:"id"`
+	SubjectID     uuid.UUID `db:"subject_id" json:"subjectId"`
+	Name          string    `db:"name" json:"name"`
+	Index         int32     `db:"index" json:"index"`
+	MinGrade      float64   `db:"min_grade" json:"minGrade"`
+	AtdPercentage float64   `db:"atd_percentage" json:"atdPercentage"`
+	Weight        float64   `db:"weight" json:"weight"`
 }
 
 type User struct {

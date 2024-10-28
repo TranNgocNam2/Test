@@ -60,6 +60,5 @@ func toCoreSubject(dbSubject sqlc.Subject) Subject {
 		Description:    dbSubject.Description,
 		Image:          dbSubject.ImageLink,
 		TimePerSession: dbSubject.TimePerSession,
-		SessionPerWeek: dbSubject.SessionsPerWeek,
 	}
 }

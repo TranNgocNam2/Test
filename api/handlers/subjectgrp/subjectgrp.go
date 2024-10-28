@@ -6,6 +6,7 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
+	"Backend/internal/web/payload"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -31,7 +32,7 @@ func New(subject *subject.Core) *Handlers {
 
 func (h *Handlers) CreateSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var request request.NewSubject
+		var request payload.NewSubject
 		if err := web.Decode(ctx, &request); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return

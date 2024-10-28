@@ -7,10 +7,12 @@ import (
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/slice"
+	"Backend/internal/web/payload"
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -47,7 +49,7 @@ var (
 	ErrInvalidMaterialType = errors.New("Material có type không phù hợp!")
 )
 
-func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, error) {
+func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, error) {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return "", err
@@ -59,16 +61,15 @@ func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, err
 
 	subjectId := uuid.New()
 	subjectArgs := sqlc.InsertSubjectParams{
-		ID:              subjectId,
-		Name:            subject.Name,
-		Code:            subject.Code,
-		Description:     &subject.Description,
-		ImageLink:       &subject.Image,
-		Status:          Draft,
-		TimePerSession:  int16(subject.TimePerSession),
-		SessionsPerWeek: int16(subject.SessionPerWeek),
-		CreatedBy:       staffId,
-		CreatedAt:       time.Now(),
+		ID:             subjectId,
+		Name:           subject.Name,
+		Code:           subject.Code,
+		Description:    &subject.Description,
+		ImageLink:      &subject.Image,
+		Status:         Draft,
+		TimePerSession: int16(subject.TimePerSession),
+		CreatedBy:      staffId,
+		CreatedAt:      time.Now(),
 	}
 
 	tx, err := c.pool.Begin(ctx)

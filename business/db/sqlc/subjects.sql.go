@@ -37,7 +37,7 @@ func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) 
 }
 
 const getSubjectByCode = `-- name: GetSubjectByCode :one
-SELECT id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE code = $1
 `
@@ -50,7 +50,6 @@ func (q *Queries) GetSubjectByCode(ctx context.Context, code string) (Subject, e
 		&i.Code,
 		&i.Name,
 		&i.TimePerSession,
-		&i.SessionsPerWeek,
 		&i.ImageLink,
 		&i.Status,
 		&i.Description,
@@ -63,7 +62,7 @@ func (q *Queries) GetSubjectByCode(ctx context.Context, code string) (Subject, e
 }
 
 const getSubjectById = `-- name: GetSubjectById :one
-SELECT id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects WHERE id = $1::uuid
 `
 
@@ -75,7 +74,6 @@ func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, er
 		&i.Code,
 		&i.Name,
 		&i.TimePerSession,
-		&i.SessionsPerWeek,
 		&i.ImageLink,
 		&i.Status,
 		&i.Description,
@@ -88,7 +86,7 @@ func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, er
 }
 
 const getSubjectsByIDs = `-- name: GetSubjectsByIDs :many
-SELECT id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE id = ANY($1::uuid[]) AND status = 1
 `
@@ -107,7 +105,6 @@ func (q *Queries) GetSubjectsByIDs(ctx context.Context, subjectIds []uuid.UUID) 
 			&i.Code,
 			&i.Name,
 			&i.TimePerSession,
-			&i.SessionsPerWeek,
 			&i.ImageLink,
 			&i.Status,
 			&i.Description,
@@ -128,26 +125,25 @@ func (q *Queries) GetSubjectsByIDs(ctx context.Context, subjectIds []uuid.UUID) 
 
 const insertSubject = `-- name: InsertSubject :one
 INSERT INTO subjects (id, name, code, description, image_link, status,
-    time_per_session, sessions_per_week, created_by,
+    time_per_session, created_by,
     created_at)
 VALUES ($1::uuid, $2, $3, $4,
     $5, $6, $7,
-    $8, $9,
-    $10)
+    $8,
+    $9)
 RETURNING id
 `
 
 type InsertSubjectParams struct {
-	ID              uuid.UUID `db:"id" json:"id"`
-	Name            string    `db:"name" json:"name"`
-	Code            string    `db:"code" json:"code"`
-	Description     *string   `db:"description" json:"description"`
-	ImageLink       *string   `db:"image_link" json:"imageLink"`
-	Status          int16     `db:"status" json:"status"`
-	TimePerSession  int16     `db:"time_per_session" json:"timePerSession"`
-	SessionsPerWeek int16     `db:"sessions_per_week" json:"sessionsPerWeek"`
-	CreatedBy       string    `db:"created_by" json:"createdBy"`
-	CreatedAt       time.Time `db:"created_at" json:"createdAt"`
+	ID             uuid.UUID `db:"id" json:"id"`
+	Name           string    `db:"name" json:"name"`
+	Code           string    `db:"code" json:"code"`
+	Description    *string   `db:"description" json:"description"`
+	ImageLink      *string   `db:"image_link" json:"imageLink"`
+	Status         int16     `db:"status" json:"status"`
+	TimePerSession int16     `db:"time_per_session" json:"timePerSession"`
+	CreatedBy      string    `db:"created_by" json:"createdBy"`
+	CreatedAt      time.Time `db:"created_at" json:"createdAt"`
 }
 
 func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (uuid.UUID, error) {
@@ -159,7 +155,6 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 		arg.ImageLink,
 		arg.Status,
 		arg.TimePerSession,
-		arg.SessionsPerWeek,
 		arg.CreatedBy,
 		arg.CreatedAt,
 	)
