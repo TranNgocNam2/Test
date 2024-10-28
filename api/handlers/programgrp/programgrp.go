@@ -77,7 +77,7 @@ func (h *Handlers) UpdateProgram() gin.HandlerFunc {
 			return
 		}
 
-		var updateProgramRequest request.UpdateProgram
+		var updateProgramRequest UpdateProgram
 		if err = web.Decode(ctx, &updateProgramRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return

@@ -40,5 +40,5 @@ FROM subjects WHERE id = sqlc.arg(id)::uuid;
 UPDATE subjects SET status = 2, updated_at = NOW(), updated_by = sqlc.arg(updated_by)
 WHERE id = sqlc.arg(id);
 
--- name: GetSubjectsByIDs :many
-SELECT * FROM subjects WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]);
+-- -- name: GetSubjectsByIDs :many
+-- SELECT * FROM subjects WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]);

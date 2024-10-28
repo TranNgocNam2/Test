@@ -107,10 +107,10 @@ type Program struct {
 	UpdatedAt   *time.Time `db:"updated_at" json:"updatedAt"`
 }
 
-type ProgramSubject struct {
+type ProgramClass struct {
 	ID        uuid.UUID  `db:"id" json:"id"`
 	ProgramID uuid.UUID  `db:"program_id" json:"programId"`
-	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
+	ClassID   uuid.UUID  `db:"class_id" json:"classId"`
 	CreatedBy string     `db:"created_by" json:"createdBy"`
 	UpdatedBy *string    `db:"updated_by" json:"updatedBy"`
 	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
