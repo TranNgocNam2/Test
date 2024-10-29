@@ -132,7 +132,6 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 	if err != nil {
 		return err
 	}
-	fmt.Println(len(dbSessions))
 
 	if *s.Status == Published {
 		if len(dbSessions) == 0 {
