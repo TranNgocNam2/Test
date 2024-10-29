@@ -28,10 +28,15 @@ type Details struct {
 	Link      string     `json:"link"`
 	StartDate time.Time  `json:"startDate"`
 	EndDate   *time.Time `json:"endDate"`
-	ProgramID uuid.UUID  `json:"programID"`
+	Program   Program    `json:"program"`
 	Subject   Subject    `json:"subject"`
 	Teachers  []Teacher  `json:"teachers"`
 	Slots     []Slot     `json:"slots"`
+}
+
+type Program struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 type Subject struct {
@@ -70,6 +75,13 @@ func toCoreSubject(dbSubject sqlc.Subject) Subject {
 	}
 }
 
+func toCoreProgram(dbProgram sqlc.Program) Program {
+	return Program{
+		ID:   dbProgram.ID,
+		Name: dbProgram.Name,
+	}
+}
+
 func toCoreSession(dbSession sqlc.Session) Session {
 	return Session{
 		ID:    dbSession.ID,
@@ -89,7 +101,7 @@ func toCoreTeacher(dbTeacher sqlc.User) Teacher {
 }
 
 func toCoreTeacherSlice(dbTeachers []sqlc.User) []Teacher {
-	var teachers []Teacher
+	teachers := make([]Teacher, len(dbTeachers))
 	for i, dbTeacher := range dbTeachers {
 		teachers[i] = toCoreTeacher(dbTeacher)
 	}

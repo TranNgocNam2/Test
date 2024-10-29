@@ -12,6 +12,7 @@ func ClassRoutes(router *gin.Engine, app *app.Application) {
 	classes := router.Group("/classes")
 	{
 		classes.POST("", handlers.CreateClass())
+		classes.GET("/:id", handlers.GetClassByID())
 		classes.PUT("/:id", handlers.UpdateClass())
 		classes.DELETE("/:id", handlers.DeleteClass())
 	}

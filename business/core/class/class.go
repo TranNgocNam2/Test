@@ -15,10 +15,12 @@ import (
 )
 
 var (
-	ErrProgramOrSubjectNotFound = errors.New("Không tìm thấy chương trình học hoặc môn học!")
-	ErrInvalidClassStartTime    = errors.New("Thời gian bắt đầu lớp học không hợp lệ!")
-	ErrSessionNotFound          = errors.New("Không có buổi học nào trong môn học này!")
-	ErrInvalidWeekDay           = errors.New("Số ngày học trong tuần không khớp với số buổi học trong môn học!")
+	ErrProgramNotFound       = errors.New("Không tìm thấy chương trình học!")
+	ErrSubjectNotFound       = errors.New("Không tìm thấy môn học!")
+	ErrInvalidClassStartTime = errors.New("Thời gian bắt đầu lớp học không hợp lệ!")
+	ErrSessionNotFound       = errors.New("Không có buổi học nào trong môn học này!")
+	ErrInvalidWeekDay        = errors.New("Số ngày học trong tuần không khớp với số buổi học trong môn học!")
+	ErrClassNotFound         = errors.New("Không tìm thấy lớp học!")
 )
 
 type Core struct {
@@ -43,48 +45,47 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	programSubject, err := c.queries.GetProgramSubject(ctx, sqlc.GetProgramSubjectParams{
-		ProgramID: newClass.ProgramID,
-		SubjectID: newClass.SubjectID,
-	})
+	dbProgram, err := c.queries.GetProgramByID(ctx, newClass.ProgramID)
 	if err != nil {
-		return uuid.Nil, ErrProgramOrSubjectNotFound
+		return uuid.Nil, ErrProgramNotFound
 	}
 
-	if newClass.StartDate.Before(programSubject.StartDate) || newClass.StartDate.After(programSubject.EndDate) {
+	dbSubject, err := c.queries.GetPublishedSubjectByID(ctx, newClass.SubjectID)
+	if err != nil {
+		return uuid.Nil, ErrSubjectNotFound
+	}
+
+	if newClass.StartDate.Before(dbProgram.StartDate) || newClass.StartDate.After(dbProgram.EndDate) {
 		return uuid.Nil, ErrInvalidClassStartTime
 	}
 
-	if int(programSubject.TimePerSession) != len(newClass.Slots.WeekDays) {
-		return uuid.Nil, ErrInvalidWeekDay
-	}
-
-	sessions, err := c.queries.GetSessionBySubject(ctx, newClass.SubjectID)
+	sessions, err := c.queries.GetSessionsBySubjectID(ctx, newClass.SubjectID)
 	if err != nil {
 		return uuid.Nil, ErrSessionNotFound
 	}
 
-	slots := generateSlots(newClass, sessions, programSubject.TimePerSession, programSubject.EndDate)
+	slots := generateSlots(newClass, sessions, dbSubject.TimePerSession, dbProgram.EndDate)
 
 	// Check if the last slot's end time is after the programs end time
 	var endDateClass *time.Time
 	lastSlot := slots[len(slots)-1:][0].EndTime
-	if lastSlot != nil && lastSlot.Before(programSubject.EndDate) {
+	if lastSlot != nil && lastSlot.Before(dbProgram.EndDate) {
 		endDate := time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(),
 			0, 0, 0, 0, time.Local)
 		endDateClass = &endDate
 	}
 
 	dbClass := sqlc.CreateClassParams{
-		ID:               newClass.ID,
-		ProgramSubjectID: programSubject.ID,
-		Name:             newClass.Name,
-		Code:             newClass.Code,
-		Link:             newClass.Link,
-		StartDate:        newClass.StartDate,
-		EndDate:          endDateClass,
-		Password:         newClass.Password,
-		CreatedBy:        staffID,
+		ID:        newClass.ID,
+		SubjectID: dbSubject.ID,
+		ProgramID: dbProgram.ID,
+		Name:      newClass.Name,
+		Code:      newClass.Code,
+		Link:      newClass.Link,
+		StartDate: newClass.StartDate,
+		EndDate:   endDateClass,
+		Password:  newClass.Password,
+		CreatedBy: staffID,
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -108,61 +109,55 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	dbClass, err := c.queries.GetClassByID(ctx, id)
 	if err != nil {
-		return Details{}, err
+		return Details{}, ErrClassNotFound
 	}
+
 	class := Details{
 		ID:        dbClass.ID,
 		Name:      dbClass.Name,
 		Link:      *dbClass.Link,
 		StartDate: dbClass.StartDate,
 		EndDate:   dbClass.EndDate,
-		Teachers:  nil,
-		Slots:     nil,
 	}
 
-	programSubject, err := c.queries.GetProgramSubjectByID(ctx, dbClass.ProgramSubjectID)
+	dbSubject, err := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
 	if err != nil {
-		return Details{}, err
-	}
-	class.ProgramID = programSubject.ProgramID
-
-	dbSubject, err := c.queries.GetSubjectById(ctx, programSubject.SubjectID)
-	if err != nil {
-		return Details{}, err
+		return Details{}, ErrSubjectNotFound
 	}
 	class.Subject = toCoreSubject(dbSubject)
 
-	dbTeachers, err := c.queries.GetTeachersByClassID(ctx, dbClass.ID)
+	dbProgram, err := c.queries.GetProgramByID(ctx, dbClass.ProgramID)
 	if err != nil {
-		return Details{}, nil
+		return Details{}, ErrProgramNotFound
 	}
+	class.Program = toCoreProgram(dbProgram)
 
-	class.Teachers = toCoreTeacherSlice(dbTeachers)
+	dbTeachers, err := c.queries.GetTeachersByClassID(ctx, dbClass.ID)
+	if err == nil {
+		class.Teachers = toCoreTeacherSlice(dbTeachers)
+	}
 
 	var slots []Slot
-	dbSlots, err := c.queries.GetSlotsByClassID(ctx, dbClass.ID)
-	if err != nil {
-		return Details{}, err
-	}
+	dbSlots, _ := c.queries.GetSlotsByClassID(ctx, dbClass.ID)
 	for _, dbSlot := range dbSlots {
-		dbSession, err := c.queries.GetSessionByID(ctx, dbSlot.SessionID)
-		if err != nil {
-			return Details{}, err
-		}
-
+		dbSession, _ := c.queries.GetSessionByID(ctx, dbSlot.SessionID)
 		session := toCoreSession(dbSession)
-		dbTeacher, err := c.queries.GetTeacherBySessionID(ctx, dbSession.ID)
-		if err != nil {
-			return Details{}, err
-		}
+
 		slot := Slot{
 			ID:        dbSlot.ID,
 			StartTime: *dbSlot.StartTime,
 			EndTime:   *dbSlot.EndTime,
 			Session:   session,
 		}
+
+		if dbSlot.TeacherID != nil {
+			dbTeacher, _ := c.queries.GetTeacherByID(ctx, *dbSlot.TeacherID)
+			slot.Teacher = toCoreTeacher(dbTeacher)
+		}
+
 		slots = append(slots, slot)
 	}
+	class.Slots = slots
 
 	return class, nil
 }

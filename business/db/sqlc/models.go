@@ -16,7 +16,6 @@ type Assignment struct {
 	TranscriptID   uuid.UUID  `db:"transcript_id" json:"transcriptId"`
 	ClassTeacherID uuid.UUID  `db:"class_teacher_id" json:"classTeacherId"`
 	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
-	CreatedBy      string     `db:"created_by" json:"createdBy"`
 	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
 	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
 }
@@ -33,18 +32,18 @@ type Certificate struct {
 }
 
 type Class struct {
-	ID               uuid.UUID  `db:"id" json:"id"`
-	Code             string     `db:"code" json:"code"`
-	Password         string     `db:"password" json:"password"`
-	Name             string     `db:"name" json:"name"`
-	Link             *string    `db:"link" json:"link"`
-	ProgramSubjectID uuid.UUID  `db:"program_subject_id" json:"programSubjectId"`
-	StartDate        time.Time  `db:"start_date" json:"startDate"`
-	EndDate          *time.Time `db:"end_date" json:"endDate"`
-	CreatedBy        string     `db:"created_by" json:"createdBy"`
-	CreatedAt        time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt        *time.Time `db:"updated_at" json:"updatedAt"`
-	UpdatedBy        *string    `db:"updated_by" json:"updatedBy"`
+	ID        uuid.UUID  `db:"id" json:"id"`
+	Code      string     `db:"code" json:"code"`
+	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
+	ProgramID uuid.UUID  `db:"program_id" json:"programId"`
+	IsDraft   bool       `db:"is_draft" json:"isDraft"`
+	Password  string     `db:"password" json:"password"`
+	Name      string     `db:"name" json:"name"`
+	Link      *string    `db:"link" json:"link"`
+	StartDate time.Time  `db:"start_date" json:"startDate"`
+	EndDate   *time.Time `db:"end_date" json:"endDate"`
+	CreatedBy string     `db:"created_by" json:"createdBy"`
+	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
 }
 
 type ClassLearner struct {
@@ -107,16 +106,6 @@ type Program struct {
 	Description string     `db:"description" json:"description"`
 	CreatedAt   time.Time  `db:"created_at" json:"createdAt"`
 	UpdatedAt   *time.Time `db:"updated_at" json:"updatedAt"`
-}
-
-type ProgramSubject struct {
-	ID        uuid.UUID  `db:"id" json:"id"`
-	ProgramID uuid.UUID  `db:"program_id" json:"programId"`
-	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
-	CreatedBy string     `db:"created_by" json:"createdBy"`
-	UpdatedBy *string    `db:"updated_by" json:"updatedBy"`
-	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
 }
 
 type Province struct {

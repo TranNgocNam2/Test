@@ -51,7 +51,10 @@ func (h *Handlers) CreateClass() gin.HandlerFunc {
 				errors.Is(err, middleware.ErrInvalidUser):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
-			case errors.Is(err, class.ErrProgramOrSubjectNotFound):
+			case
+				errors.Is(err, class.ErrProgramNotFound),
+				errors.Is(err, class.ErrSubjectNotFound):
+
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case
@@ -77,6 +80,32 @@ func (h *Handlers) UpdateClass() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) GetClassByID() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIDInvalid)
+			return
+		}
+
+		classRes, err := h.class.GetByID(ctx, id)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, class.ErrClassNotFound),
+				errors.Is(err, class.ErrSubjectNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, classRes, http.StatusOK, nil)
 	}
 }
 

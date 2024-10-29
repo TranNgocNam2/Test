@@ -1,25 +1,25 @@
 CREATE table classes(
     id                      uuid PRIMARY KEY,
     code                    character varying(10) NOT NULL,
-    password                text NOT NULL,
+    subject_id              uuid NOT NULL,
+    program_id              uuid NOT NULL,
+    is_draft                boolean NOT NULL DEFAULT true,
+    password                character varying(50) NOT NULL,
     name                    character varying(50) NOT NULL,
-    link                    text,
-    program_subject_id      uuid NOT NULL,
-    start_date              date NOT NULL,
-    end_date                date,
+    link                    character varying(100),
+    start_date              timestamp NOT NULL,
+    end_date                timestamp,
     created_by              character varying(50) NOT NULL,
     created_at              timestamp NOT NULL DEFAULT now(),
-    updated_at              timestamp,
-    updated_by              character varying(50),
 
-    CONSTRAINT fk_class_program_subject
-        FOREIGN KEY (program_subject_id) REFERENCES program_subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_class_staffs_created_by
         FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_class_staffs_updated_by
-        FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_class_subject
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    CONSTRAINT fk_class_program
+        FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
 
-    CONSTRAINT unique_class_subject_program UNIQUE (id, program_subject_id)
+    CONSTRAINT unique_classes_subject UNIQUE (id, subject_id)
 );
 
 CREATE table class_teachers(
@@ -44,14 +44,11 @@ CREATE table assignments(
     transcript_id       uuid NOT NULL,
     class_teacher_id    uuid NOT NULL,
     created_at          timestamp NOT NULL DEFAULT now(),
-    created_by          character varying(50) NOT NULL,
     updated_at          timestamp,
     updated_by          character varying(50),
 
     CONSTRAINT fk_assignment_class_teacher
         FOREIGN KEY (class_teacher_id) REFERENCES class_teachers(id) ON DELETE CASCADE,
-    CONSTRAINT fk_assignment_staff_created_by
-        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_assignment_staff_updated_by
         FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_assignment_transcript

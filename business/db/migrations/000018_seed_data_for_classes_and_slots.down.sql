@@ -1,0 +1,2 @@
+DELETE FROM slots;
+DELETE FROM classes;

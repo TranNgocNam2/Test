@@ -36,6 +36,32 @@ func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) 
 	return err
 }
 
+const getPublishedSubjectByID = `-- name: GetPublishedSubjectByID :one
+SELECT id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, updated_by, created_at, updated_at
+FROM subjects
+WHERE id = $1::uuid AND status = 1
+`
+
+func (q *Queries) GetPublishedSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error) {
+	row := q.db.QueryRow(ctx, getPublishedSubjectByID, id)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.TimePerSession,
+		&i.SessionsPerWeek,
+		&i.ImageLink,
+		&i.Status,
+		&i.Description,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getSubjectByCode = `-- name: GetSubjectByCode :one
 SELECT id, code, name, time_per_session, sessions_per_week, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects

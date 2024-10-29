@@ -12,24 +12,35 @@ import (
 	"github.com/google/uuid"
 )
 
+const countClassesByProgramID = `-- name: CountClassesByProgramID :one
+SELECT COUNT(*) FROM classes WHERE program_id = $1::uuid
+`
+
+func (q *Queries) CountClassesByProgramID(ctx context.Context, programID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countClassesByProgramID, programID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createClass = `-- name: CreateClass :exec
-INSERT INTO classes (id, code, password, name, link, program_subject_id,
-                     start_date, end_date, created_by)
+INSERT INTO classes (id, code, password, name, subject_id, program_id, link, start_date, end_date, created_by)
 VALUES ($1::uuid, $2, $3,
-        $4, $5, $6::uuid,
-        $7, $8, $9)
+        $4, $5::uuid, $6::uuid,
+        $7, $8, $9, $10)
 `
 
 type CreateClassParams struct {
-	ID               uuid.UUID  `db:"id" json:"id"`
-	Code             string     `db:"code" json:"code"`
-	Password         string     `db:"password" json:"password"`
-	Name             string     `db:"name" json:"name"`
-	Link             *string    `db:"link" json:"link"`
-	ProgramSubjectID uuid.UUID  `db:"program_subject_id" json:"programSubjectId"`
-	StartDate        time.Time  `db:"start_date" json:"startDate"`
-	EndDate          *time.Time `db:"end_date" json:"endDate"`
-	CreatedBy        string     `db:"created_by" json:"createdBy"`
+	ID        uuid.UUID  `db:"id" json:"id"`
+	Code      string     `db:"code" json:"code"`
+	Password  string     `db:"password" json:"password"`
+	Name      string     `db:"name" json:"name"`
+	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
+	ProgramID uuid.UUID  `db:"program_id" json:"programId"`
+	Link      *string    `db:"link" json:"link"`
+	StartDate time.Time  `db:"start_date" json:"startDate"`
+	EndDate   *time.Time `db:"end_date" json:"endDate"`
+	CreatedBy string     `db:"created_by" json:"createdBy"`
 }
 
 func (q *Queries) CreateClass(ctx context.Context, arg CreateClassParams) error {
@@ -38,8 +49,9 @@ func (q *Queries) CreateClass(ctx context.Context, arg CreateClassParams) error 
 		arg.Code,
 		arg.Password,
 		arg.Name,
+		arg.SubjectID,
+		arg.ProgramID,
 		arg.Link,
-		arg.ProgramSubjectID,
 		arg.StartDate,
 		arg.EndDate,
 		arg.CreatedBy,
@@ -48,7 +60,7 @@ func (q *Queries) CreateClass(ctx context.Context, arg CreateClassParams) error 
 }
 
 const getClassByID = `-- name: GetClassByID :one
-SELECT id, code, password, name, link, program_subject_id, start_date, end_date, created_by, created_at, updated_at, updated_by FROM classes WHERE id = $1::uuid
+SELECT id, code, subject_id, program_id, is_draft, password, name, link, start_date, end_date, created_by, created_at FROM classes WHERE id = $1::uuid
 `
 
 func (q *Queries) GetClassByID(ctx context.Context, id uuid.UUID) (Class, error) {
@@ -57,16 +69,16 @@ func (q *Queries) GetClassByID(ctx context.Context, id uuid.UUID) (Class, error)
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
+		&i.SubjectID,
+		&i.ProgramID,
+		&i.IsDraft,
 		&i.Password,
 		&i.Name,
 		&i.Link,
-		&i.ProgramSubjectID,
 		&i.StartDate,
 		&i.EndDate,
 		&i.CreatedBy,
 		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.UpdatedBy,
 	)
 	return i, err
 }

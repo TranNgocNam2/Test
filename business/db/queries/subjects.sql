@@ -39,3 +39,11 @@ FROM subjects WHERE id = sqlc.arg(id)::uuid;
 -- name: DeleteSubject :exec
 UPDATE subjects SET status = 2, updated_at = NOW(), updated_by = sqlc.arg(updated_by)
 WHERE id = sqlc.arg(id);
+
+-- name: GetPublishedSubjectByID :one
+SELECT *
+FROM subjects
+WHERE id = sqlc.arg(id)::uuid AND status = 1;
+
+-- -- name: GetSubjectsByIDs :many
+-- SELECT * FROM subjects WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]);

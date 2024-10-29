@@ -27,6 +27,28 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
+const getTeacherByID = `-- name: GetTeacherByID :one
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id FROM users
+WHERE id = $1 AND auth_role = 2
+`
+
+func (q *Queries) GetTeacherByID(ctx context.Context, id string) (User, error) {
+	row := q.db.QueryRow(ctx, getTeacherByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
+		&i.Gender,
+		&i.AuthRole,
+		&i.ProfilePhoto,
+		&i.Status,
+		&i.SchoolID,
+	)
+	return i, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id FROM users
 WHERE email = $1
