@@ -1,7 +1,5 @@
 package payload
 
-import "encoding/json"
-
 type NewSubject struct {
 	Name           string   `json:"name" validate:"required"`
 	Code           string   `json:"code" validate:"required"`
@@ -29,10 +27,10 @@ type Session struct {
 }
 
 type Material struct {
-	ID       string          `json:"id"`
-	Name     string          `json:"name"`
-	Type     string          `json:"type"`
-	Index    int             `json:"index"`
-	IsShared bool            `json:"isShared"`
-	Data     json.RawMessage `json:"data"`
+	ID       string      `json:"id"`
+	Name     string      `json:"name"`
+	Type     string      `json:"type"`
+	Index    int         `json:"index"`
+	IsShared bool        `json:"isShared"`
+	Data     interface{} `json:"data"`
 }

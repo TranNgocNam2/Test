@@ -13,7 +13,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gitlab.com/innovia69420/kit/web/request"
 )
 
 var (
@@ -79,7 +78,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 			return
 		}
 
-		var request request.UpdateSubject
+		var request payload.UpdateSubject
 		if err := web.Decode(ctx, &request); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -106,6 +105,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 					return
 
 				case
+					errors.Is(err, subject.ErrCodeAlreadyExist),
 					errors.Is(err, subject.ErrInvalidMaterials),
 					errors.Is(err, subject.ErrInvalidSessions):
 
@@ -132,6 +132,11 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 				case
 					errors.Is(err, subject.ErrSkillNotFound):
 					web.Respond(ctx, nil, http.StatusNotFound, err)
+					return
+
+				case
+					errors.Is(err, subject.ErrCodeAlreadyExist):
+					web.Respond(ctx, nil, http.StatusBadRequest, err)
 					return
 
 				default:

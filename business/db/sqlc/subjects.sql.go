@@ -36,31 +36,6 @@ func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) 
 	return err
 }
 
-const getSubjectByCode = `-- name: GetSubjectByCode :one
-SELECT id, code, name, time_per_session, image_link, status, description, created_by, updated_by, created_at, updated_at
-FROM subjects
-WHERE code = $1
-`
-
-func (q *Queries) GetSubjectByCode(ctx context.Context, code string) (Subject, error) {
-	row := q.db.QueryRow(ctx, getSubjectByCode, code)
-	var i Subject
-	err := row.Scan(
-		&i.ID,
-		&i.Code,
-		&i.Name,
-		&i.TimePerSession,
-		&i.ImageLink,
-		&i.Status,
-		&i.Description,
-		&i.CreatedBy,
-		&i.UpdatedBy,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const getSubjectById = `-- name: GetSubjectById :one
 SELECT id, code, name, time_per_session, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects WHERE id = $1::uuid
@@ -161,6 +136,61 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const isCodeExist = `-- name: IsCodeExist :one
+SELECT id, code, name, time_per_session, image_link, status, description, created_by, updated_by, created_at, updated_at
+FROM subjects
+WHERE code = $1 AND status = 1
+`
+
+func (q *Queries) IsCodeExist(ctx context.Context, code string) (Subject, error) {
+	row := q.db.QueryRow(ctx, isCodeExist, code)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.TimePerSession,
+		&i.ImageLink,
+		&i.Status,
+		&i.Description,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const isCodePublished = `-- name: IsCodePublished :one
+SELECT id, code, name, time_per_session, image_link, status, description, created_by, updated_by, created_at, updated_at
+FROM subjects
+WHERE code = $1 AND status = 1 AND id != $2
+`
+
+type IsCodePublishedParams struct {
+	Code string    `db:"code" json:"code"`
+	ID   uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) IsCodePublished(ctx context.Context, arg IsCodePublishedParams) (Subject, error) {
+	row := q.db.QueryRow(ctx, isCodePublished, arg.Code, arg.ID)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.TimePerSession,
+		&i.ImageLink,
+		&i.Status,
+		&i.Description,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateSubject = `-- name: UpdateSubject :exec

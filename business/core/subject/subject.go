@@ -9,6 +9,7 @@ import (
 	"Backend/internal/slice"
 	"Backend/internal/web/payload"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
-	"gitlab.com/innovia69420/kit/web/request"
 	"go.uber.org/zap"
 )
 
@@ -47,6 +47,7 @@ var (
 	ErrInvalidSessions     = errors.New("Số lượng session cho môn học không hợp lệ!")
 	ErrInvalidMaterials    = errors.New("Buổi học phải có ít nhất 1 nội dung!")
 	ErrInvalidMaterialType = errors.New("Material có type không phù hợp!")
+	ErrDataConversion      = errors.New("Không convert qua json được!")
 )
 
 func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, error) {
@@ -55,7 +56,7 @@ func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, err
 		return "", err
 	}
 
-	if _, err := c.queries.GetSubjectByCode(ctx, subject.Code); err == nil {
+	if _, err := c.queries.IsCodeExist(ctx, subject.Code); err == nil {
 		return "", ErrCodeAlreadyExist
 	}
 
@@ -114,7 +115,7 @@ func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, err
 	return id.String(), nil
 }
 
-func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UUID) error {
+func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UUID) error {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
@@ -125,14 +126,34 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 		return ErrSubjectNotFound
 	}
 
-	totalSessions := len(s.Sessions)
+	fmt.Println(id)
+
+	dbSessions, err := c.queries.GetSessionsBySubjectID(ctx, id)
+	if err != nil {
+		return err
+	}
+	fmt.Println(len(dbSessions))
+
 	if *s.Status == Published {
-		if totalSessions == 0 {
+		if len(dbSessions) == 0 {
 			return ErrInvalidSessions
 		}
 
-		for _, session := range s.Sessions {
-			if len(session.Materials) == 0 {
+		if _, err := c.queries.IsCodePublished(ctx,
+			sqlc.IsCodePublishedParams{
+				Code: s.Code,
+				ID:   id,
+			}); err == nil {
+			return ErrCodeAlreadyExist
+		}
+
+		for _, session := range dbSessions {
+			materials, err := c.queries.GetMaterialsBySessionID(ctx, session.ID)
+			if err != nil {
+				return err
+			}
+
+			if len(materials) == 0 {
 				return ErrInvalidMaterials
 			}
 		}
@@ -223,13 +244,18 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 				return fmt.Errorf("Material với id: %s, không đúng định dạng", material.ID)
 			}
 
+			data, err := json.Marshal(material.Data)
+			if err != nil {
+				return ErrDataConversion
+			}
+
 			param := sqlc.InsertMaterialParams{
 				ID:        materialId,
 				SessionID: sessionId,
 				Index:     int32(material.Index),
 				IsShared:  material.IsShared,
 				Name:      &material.Name,
-				Data:      material.Data,
+				Data:      json.RawMessage(data),
 			}
 
 			materialParams = append(materialParams, param)
@@ -247,10 +273,18 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 	return nil
 }
 
-func (c *Core) UpdatePublished(ctx *gin.Context, s request.UpdateSubject, id uuid.UUID) error {
+func (c *Core) UpdatePublished(ctx *gin.Context, s payload.UpdateSubject, id uuid.UUID) error {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
+	}
+
+	if _, err := c.queries.IsCodePublished(ctx,
+		sqlc.IsCodePublishedParams{
+			Code: s.Code,
+			ID:   id,
+		}); err == nil {
+		return ErrCodeAlreadyExist
 	}
 
 	skills, err := slice.GetUUIDs(s.Skills)
