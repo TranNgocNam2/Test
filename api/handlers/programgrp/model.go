@@ -14,32 +14,6 @@ var (
 	ErrInvalidEndDate   = errors.New("Thời gian kết thúc khoá học không hợp lệ!")
 )
 
-type ProgramResponse struct {
-	ID            uuid.UUID `json:"id"`
-	Name          string    `json:"name"`
-	StartDate     string    `json:"startDate"`
-	EndDate       string    `json:"endDate"`
-	TotalSubjects int64     `json:"totalSubjects"`
-}
-
-func toProgramResponse(program program.Program) ProgramResponse {
-	return ProgramResponse{
-		ID:            program.ID,
-		Name:          program.Name,
-		StartDate:     program.StartDate.Format(time.DateOnly),
-		EndDate:       program.EndDate.Format(time.DateOnly),
-		TotalSubjects: program.TotalClasses,
-	}
-}
-
-func toCoreProgramsResponse(programs []program.Program) []ProgramResponse {
-	programsResponse := make([]ProgramResponse, len(programs))
-	for i, program := range programs {
-		programsResponse[i] = toProgramResponse(program)
-	}
-	return programsResponse
-}
-
 func toCoreNewProgram(newProgramRequest request.NewProgram) (program.NewProgram, error) {
 	startDate, err := time.Parse(time.DateOnly, newProgramRequest.StartDate)
 	if err != nil || startDate.Before(time.Now()) {

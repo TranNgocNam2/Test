@@ -22,11 +22,11 @@ type UpdateProgram struct {
 }
 
 type Program struct {
-	ID           uuid.UUID
-	Name         string
-	StartDate    time.Time
-	EndDate      time.Time
-	TotalClasses int64
+	ID           uuid.UUID `json:"id"`
+	Name         string    `json:"name"`
+	StartDate    time.Time `json:"startDate"`
+	EndDate      time.Time `json:"endDate"`
+	TotalClasses int64     `json:"totalClasses"`
 }
 
 func toCoreProgram(dbProgram sqlc.Program) Program {

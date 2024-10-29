@@ -183,7 +183,7 @@ func (h *Handlers) GetPrograms() gin.HandlerFunc {
 
 		programs := h.program.Query(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		total := h.program.Count(ctx, filter)
-		result := page.NewPageResponse(toCoreProgramsResponse(programs), total, pageInfo.Number, pageInfo.Size)
+		result := page.NewPageResponse(programs, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}

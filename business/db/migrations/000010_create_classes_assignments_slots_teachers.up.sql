@@ -5,18 +5,13 @@ CREATE table classes(
     password                character varying(50) NOT NULL,
     name                    character varying(50) NOT NULL,
     link                    character varying(100) NOT NULL,
-    program_subject_id      uuid NOT NULL,
     start_time              timestamp NOT NULL,
     end_time                timestamp NOT NULL,
     created_by              character varying(50) NOT NULL,
     created_at              timestamp NOT NULL DEFAULT now(),
 
-    CONSTRAINT fk_class_program_subject
-        FOREIGN KEY (program_subject_id) REFERENCES program_subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_class_staffs_created_by
-        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
-
-    CONSTRAINT unique_class_subject_program UNIQUE (id, program_subject_id)
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE table class_teachers(
