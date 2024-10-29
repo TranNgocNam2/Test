@@ -37,7 +37,7 @@ deploy-prod:
   script:
     - docker rm -f ${DOCKERHUB_REPO}_${DOCKERHUB_TAG}
     - docker rmi --force $(docker images --filter=reference="*/*:${DOCKERHUB_TAG}-*" -q)
-    - docker run --volume=${LOG}:/app/logs --restart always --name=${DOCKERHUB_REPO}_${DOCKERHUB_TAG} -dp 3000:3000 $DOCKERHUB_USERNAME/$DOCKERHUB_REPO:$DOCKERHUB_TAG-$CI_COMMIT_SHORT_SHA
+    - docker run --volume=${LOG}:/app/logs --restart always --name=${DOCKERHUB_REPO}_${DOCKERHUB_TAG} -dp 127.0.0.1:3000:3000 $DOCKERHUB_USERNAME/$DOCKERHUB_REPO:$DOCKERHUB_TAG-$CI_COMMIT_SHORT_SHA
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'  # Only runs on main branch
       when: always
