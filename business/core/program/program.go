@@ -125,7 +125,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	var programs []Program
 	for _, dbProgram := range dbPrograms {
 		program := toCoreProgram(dbProgram)
-		program.TotalClasses, err = c.queries.CountClassesByProgramID(ctx, dbProgram.ID)
+		program.TotalClasses, err = c.queries.CountClassesByProgramId(ctx, dbProgram.ID)
 		if err != nil {
 			c.logger.Error(err.Error())
 			return nil
@@ -173,7 +173,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		return ErrProgramNotFound
 	}
 
-	totalClasses, _ := c.queries.CountClassesByProgramID(ctx, id)
+	totalClasses, _ := c.queries.CountClassesByProgramId(ctx, id)
 	if totalClasses > 0 || dbProgram.StartDate.Before(time.Now()) {
 		return ErrCannotDeleteProgram
 	}

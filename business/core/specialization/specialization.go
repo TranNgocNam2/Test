@@ -67,7 +67,7 @@ func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) (uuid.UUID, e
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
-	dbSpec, err := c.queries.GetSpecializationByID(ctx, id)
+	dbSpec, err := c.queries.GetSpecializationById(ctx, id)
 	if err != nil {
 		return Details{}, ErrSpecNotFound
 	}
@@ -90,7 +90,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	}
 	if dbSpecSubjects != nil {
 		for _, subject := range dbSpecSubjects {
-			totalSession, err := c.queries.CountSessionsBySubjectID(ctx, subject.ID)
+			totalSession, err := c.queries.CountSessionsBySubjectId(ctx, subject.ID)
 			if err != nil {
 				return Details{}, err
 			}
@@ -121,7 +121,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateSpec UpdateSpecializ
 		return err
 	}
 
-	dbSpec, err := c.queries.GetSpecializationByID(ctx, id)
+	dbSpec, err := c.queries.GetSpecializationById(ctx, id)
 	if err != nil {
 		return ErrSpecNotFound
 	}
@@ -257,7 +257,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		return err
 	}
 
-	dbSpec, err := c.queries.GetSpecializationByID(ctx, id)
+	dbSpec, err := c.queries.GetSpecializationById(ctx, id)
 	if err != nil {
 		return ErrSpecNotFound
 	}
@@ -331,7 +331,7 @@ func processSpecSkills(ctx *gin.Context, qtx *sqlc.Queries, specializationID uui
 		if err != nil {
 			return err
 		}
-		dbSkill, err := qtx.GetSkillsByIDs(ctx, skillIDs)
+		dbSkill, err := qtx.GetSkillsByIds(ctx, skillIDs)
 		if err != nil || (len(dbSkill) != len(skillIDs)) {
 			return ErrSkillNotFound
 		}

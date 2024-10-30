@@ -11,15 +11,31 @@ import (
 	"github.com/google/uuid"
 )
 
-const getTeachersByClassID = `-- name: GetTeachersByClassID :many
+const addTeacherToClass = `-- name: AddTeacherToClass :exec
+INSERT INTO class_teachers (id, teacher_id, class_id, created_by)
+SELECT uuid_generate_v4(), unnest($1::varchar[]), $2::uuid, $3
+`
+
+type AddTeacherToClassParams struct {
+	TeacherIds []string  `db:"teacher_ids" json:"teacherIds"`
+	ClassID    uuid.UUID `db:"class_id" json:"classId"`
+	CreatedBy  string    `db:"created_by" json:"createdBy"`
+}
+
+func (q *Queries) AddTeacherToClass(ctx context.Context, arg AddTeacherToClassParams) error {
+	_, err := q.db.Exec(ctx, addTeacherToClass, arg.TeacherIds, arg.ClassID, arg.CreatedBy)
+	return err
+}
+
+const getTeachersByClassId = `-- name: GetTeachersByClassId :many
 SELECT t.id, t.full_name, t.email, t.phone, t.gender, t.auth_role, t.profile_photo, t.status, t.school_id
 FROM class_teachers ct
 JOIN users t ON ct.teacher_id = t.id
-WHERE ct.class_id = $1::uuid
+WHERE ct.class_id = $1::uuid AND t.auth_role = 2
 `
 
-func (q *Queries) GetTeachersByClassID(ctx context.Context, classID uuid.UUID) ([]User, error) {
-	rows, err := q.db.Query(ctx, getTeachersByClassID, classID)
+func (q *Queries) GetTeachersByClassId(ctx context.Context, classID uuid.UUID) ([]User, error) {
+	rows, err := q.db.Query(ctx, getTeachersByClassId, classID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,4 +62,14 @@ func (q *Queries) GetTeachersByClassID(ctx context.Context, classID uuid.UUID) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const removeTeacherFromClass = `-- name: RemoveTeacherFromClass :exec
+DELETE FROM class_teachers
+WHERE class_id = $1::uuid
+`
+
+func (q *Queries) RemoveTeacherFromClass(ctx context.Context, classID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, removeTeacherFromClass, classID)
+	return err
 }

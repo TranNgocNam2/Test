@@ -11,12 +11,12 @@ import (
 	"github.com/google/uuid"
 )
 
-const getSkillsByIDs = `-- name: GetSkillsByIDs :many
+const getSkillsByIds = `-- name: GetSkillsByIds :many
 SELECT id, name FROM skills WHERE id = ANY($1::uuid[])
 `
 
-func (q *Queries) GetSkillsByIDs(ctx context.Context, skillIds []uuid.UUID) ([]Skill, error) {
-	rows, err := q.db.Query(ctx, getSkillsByIDs, skillIds)
+func (q *Queries) GetSkillsByIds(ctx context.Context, skillIds []uuid.UUID) ([]Skill, error) {
+	rows, err := q.db.Query(ctx, getSkillsByIds, skillIds)
 	if err != nil {
 		return nil, err
 	}
@@ -35,15 +35,15 @@ func (q *Queries) GetSkillsByIDs(ctx context.Context, skillIds []uuid.UUID) ([]S
 	return items, nil
 }
 
-const getSkillsBySubjectID = `-- name: GetSkillsBySubjectID :many
+const getSkillsBySubjectId = `-- name: GetSkillsBySubjectId :many
 SELECT s.id, s.name
 FROM skills s
 JOIN subject_skills ss ON ss.skill_id = s.id
 WHERE ss.subject_id = $1
 `
 
-func (q *Queries) GetSkillsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]Skill, error) {
-	rows, err := q.db.Query(ctx, getSkillsBySubjectID, subjectID)
+func (q *Queries) GetSkillsBySubjectId(ctx context.Context, subjectID uuid.UUID) ([]Skill, error) {
+	rows, err := q.db.Query(ctx, getSkillsBySubjectId, subjectID)
 	if err != nil {
 		return nil, err
 	}

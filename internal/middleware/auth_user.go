@@ -11,8 +11,9 @@ func AuthorizeStaff(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
 	if ctx.GetHeader(header.XUserId) == "" {
 		return "", ErrInvalidUser
 	}
+
 	staff, err := queries.GetUserByID(ctx, ctx.GetHeader(header.XUserId))
-	if err != nil || (staff.AuthRole != role.MANAGER && staff.AuthRole != role.ADMIN) {
+	if err != nil || staff.AuthRole == role.LEARNER || staff.AuthRole == role.TEACHER {
 		return "", ErrInvalidUser
 	}
 

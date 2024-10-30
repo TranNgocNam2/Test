@@ -89,7 +89,7 @@ func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, err
 		return "", ErrInvalidSkillId
 	}
 
-	dbSkills, err := qtx.GetSkillsByIDs(ctx, skills)
+	dbSkills, err := qtx.GetSkillsByIds(ctx, skills)
 	if err != nil || len(dbSkills) == 0 {
 		return "", ErrSkillNotFound
 	}
@@ -167,7 +167,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 		return err
 	}
 
-	if dbSkills, err := qtx.GetSkillsByIDs(ctx, skills); err != nil || len(dbSkills) == 0 {
+	if dbSkills, err := qtx.GetSkillsByIds(ctx, skills); err != nil || len(dbSkills) == 0 {
 		return ErrSkillNotFound
 	}
 
@@ -280,7 +280,7 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s request.UpdateSubject, id uui
 		return err
 	}
 
-	if dbSkills, err := qtx.GetSkillsByIDs(ctx, skills); err != nil || len(dbSkills) == 0 {
+	if dbSkills, err := qtx.GetSkillsByIds(ctx, skills); err != nil || len(dbSkills) == 0 {
 		return ErrSkillNotFound
 	}
 
@@ -317,7 +317,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 		return nil, ErrSubjectNotFound
 	}
 
-	totalSessions, err := c.queries.CountSessionsBySubjectID(ctx, id)
+	totalSessions, err := c.queries.CountSessionsBySubjectId(ctx, id)
 	if err != nil {
 		totalSessions = 0
 	}
@@ -330,7 +330,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 	result.Status = int(subject.Status)
 	result.TotalSessions = int(totalSessions)
 
-	dbSkills, err := c.queries.GetSkillsBySubjectID(ctx, id)
+	dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +344,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 		result.Skills = append(result.Skills, skill)
 	}
 
-	dbSessions, err := c.queries.GetSessionsBySubjectID(ctx, id)
+	dbSessions, err := c.queries.GetSessionsBySubjectId(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +422,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	var subjects []Subject
 	for _, dbSubject := range dbSubjects {
 		subject := toCoreSubject(dbSubject)
-		dbSubjectSkills, err := c.queries.GetSkillsBySubjectID(ctx, dbSubject.ID)
+		dbSubjectSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
 		if err != nil {
 			c.logger.Error(err.Error())
 			return nil
@@ -435,7 +435,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 				})
 			}
 		}
-		totalSession, err := c.queries.CountSessionsBySubjectID(ctx, dbSubject.ID)
+		totalSession, err := c.queries.CountSessionsBySubjectId(ctx, dbSubject.ID)
 		if err != nil {
 			c.logger.Error(err.Error())
 			return nil

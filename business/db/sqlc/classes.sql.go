@@ -12,12 +12,12 @@ import (
 	"github.com/google/uuid"
 )
 
-const countClassesByProgramID = `-- name: CountClassesByProgramID :one
+const countClassesByProgramId = `-- name: CountClassesByProgramId :one
 SELECT COUNT(*) FROM classes WHERE program_id = $1::uuid
 `
 
-func (q *Queries) CountClassesByProgramID(ctx context.Context, programID uuid.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, countClassesByProgramID, programID)
+func (q *Queries) CountClassesByProgramId(ctx context.Context, programID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countClassesByProgramId, programID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -38,7 +38,7 @@ type CreateClassParams struct {
 	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
 	ProgramID uuid.UUID  `db:"program_id" json:"programId"`
 	Link      *string    `db:"link" json:"link"`
-	StartDate time.Time  `db:"start_date" json:"startDate"`
+	StartDate *time.Time `db:"start_date" json:"startDate"`
 	EndDate   *time.Time `db:"end_date" json:"endDate"`
 	CreatedBy string     `db:"created_by" json:"createdBy"`
 }
@@ -59,26 +59,114 @@ func (q *Queries) CreateClass(ctx context.Context, arg CreateClassParams) error 
 	return err
 }
 
-const getClassByID = `-- name: GetClassByID :one
-SELECT id, code, subject_id, program_id, is_draft, password, name, link, start_date, end_date, created_by, created_at FROM classes WHERE id = $1::uuid
+const deleteClass = `-- name: DeleteClass :exec
+DELETE FROM classes WHERE id = $1::uuid
 `
 
-func (q *Queries) GetClassByID(ctx context.Context, id uuid.UUID) (Class, error) {
-	row := q.db.QueryRow(ctx, getClassByID, id)
+func (q *Queries) DeleteClass(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteClass, id)
+	return err
+}
+
+const getClassByCode = `-- name: GetClassByCode :one
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes WHERE code = $1
+`
+
+func (q *Queries) GetClassByCode(ctx context.Context, code string) (Class, error) {
+	row := q.db.QueryRow(ctx, getClassByCode, code)
 	var i Class
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
 		&i.SubjectID,
 		&i.ProgramID,
-		&i.IsDraft,
 		&i.Password,
 		&i.Name,
 		&i.Link,
 		&i.StartDate,
 		&i.EndDate,
+		&i.Status,
 		&i.CreatedBy,
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getClassById = `-- name: GetClassById :one
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes WHERE id = $1::uuid
+`
+
+func (q *Queries) GetClassById(ctx context.Context, id uuid.UUID) (Class, error) {
+	row := q.db.QueryRow(ctx, getClassById, id)
+	var i Class
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.SubjectID,
+		&i.ProgramID,
+		&i.Password,
+		&i.Name,
+		&i.Link,
+		&i.StartDate,
+		&i.EndDate,
+		&i.Status,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const softDeleteClass = `-- name: SoftDeleteClass :exec
+UPDATE classes
+SET status = 2
+WHERE id = $1::uuid
+`
+
+func (q *Queries) SoftDeleteClass(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteClass, id)
+	return err
+}
+
+const updateActiveClass = `-- name: UpdateActiveClass :exec
+UPDATE classes
+SET status = 1
+AND start_date = $1
+AND end_date = $2
+WHERE id = $3::uuid
+`
+
+type UpdateActiveClassParams struct {
+	StartDate *time.Time `db:"start_date" json:"startDate"`
+	EndDate   *time.Time `db:"end_date" json:"endDate"`
+	ID        uuid.UUID  `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateActiveClass(ctx context.Context, arg UpdateActiveClassParams) error {
+	_, err := q.db.Exec(ctx, updateActiveClass, arg.StartDate, arg.EndDate, arg.ID)
+	return err
+}
+
+const updateClass = `-- name: UpdateClass :exec
+UPDATE classes
+SET name = $1,
+    link = $2,
+    password = $3
+WHERE id = $4::uuid
+`
+
+type UpdateClassParams struct {
+	Name     string    `db:"name" json:"name"`
+	Link     *string   `db:"link" json:"link"`
+	Password string    `db:"password" json:"password"`
+	ID       uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateClass(ctx context.Context, arg UpdateClassParams) error {
+	_, err := q.db.Exec(ctx, updateClass,
+		arg.Name,
+		arg.Link,
+		arg.Password,
+		arg.ID,
+	)
+	return err
 }

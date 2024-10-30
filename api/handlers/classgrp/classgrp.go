@@ -3,16 +3,18 @@ package classgrp
 import (
 	"Backend/business/core/class"
 	"Backend/internal/middleware"
+	"Backend/internal/order"
+	"Backend/internal/page"
 	"Backend/internal/web"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"gitlab.com/innovia69420/kit/web/request"
 	"net/http"
+	"time"
 )
 
 var (
-	ErrClassIDInvalid = errors.New("ID lớp học không hợp lệ!")
+	ErrClassIdInvalid = errors.New("Mã lớp học không hợp lệ!")
 )
 
 type Handlers struct {
@@ -27,7 +29,7 @@ func New(class *class.Core) *Handlers {
 
 func (h *Handlers) CreateClass() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var newClassRequest request.NewClass
+		var newClassRequest NewClass
 		if err := web.Decode(ctx, &newClassRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -59,7 +61,8 @@ func (h *Handlers) CreateClass() gin.HandlerFunc {
 				return
 			case
 				errors.Is(err, class.ErrInvalidClassStartTime),
-				errors.Is(err, class.ErrInvalidWeekDay):
+				errors.Is(err, class.ErrInvalidWeekDay),
+				errors.Is(err, class.ErrClassAlreadyExist):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
@@ -76,18 +79,84 @@ func (h *Handlers) CreateClass() gin.HandlerFunc {
 	}
 }
 
-func (h *Handlers) UpdateClass() gin.HandlerFunc {
+func (h *Handlers) GetClassesByManager() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		pageInfo, err := page.Parse(ctx)
+		if err != nil {
+			pageInfo = page.Page{
+				Number: 1,
+				Size:   10,
+			}
+		}
+
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = class.QueryFilter{
+				Name:   nil,
+				Code:   nil,
+				Status: nil,
+			}
+		}
+
+		orderBy, err := parseOrder(ctx)
+		if err != nil {
+			orderBy = order.NewBy(filterByCode, order.ASC)
+		}
+
+		classes := h.class.QueryByManager(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		total := h.class.Count(ctx, filter)
+		result := page.NewPageResponse(classes, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, result, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) UpdateClassTeacher() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			return
+		}
+
+		var updateClassTeacher UpdateClassTeacher
+		if err := web.Decode(ctx, &updateClassTeacher); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err := validateUpdateClassTeacherRequest(updateClassTeacher); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.class.UpdateClassTeacher(ctx, id, updateClassTeacher.TeacherIds)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, class.ErrClassNotFound),
+				errors.Is(err, class.ErrTeacherNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
 
 		web.Respond(ctx, nil, http.StatusOK, nil)
 	}
 }
 
-func (h *Handlers) GetClassByID() gin.HandlerFunc {
+func (h *Handlers) GetClassById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIDInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
 			return
 		}
 
@@ -111,7 +180,157 @@ func (h *Handlers) GetClassByID() gin.HandlerFunc {
 
 func (h *Handlers) DeleteClass() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			return
+		}
+
+		err = h.class.Delete(ctx, id)
+		if err != nil {
+			switch {
+			case errors.Is(err, class.ErrClassNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) UpdateClass() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			return
+		}
+
+		var updateClassRequest UpdateClass
+		if err = web.Decode(ctx, &updateClassRequest); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err = validateUpdateClassRequest(updateClassRequest); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		updateClass, err := toCoreUpdateClass(updateClassRequest)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.class.Update(ctx, id, updateClass)
+		if err != nil {
+			switch {
+			case errors.Is(err, class.ErrClassNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			return
+		}
+
+		var updateSlot UpdateSlot
+		if err = web.Decode(ctx, &updateSlot); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err = validateUpdateSlotRequest(updateSlot); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		updateSlots, err := toCoreUpdateSlot(updateSlot)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.class.UpdateSlot(ctx, id, updateSlots)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, class.ErrClassNotFound),
+				errors.Is(err, class.ErrSlotNotFound),
+				errors.Is(err, class.ErrTeacherNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			case errors.Is(err, class.ErrInvalidSlotStartTime),
+				errors.Is(err, class.ErrInvalidSlotEndTime),
+				errors.Is(err, class.ErrTeacherNotAvailable),
+				errors.Is(err, class.ErrDuplicateSlotTime),
+				errors.Is(err, class.ErrInvalidSlotCount):
+
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
 
 		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) CheckTeacherConflict() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		teacherID := ctx.Query("teacherId")
+		startTime := ctx.Query("startTime")
+		endTime := ctx.Query("endTime")
+		if teacherID == "" || startTime == "" || endTime == "" {
+			web.Respond(ctx, nil, http.StatusBadRequest, nil)
+			return
+		}
+
+		startTimeParsed, err := time.Parse(time.DateTime, startTime)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrInvalidTime)
+			return
+		}
+
+		endTimeParsed, err := time.Parse(time.DateTime, endTime)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, ErrInvalidTime)
+			return
+		}
+
+		status := h.class.IsTeacherAvailable(ctx, &teacherID, &startTimeParsed, &endTimeParsed)
+
+		response := map[string]bool{
+			"isAvailable": status,
+		}
+
+		web.Respond(ctx, response, http.StatusOK, nil)
 	}
 }

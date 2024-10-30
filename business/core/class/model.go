@@ -8,12 +8,11 @@ import (
 
 type NewClass struct {
 	ID        uuid.UUID
-	ProgramID uuid.UUID
-	SubjectID uuid.UUID
+	ProgramId uuid.UUID
+	SubjectId uuid.UUID
 	Name      string
 	Code      string
 	Link      *string
-	StartDate time.Time
 	Slots     struct {
 		WeekDays  []time.Weekday
 		StartTime *time.Time
@@ -22,16 +21,45 @@ type NewClass struct {
 	Password string
 }
 
+type UpdateSlot struct {
+	ID        uuid.UUID
+	StartTime time.Time
+	EndTime   time.Time
+	TeacherId string
+}
+
+type UpdateClass struct {
+	Name     string
+	Link     string
+	Password string
+}
+
 type Details struct {
 	ID        uuid.UUID  `json:"id"`
 	Name      string     `json:"name"`
 	Link      string     `json:"link"`
-	StartDate time.Time  `json:"startDate"`
+	StartDate *time.Time `json:"startDate"`
 	EndDate   *time.Time `json:"endDate"`
 	Program   Program    `json:"program"`
 	Subject   Subject    `json:"subject"`
 	Teachers  []Teacher  `json:"teachers"`
 	Slots     []Slot     `json:"slots"`
+}
+
+type Class struct {
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	Code          string    `json:"code"`
+	Program       Program   `json:"program"`
+	Subject       Subject   `json:"subject"`
+	Teachers      []Teacher `json:"teachers"`
+	Skills        []Skill   `json:"skills"`
+	TotalLearners int64     `json:"totalLearners"`
+}
+
+type Skill struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 type Program struct {
@@ -55,16 +83,16 @@ type Teacher struct {
 
 type Slot struct {
 	ID        uuid.UUID `json:"id"`
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
+	StartTime string    `json:"startTime"`
+	EndTime   string    `json:"endTime"`
+	Index     int32     `json:"index"`
 	Session   Session   `json:"session"`
 	Teacher   Teacher   `json:"teacher"`
 }
 
 type Session struct {
-	ID    uuid.UUID `json:"id"`
-	Name  string    `json:"name"`
-	Index int32     `json:"index"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 func toCoreSubject(dbSubject sqlc.Subject) Subject {
@@ -84,9 +112,8 @@ func toCoreProgram(dbProgram sqlc.Program) Program {
 
 func toCoreSession(dbSession sqlc.Session) Session {
 	return Session{
-		ID:    dbSession.ID,
-		Name:  dbSession.Name,
-		Index: dbSession.Index,
+		ID:   dbSession.ID,
+		Name: dbSession.Name,
 	}
 }
 
@@ -99,11 +126,21 @@ func toCoreTeacher(dbTeacher sqlc.User) Teacher {
 		Gender:   dbTeacher.Gender,
 	}
 }
-
 func toCoreTeacherSlice(dbTeachers []sqlc.User) []Teacher {
 	teachers := make([]Teacher, len(dbTeachers))
 	for i, dbTeacher := range dbTeachers {
 		teachers[i] = toCoreTeacher(dbTeacher)
 	}
 	return teachers
+}
+
+func toCoreSkillSlice(dbSkills []sqlc.Skill) []Skill {
+	skills := make([]Skill, len(dbSkills))
+	for i, dbSkill := range dbSkills {
+		skills[i] = Skill{
+			ID:   dbSkill.ID,
+			Name: dbSkill.Name,
+		}
+	}
+	return skills
 }

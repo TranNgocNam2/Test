@@ -36,12 +36,12 @@ type Class struct {
 	Code      string     `db:"code" json:"code"`
 	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
 	ProgramID uuid.UUID  `db:"program_id" json:"programId"`
-	IsDraft   bool       `db:"is_draft" json:"isDraft"`
 	Password  string     `db:"password" json:"password"`
 	Name      string     `db:"name" json:"name"`
 	Link      *string    `db:"link" json:"link"`
-	StartDate time.Time  `db:"start_date" json:"startDate"`
+	StartDate *time.Time `db:"start_date" json:"startDate"`
 	EndDate   *time.Time `db:"end_date" json:"endDate"`
+	Status    int16      `db:"status" json:"status"`
 	CreatedBy string     `db:"created_by" json:"createdBy"`
 	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
 }

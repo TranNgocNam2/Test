@@ -11,23 +11,23 @@ import (
 	"github.com/google/uuid"
 )
 
-const countSessionsBySubjectID = `-- name: CountSessionsBySubjectID :one
+const countSessionsBySubjectId = `-- name: CountSessionsBySubjectId :one
 SELECT count(*) FROM sessions WHERE subject_id = $1
 `
 
-func (q *Queries) CountSessionsBySubjectID(ctx context.Context, subjectID uuid.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, countSessionsBySubjectID, subjectID)
+func (q *Queries) CountSessionsBySubjectId(ctx context.Context, subjectID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countSessionsBySubjectId, subjectID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getSessionByID = `-- name: GetSessionByID :one
+const getSessionById = `-- name: GetSessionById :one
 SELECT id, subject_id, index, name FROM sessions WHERE id = $1
 `
 
-func (q *Queries) GetSessionByID(ctx context.Context, id uuid.UUID) (Session, error) {
-	row := q.db.QueryRow(ctx, getSessionByID, id)
+func (q *Queries) GetSessionById(ctx context.Context, id uuid.UUID) (Session, error) {
+	row := q.db.QueryRow(ctx, getSessionById, id)
 	var i Session
 	err := row.Scan(
 		&i.ID,
@@ -38,12 +38,12 @@ func (q *Queries) GetSessionByID(ctx context.Context, id uuid.UUID) (Session, er
 	return i, err
 }
 
-const getSessionsBySubjectID = `-- name: GetSessionsBySubjectID :many
+const getSessionsBySubjectId = `-- name: GetSessionsBySubjectId :many
 SELECT id, subject_id, index, name FROM sessions WHERE subject_id = $1 ORDER BY index
 `
 
-func (q *Queries) GetSessionsBySubjectID(ctx context.Context, subjectID uuid.UUID) ([]Session, error) {
-	rows, err := q.db.Query(ctx, getSessionsBySubjectID, subjectID)
+func (q *Queries) GetSessionsBySubjectId(ctx context.Context, subjectID uuid.UUID) ([]Session, error) {
+	rows, err := q.db.Query(ctx, getSessionsBySubjectId, subjectID)
 	if err != nil {
 		return nil, err
 	}
