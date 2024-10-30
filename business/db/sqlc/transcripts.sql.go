@@ -21,7 +21,7 @@ func (q *Queries) DeleteSubjectTranscripts(ctx context.Context, subjectID uuid.U
 }
 
 const getTranscriptsBySubjectId = `-- name: GetTranscriptsBySubjectId :many
-SELECT id, subject_id, name, index, min_grade, weight FROM transcripts WHERE subject_id = $1
+SELECT id, subject_id, name, index, min_grade, weight FROM transcripts WHERE subject_id = $1 ORDER BY index
 `
 
 func (q *Queries) GetTranscriptsBySubjectId(ctx context.Context, subjectID uuid.UUID) ([]Transcript, error) {
@@ -49,22 +49,6 @@ func (q *Queries) GetTranscriptsBySubjectId(ctx context.Context, subjectID uuid.
 		return nil, err
 	}
 	return items, nil
-}
-
-const getTranscriptsCountBySubjectId = `-- name: GetTranscriptsCountBySubjectId :one
-SELECT COUNT(*), COALESCE(SUM(weight), 0)::integer AS sum  FROM transcripts WHERE subject_id = $1
-`
-
-type GetTranscriptsCountBySubjectIdRow struct {
-	Count int64 `db:"count" json:"count"`
-	Sum   int32 `db:"sum" json:"sum"`
-}
-
-func (q *Queries) GetTranscriptsCountBySubjectId(ctx context.Context, subjectID uuid.UUID) (GetTranscriptsCountBySubjectIdRow, error) {
-	row := q.db.QueryRow(ctx, getTranscriptsCountBySubjectId, subjectID)
-	var i GetTranscriptsCountBySubjectIdRow
-	err := row.Scan(&i.Count, &i.Sum)
-	return i, err
 }
 
 type InsertTranscriptsParams struct {
