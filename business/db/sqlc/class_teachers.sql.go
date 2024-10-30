@@ -27,6 +27,27 @@ func (q *Queries) AddTeacherToClass(ctx context.Context, arg AddTeacherToClassPa
 	return err
 }
 
+const checkTeacherInClass = `-- name: CheckTeacherInClass :one
+SELECT EXISTS (
+    SELECT 1
+    FROM class_teachers
+    WHERE teacher_id = $1
+      AND class_id = $2
+) AS exists
+`
+
+type CheckTeacherInClassParams struct {
+	TeacherID string    `db:"teacher_id" json:"teacherId"`
+	ClassID   uuid.UUID `db:"class_id" json:"classId"`
+}
+
+func (q *Queries) CheckTeacherInClass(ctx context.Context, arg CheckTeacherInClassParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkTeacherInClass, arg.TeacherID, arg.ClassID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const getTeachersByClassId = `-- name: GetTeachersByClassId :many
 SELECT t.id, t.full_name, t.email, t.phone, t.gender, t.auth_role, t.profile_photo, t.status, t.school_id
 FROM class_teachers ct

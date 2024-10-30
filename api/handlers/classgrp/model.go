@@ -88,20 +88,22 @@ func toCoreNewClass(newClassRequest NewClass) (class.NewClass, error) {
 
 type UpdateClass struct {
 	Name     string `json:"name" validate:"required"`
-	Link     string `json:"link" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Code     string `json:"code" validate:"required"`
+	Password string `json:"password"`
 }
 
 func toCoreUpdateClass(updateClassRequest UpdateClass) (class.UpdateClass, error) {
-	pwd, err := password.Hash(updateClassRequest.Password)
-	if err != nil {
-		return class.UpdateClass{}, ErrInvalidPassword
+	updateClass := class.UpdateClass{
+		Name: updateClassRequest.Name,
+		Code: updateClassRequest.Code,
 	}
 
-	updateClass := class.UpdateClass{
-		Name:     updateClassRequest.Name,
-		Link:     updateClassRequest.Link,
-		Password: pwd,
+	if updateClassRequest.Password != "" {
+		pwd, err := password.Hash(updateClassRequest.Password)
+		if err != nil {
+			return class.UpdateClass{}, ErrInvalidPassword
+		}
+		updateClass.Password = &pwd
 	}
 
 	return updateClass, nil
@@ -177,4 +179,41 @@ func toCoreUpdateSlot(updateSlotRequest UpdateSlot) ([]class.UpdateSlot, error) 
 	}
 
 	return updateSlots, nil
+}
+
+type CheckTeacherTime struct {
+	TeacherId string `json:"teacherId" validate:"required"`
+	StartTime string `json:"startTime" validate:"required"`
+	EndTime   string `json:"endTime" validate:"required"`
+}
+
+func toCoreCheckTeacherTime(checkTeacherTime CheckTeacherTime) (class.CheckTeacherTime, error) {
+	startTime, err := time.Parse(time.DateTime, checkTeacherTime.StartTime)
+	if err != nil {
+		return class.CheckTeacherTime{}, ErrInvalidTime
+	}
+
+	endTime, err := time.Parse(time.DateTime, checkTeacherTime.EndTime)
+	if err != nil || endTime.Before(startTime) {
+		return class.CheckTeacherTime{}, ErrInvalidTime
+	}
+
+	if endTime.Before(startTime) || endTime.Sub(startTime) > time.Hour*12 {
+		return class.CheckTeacherTime{}, ErrInvalidTime
+	}
+
+	teacherTime := class.CheckTeacherTime{
+		TeacherId: &checkTeacherTime.TeacherId,
+		StartTime: &startTime,
+		EndTime:   &endTime,
+	}
+
+	return teacherTime, nil
+}
+
+func validateCheckTeacherTimeRequest(checkTeacherTime CheckTeacherTime) error {
+	if err := validate.Check(checkTeacherTime); err != nil {
+		return err
+	}
+	return nil
 }

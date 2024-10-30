@@ -30,8 +30,8 @@ type UpdateSlot struct {
 
 type UpdateClass struct {
 	Name     string
-	Link     string
-	Password string
+	Code     string
+	Password *string
 }
 
 type Details struct {
@@ -93,6 +93,12 @@ type Slot struct {
 type Session struct {
 	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
+}
+
+type CheckTeacherTime struct {
+	TeacherId *string
+	StartTime *time.Time
+	EndTime   *time.Time
 }
 
 func toCoreSubject(dbSubject sqlc.Subject) Subject {

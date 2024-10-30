@@ -6,11 +6,6 @@ VALUES (sqlc.arg(id), sqlc.arg(session_id), sqlc.arg(class_id), sqlc.arg(start_t
 -- name: GetSlotsByClassID :many
 SELECT * FROM slots WHERE class_id = sqlc.arg(class_id);
 
--- name: UpdateTeacherSlot :exec
-UPDATE slots
-SET teacher_id = sqlc.arg(teacher_id)
-WHERE class_id = sqlc.arg(class_id);
-
 -- name: GetSlotByID :one
 SELECT * FROM slots WHERE id = sqlc.arg(id);
 

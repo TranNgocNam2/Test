@@ -18,6 +18,6 @@ func ClassRoutes(router *gin.Engine, app *app.Application) {
 		classes.DELETE("/:id", handlers.DeleteClass())
 		classes.PUT("/:id/teachers", handlers.UpdateClassTeacher())
 		classes.PUT("/:id/slots", handlers.UpdateClassSlot())
-		classes.GET("/slots/teachers", handlers.CheckTeacherConflict())
+		classes.POST("/slots/teachers", handlers.CheckTeacherConflict())
 	}
 }

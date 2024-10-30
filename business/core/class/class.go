@@ -8,6 +8,7 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/weekday"
 	"bytes"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,12 +27,13 @@ var (
 	ErrSessionNotFound       = errors.New("Không có buổi học nào trong môn học này!")
 	ErrInvalidWeekDay        = errors.New("Số ngày học trong tuần không khớp với số buổi học trong môn học!")
 	ErrClassNotFound         = errors.New("Không tìm thấy lớp học!")
-	ErrClassAlreadyExist     = errors.New("Lớp học đã tồn tại!")
+	ErrClassCodeAlreadyExist = errors.New("Mã của lớp học đã tồn tại!")
 	ErrTeacherNotFound       = errors.New("Không tìm thấy giáo viên!")
 	ErrInvalidSlotCount      = errors.New("Số lượng buổi học không hợp lệ!")
-	ErrDuplicateSlotTime     = errors.New("Thời gian bắt đầu buổi học trùng nhau!")
+	ErrInvalidSlotTime       = errors.New("Thời gian buổi học không hợp lệ!")
 	ErrSlotNotFound          = errors.New("Không tìm thấy buổi học!")
 	ErrTeacherNotAvailable   = errors.New("Giáo viên không thể dạy vào thời gian này!")
+	ErrTeacherIsNotInClass   = errors.New("Giáo viên không thuộc lớp học này!")
 )
 
 type Core struct {
@@ -58,7 +60,7 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 
 	_, err = c.queries.GetClassByCode(ctx, newClass.Code)
 	if err == nil {
-		return uuid.Nil, ErrClassAlreadyExist
+		return uuid.Nil, ErrClassCodeAlreadyExist
 	}
 
 	dbProgram, err := c.queries.GetProgramByID(ctx, newClass.ProgramId)
@@ -326,15 +328,6 @@ func (c *Core) UpdateClassTeacher(ctx *gin.Context, id uuid.UUID, teacherIds []s
 		return err
 	}
 
-	slotTeacher := sqlc.UpdateTeacherSlotParams{
-		TeacherID: &teacherIds[0],
-		ClassID:   dbClass.ID,
-	}
-
-	if err = qtx.UpdateTeacherSlot(ctx, slotTeacher); err != nil {
-		return err
-	}
-
 	tx.Commit(ctx)
 	return nil
 }
@@ -376,7 +369,7 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 	}
 
 	if hasOverlappingSlots(updateSlots) {
-		return ErrDuplicateSlotTime
+		return ErrInvalidSlotTime
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -388,9 +381,23 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 	qtx := c.queries.WithTx(tx)
 
 	for _, updateSlot := range updateSlots {
-		dbSlot, _ := c.queries.GetSlotByID(ctx, updateSlot.ID)
-		if dbSlot.
-		if c.IsTeacherAvailable(ctx, &updateSlot.TeacherId, &updateSlot.StartTime, &updateSlot.EndTime) {
+		classTeacher := sqlc.CheckTeacherInClassParams{
+			TeacherID: updateSlot.TeacherId,
+			ClassID:   dbClass.ID,
+		}
+
+		isTeacherInClass, err := c.queries.CheckTeacherInClass(ctx, classTeacher)
+		if err != nil || !isTeacherInClass {
+			return ErrTeacherIsNotInClass
+		}
+
+		teacherTime := CheckTeacherTime{
+			TeacherId: &updateSlot.TeacherId,
+			StartTime: &updateSlot.StartTime,
+			EndTime:   &updateSlot.EndTime,
+		}
+
+		if c.IsTeacherAvailable(ctx, teacherTime) {
 			return ErrTeacherNotAvailable
 		}
 
@@ -431,8 +438,8 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 	if err != nil {
 		return ErrClassNotFound
 	}
-
-	if dbClass.StartDate.Before(time.Now()) {
+	fmt.Println(dbClass.StartDate.Before(time.Now()))
+	if dbClass.StartDate.After(time.Now()) {
 		err = c.queries.DeleteClass(ctx, dbClass.ID)
 		if err != nil {
 			return err
@@ -456,12 +463,21 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 	if err != nil {
 		return ErrClassNotFound
 	}
+	if updateClass.Code != dbClass.Code {
+		_, err = c.queries.GetClassByCode(ctx, updateClass.Code)
+		if err == nil {
+			return ErrClassCodeAlreadyExist
+		}
+	}
 
 	dbUpdateClass := sqlc.UpdateClassParams{
-		Name:     updateClass.Name,
-		Link:     &updateClass.Link,
-		Password: updateClass.Password,
-		ID:       dbClass.ID,
+		Name: updateClass.Name,
+		Code: updateClass.Code,
+		ID:   dbClass.ID,
+	}
+
+	if updateClass.Password != nil {
+		dbUpdateClass.Password = *updateClass.Password
 	}
 
 	err = c.queries.UpdateClass(ctx, dbUpdateClass)
@@ -471,11 +487,11 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 	return nil
 }
 
-func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherId *string, startTime *time.Time, endTime *time.Time) bool {
+func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime) bool {
 	checkCondition := sqlc.CheckTeacherTimeOverlapParams{
-		TeacherID: teacherId,
-		EndTime:   endTime,
-		StartTime: startTime,
+		TeacherID: teacherTime.TeacherId,
+		EndTime:   teacherTime.EndTime,
+		StartTime: teacherTime.StartTime,
 	}
 
 	status, err := c.queries.CheckTeacherTimeOverlap(ctx, checkCondition)

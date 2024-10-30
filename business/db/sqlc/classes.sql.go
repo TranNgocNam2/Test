@@ -129,9 +129,9 @@ func (q *Queries) SoftDeleteClass(ctx context.Context, id uuid.UUID) error {
 
 const updateActiveClass = `-- name: UpdateActiveClass :exec
 UPDATE classes
-SET status = 1
-AND start_date = $1
-AND end_date = $2
+SET status = 1,
+    start_date = $1,
+    end_date = $2
 WHERE id = $3::uuid
 `
 
@@ -149,14 +149,14 @@ func (q *Queries) UpdateActiveClass(ctx context.Context, arg UpdateActiveClassPa
 const updateClass = `-- name: UpdateClass :exec
 UPDATE classes
 SET name = $1,
-    link = $2,
+    code = $2,
     password = $3
 WHERE id = $4::uuid
 `
 
 type UpdateClassParams struct {
 	Name     string    `db:"name" json:"name"`
-	Link     *string   `db:"link" json:"link"`
+	Code     string    `db:"code" json:"code"`
 	Password string    `db:"password" json:"password"`
 	ID       uuid.UUID `db:"id" json:"id"`
 }
@@ -164,7 +164,7 @@ type UpdateClassParams struct {
 func (q *Queries) UpdateClass(ctx context.Context, arg UpdateClassParams) error {
 	_, err := q.db.Exec(ctx, updateClass,
 		arg.Name,
-		arg.Link,
+		arg.Code,
 		arg.Password,
 		arg.ID,
 	)

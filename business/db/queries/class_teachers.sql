@@ -11,3 +11,11 @@ SELECT uuid_generate_v4(), unnest(sqlc.arg(teacher_ids)::varchar[]), sqlc.arg(cl
 -- name: RemoveTeacherFromClass :exec
 DELETE FROM class_teachers
 WHERE class_id = sqlc.arg(class_id)::uuid;
+
+-- name: CheckTeacherInClass :one
+SELECT EXISTS (
+    SELECT 1
+    FROM class_teachers
+    WHERE teacher_id = sqlc.arg(teacher_id)
+      AND class_id = sqlc.arg(class_id)
+) AS exists;

@@ -119,19 +119,3 @@ func (q *Queries) UpdateSlot(ctx context.Context, arg UpdateSlotParams) error {
 	)
 	return err
 }
-
-const updateTeacherSlot = `-- name: UpdateTeacherSlot :exec
-UPDATE slots
-SET teacher_id = $1
-WHERE class_id = $2
-`
-
-type UpdateTeacherSlotParams struct {
-	TeacherID *string   `db:"teacher_id" json:"teacherId"`
-	ClassID   uuid.UUID `db:"class_id" json:"classId"`
-}
-
-func (q *Queries) UpdateTeacherSlot(ctx context.Context, arg UpdateTeacherSlotParams) error {
-	_, err := q.db.Exec(ctx, updateTeacherSlot, arg.TeacherID, arg.ClassID)
-	return err
-}

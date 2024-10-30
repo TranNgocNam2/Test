@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"net/http"
-	"time"
 )
 
 var (
@@ -62,7 +61,7 @@ func (h *Handlers) CreateClass() gin.HandlerFunc {
 			case
 				errors.Is(err, class.ErrInvalidClassStartTime),
 				errors.Is(err, class.ErrInvalidWeekDay),
-				errors.Is(err, class.ErrClassAlreadyExist):
+				errors.Is(err, class.ErrClassCodeAlreadyExist):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
@@ -126,7 +125,7 @@ func (h *Handlers) UpdateClassTeacher() gin.HandlerFunc {
 		}
 
 		if err := validateUpdateClassTeacherRequest(updateClassTeacher); err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
@@ -219,7 +218,7 @@ func (h *Handlers) UpdateClass() gin.HandlerFunc {
 		}
 
 		if err = validateUpdateClassRequest(updateClassRequest); err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
@@ -237,6 +236,9 @@ func (h *Handlers) UpdateClass() gin.HandlerFunc {
 				return
 			case errors.Is(err, middleware.ErrInvalidUser):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			case errors.Is(err, class.ErrClassCodeAlreadyExist):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			default:
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)
@@ -262,7 +264,7 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 		}
 
 		if err = validateUpdateSlotRequest(updateSlot); err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
@@ -288,8 +290,9 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 			case errors.Is(err, class.ErrInvalidSlotStartTime),
 				errors.Is(err, class.ErrInvalidSlotEndTime),
 				errors.Is(err, class.ErrTeacherNotAvailable),
-				errors.Is(err, class.ErrDuplicateSlotTime),
-				errors.Is(err, class.ErrInvalidSlotCount):
+				errors.Is(err, class.ErrInvalidSlotTime),
+				errors.Is(err, class.ErrInvalidSlotCount),
+				errors.Is(err, class.ErrTeacherIsNotInClass):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
@@ -305,30 +308,26 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 
 func (h *Handlers) CheckTeacherConflict() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		teacherID := ctx.Query("teacherId")
-		startTime := ctx.Query("startTime")
-		endTime := ctx.Query("endTime")
-		if teacherID == "" || startTime == "" || endTime == "" {
-			web.Respond(ctx, nil, http.StatusBadRequest, nil)
+		var checkTeacherTime CheckTeacherTime
+		if err := web.Decode(ctx, &checkTeacherTime); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+		}
+
+		if err := validateCheckTeacherTimeRequest(checkTeacherTime); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
-		startTimeParsed, err := time.Parse(time.DateTime, startTime)
+		teacherTime, err := toCoreCheckTeacherTime(checkTeacherTime)
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrInvalidTime)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
-		endTimeParsed, err := time.Parse(time.DateTime, endTime)
-		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrInvalidTime)
-			return
-		}
-
-		status := h.class.IsTeacherAvailable(ctx, &teacherID, &startTimeParsed, &endTimeParsed)
+		status := h.class.IsTeacherAvailable(ctx, teacherTime)
 
 		response := map[string]bool{
-			"isAvailable": status,
+			"isAvailable": !status,
 		}
 
 		web.Respond(ctx, response, http.StatusOK, nil)

@@ -15,9 +15,9 @@ SELECT * FROM classes WHERE code = sqlc.arg(code);
 
 -- name: UpdateActiveClass :exec
 UPDATE classes
-SET status = 1
-AND start_date = sqlc.arg(start_date)
-AND end_date = sqlc.arg(end_date)
+SET status = 1,
+    start_date = sqlc.arg(start_date),
+    end_date = sqlc.arg(end_date)
 WHERE id = sqlc.arg(id)::uuid;
 
 -- name: DeleteClass :exec
@@ -31,6 +31,6 @@ WHERE id = sqlc.arg(id)::uuid;
 -- name: UpdateClass :exec
 UPDATE classes
 SET name = sqlc.arg(name),
-    link = sqlc.arg(link),
+    code = sqlc.arg(code),
     password = sqlc.arg(password)
 WHERE id = sqlc.arg(id)::uuid;
