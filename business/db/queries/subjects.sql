@@ -30,6 +30,9 @@ WHERE code = sqlc.arg(code) AND status = 1;
 UPDATE subjects
 SET name = sqlc.arg(name),
     code = sqlc.arg(code),
+    time_per_session = sqlc.arg(time_per_session),
+    min_pass_grade = sqlc.arg(min_pass_grade),
+    min_atendance = sqlc.arg(min_atendance),
     description = sqlc.arg(description),
     status = sqlc.arg(status),
     image_link = sqlc.arg(image_link),

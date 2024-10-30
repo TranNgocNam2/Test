@@ -31,7 +31,6 @@ CREATE table transcripts
     name            character varying(50) NOT NULL,
     index           int NOT NULL,
     min_grade       float NOT NULL,
-    atd_percentage  float NOT NULL,
     weight          float NOT NULL,
 
     CONSTRAINT fk_transcript_subject

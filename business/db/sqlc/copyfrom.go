@@ -80,3 +80,40 @@ func (r iteratorForInsertSubjectSkill) Err() error {
 func (q *Queries) InsertSubjectSkill(ctx context.Context, arg []InsertSubjectSkillParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"subject_skills"}, []string{"id", "subject_id", "skill_id"}, &iteratorForInsertSubjectSkill{rows: arg})
 }
+
+// iteratorForInsertTranscripts implements pgx.CopyFromSource.
+type iteratorForInsertTranscripts struct {
+	rows                 []InsertTranscriptsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertTranscripts) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertTranscripts) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ID,
+		r.rows[0].SubjectID,
+		r.rows[0].Name,
+		r.rows[0].Index,
+		r.rows[0].MinGrade,
+		r.rows[0].Weight,
+	}, nil
+}
+
+func (r iteratorForInsertTranscripts) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertTranscripts(ctx context.Context, arg []InsertTranscriptsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"transcripts"}, []string{"id", "subject_id", "name", "index", "min_grade", "weight"}, &iteratorForInsertTranscripts{rows: arg})
+}

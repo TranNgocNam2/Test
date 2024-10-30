@@ -182,6 +182,8 @@ type Subject struct {
 	Code           string     `db:"code" json:"code"`
 	Name           string     `db:"name" json:"name"`
 	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
+	MinPassGrade   *float64   `db:"min_pass_grade" json:"minPassGrade"`
+	MinAtendance   *float64   `db:"min_atendance" json:"minAtendance"`
 	ImageLink      *string    `db:"image_link" json:"imageLink"`
 	Status         int16      `db:"status" json:"status"`
 	Description    *string    `db:"description" json:"description"`
@@ -198,13 +200,12 @@ type SubjectSkill struct {
 }
 
 type Transcript struct {
-	ID            uuid.UUID `db:"id" json:"id"`
-	SubjectID     uuid.UUID `db:"subject_id" json:"subjectId"`
-	Name          string    `db:"name" json:"name"`
-	Index         int32     `db:"index" json:"index"`
-	MinGrade      float64   `db:"min_grade" json:"minGrade"`
-	AtdPercentage float64   `db:"atd_percentage" json:"atdPercentage"`
-	Weight        float64   `db:"weight" json:"weight"`
+	ID        uuid.UUID `db:"id" json:"id"`
+	SubjectID uuid.UUID `db:"subject_id" json:"subjectId"`
+	Name      string    `db:"name" json:"name"`
+	Index     int32     `db:"index" json:"index"`
+	MinGrade  float64   `db:"min_grade" json:"minGrade"`
+	Weight    float64   `db:"weight" json:"weight"`
 }
 
 type User struct {
