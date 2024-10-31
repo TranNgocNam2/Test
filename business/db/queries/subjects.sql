@@ -16,12 +16,12 @@ SELECT *
 FROM subjects
 WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]) AND status = 1;
 
--- name: IsCodePublished :one
+-- name: IsSubjectCodePublished :one
 SELECT *
 FROM subjects
 WHERE code = sqlc.arg(code) AND status = 1 AND id != sqlc.arg(id);
 
--- name: IsCodeExist :one
+-- name: IsSubjectCodeExist :one
 SELECT *
 FROM subjects
 WHERE code = sqlc.arg(code) AND status = 1;

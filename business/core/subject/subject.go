@@ -43,7 +43,7 @@ func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, err
 		return "", err
 	}
 
-	if _, err := c.queries.IsCodeExist(ctx, subject.Code); err == nil {
+	if _, err := c.queries.IsSubjectCodeExist(ctx, subject.Code); err == nil {
 		return "", model.ErrCodeAlreadyExist
 	}
 
@@ -118,8 +118,8 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 			return model.ErrInvalidSessions
 		}
 
-		if _, err := c.queries.IsCodePublished(ctx,
-			sqlc.IsCodePublishedParams{
+		if _, err := c.queries.IsSubjectCodePublished(ctx,
+			sqlc.IsSubjectCodePublishedParams{
 				Code: s.Code,
 				ID:   id,
 			}); err == nil {
@@ -296,8 +296,8 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s payload.UpdateSubject, id uui
 		return err
 	}
 
-	if _, err := c.queries.IsCodePublished(ctx,
-		sqlc.IsCodePublishedParams{
+	if _, err := c.queries.IsSubjectCodePublished(ctx,
+		sqlc.IsSubjectCodePublishedParams{
 			Code: s.Code,
 			ID:   id,
 		}); err == nil {

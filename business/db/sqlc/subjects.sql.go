@@ -142,14 +142,14 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 	return id, err
 }
 
-const isCodeExist = `-- name: IsCodeExist :one
+const isSubjectCodeExist = `-- name: IsSubjectCodeExist :one
 SELECT id, code, name, time_per_session, min_pass_grade, min_atendance, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE code = $1 AND status = 1
 `
 
-func (q *Queries) IsCodeExist(ctx context.Context, code string) (Subject, error) {
-	row := q.db.QueryRow(ctx, isCodeExist, code)
+func (q *Queries) IsSubjectCodeExist(ctx context.Context, code string) (Subject, error) {
+	row := q.db.QueryRow(ctx, isSubjectCodeExist, code)
 	var i Subject
 	err := row.Scan(
 		&i.ID,
@@ -169,19 +169,19 @@ func (q *Queries) IsCodeExist(ctx context.Context, code string) (Subject, error)
 	return i, err
 }
 
-const isCodePublished = `-- name: IsCodePublished :one
+const isSubjectCodePublished = `-- name: IsSubjectCodePublished :one
 SELECT id, code, name, time_per_session, min_pass_grade, min_atendance, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE code = $1 AND status = 1 AND id != $2
 `
 
-type IsCodePublishedParams struct {
+type IsSubjectCodePublishedParams struct {
 	Code string    `db:"code" json:"code"`
 	ID   uuid.UUID `db:"id" json:"id"`
 }
 
-func (q *Queries) IsCodePublished(ctx context.Context, arg IsCodePublishedParams) (Subject, error) {
-	row := q.db.QueryRow(ctx, isCodePublished, arg.Code, arg.ID)
+func (q *Queries) IsSubjectCodePublished(ctx context.Context, arg IsSubjectCodePublishedParams) (Subject, error) {
+	row := q.db.QueryRow(ctx, isSubjectCodePublished, arg.Code, arg.ID)
 	var i Subject
 	err := row.Scan(
 		&i.ID,
