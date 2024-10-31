@@ -59,19 +59,6 @@ CREATE table skills(
     name    character varying(50) NOT NULL
 );
 
-CREATE table specialization_skills(
-    id                  uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    specialization_id   uuid NOT NULL,
-    skill_id            uuid NOT NULL,
-
-    CONSTRAINT fk_specialization_skills_specialization
-        FOREIGN KEY (specialization_id) REFERENCES specializations(id) ON DELETE CASCADE,
-    CONSTRAINT fk_specialization_skills_skill
-    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
-
-    CONSTRAINT unique_specialization_skills UNIQUE (specialization_id, skill_id)
-);
-
 CREATE table subject_skills(
     id              uuid PRIMARY KEY,
     subject_id      uuid NOT NULL,

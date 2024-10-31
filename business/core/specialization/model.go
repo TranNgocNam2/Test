@@ -15,11 +15,7 @@ type Details struct {
 	TimeAmount  *float64
 	Image       *string
 	CreatedAt   time.Time
-	Skills      []*struct {
-		ID   uuid.UUID
-		Name string
-	}
-	Subjects []*struct {
+	Subjects    []*struct {
 		ID           uuid.UUID
 		Name         string
 		Image        string
@@ -46,7 +42,6 @@ type UpdateSpecialization struct {
 	Description string
 	TimeAmount  float64
 	Image       string
-	Skills      []uuid.UUID
 	Subjects    []uuid.UUID
 }
 
@@ -74,7 +69,7 @@ func toCoreSpecialization(dbSpec sqlc.Specialization) Specialization {
 
 	return spec
 }
-func toCoreSpecializationDetails(dbSpec sqlc.Specialization, dbSpecSkills []sqlc.Skill) Details {
+func toCoreSpecializationDetails(dbSpec sqlc.Specialization) Details {
 	specDetails := Details{
 		ID:          dbSpec.ID,
 		Name:        dbSpec.Name,
@@ -84,16 +79,6 @@ func toCoreSpecializationDetails(dbSpec sqlc.Specialization, dbSpecSkills []sqlc
 		TimeAmount:  dbSpec.TimeAmount,
 		Image:       dbSpec.ImageLink,
 		CreatedAt:   dbSpec.CreatedAt,
-	}
-
-	for _, skill := range dbSpecSkills {
-		specDetails.Skills = append(specDetails.Skills, &struct {
-			ID   uuid.UUID
-			Name string
-		}{
-			ID:   skill.ID,
-			Name: skill.Name,
-		})
 	}
 
 	return specDetails
