@@ -7,21 +7,21 @@ import (
 )
 
 type Details struct {
-	ID          uuid.UUID
-	Name        string
-	Code        string
-	Status      int16
-	Description *string
-	TimeAmount  *float64
-	Image       *string
-	CreatedAt   time.Time
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Code        string    `json:"code"`
+	Status      int16     `json:"status"`
+	Description *string   `json:"description"`
+	TimeAmount  *float64  `json:"timeAmount"`
+	Image       *string   `json:"image"`
+	CreatedAt   time.Time `json:"createdAt"`
 	Subjects    []*struct {
-		ID           uuid.UUID
-		Name         string
-		Image        string
-		Code         string
-		LastUpdated  time.Time
-		TotalSession int64
+		ID            uuid.UUID `json:"id"`
+		Name          string    `json:"name"`
+		Image         string    `json:"image"`
+		Code          string    `json:"code"`
+		LastUpdated   time.Time `json:"lastUpdated"`
+		TotalSessions int64     `json:"totalSessions"`
 	}
 }
 
@@ -46,16 +46,12 @@ type UpdateSpecialization struct {
 }
 
 type Specialization struct {
-	ID           uuid.UUID
-	Name         string
-	Code         string
-	Status       int16
-	Image        *string
-	TotalSubject int64
-	Skills       []*struct {
-		ID   uuid.UUID
-		Name string
-	}
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	Code          string    `json:"code"`
+	Status        int16     `json:"status"`
+	Image         *string   `json:"image"`
+	TotalSubjects int64     `json:"totalSubjects"`
 }
 
 func toCoreSpecialization(dbSpec sqlc.Specialization) Specialization {

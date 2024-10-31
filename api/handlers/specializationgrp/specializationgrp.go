@@ -15,10 +15,6 @@ import (
 	"net/http"
 )
 
-var (
-	ErrSpecIDInvalid = errors.New("ID chuyên ngành không hợp lệ!")
-)
-
 type Handlers struct {
 	specialization *specialization.Core
 }
@@ -78,7 +74,7 @@ func (h *Handlers) UpdateSpecialization() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		specID, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrSpecIDInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSpecIDInvalid)
 			return
 		}
 
@@ -130,7 +126,7 @@ func (h *Handlers) DeleteSpecialization() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		specID, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrSpecIDInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSpecIDInvalid)
 			return
 		}
 
@@ -164,7 +160,7 @@ func (h *Handlers) GetSpecializationByID() gin.HandlerFunc {
 			return
 		}
 
-		spec, err := h.specialization.GetByID(ctx, id)
+		specialization, err := h.specialization.GetByID(ctx, id)
 		if err != nil {
 			switch {
 			case
@@ -182,7 +178,7 @@ func (h *Handlers) GetSpecializationByID() gin.HandlerFunc {
 			}
 		}
 
-		web.Respond(ctx, toResponseSpecializationDetails(spec), http.StatusOK, nil)
+		web.Respond(ctx, specialization, http.StatusOK, nil)
 	}
 }
 
@@ -212,7 +208,7 @@ func (h *Handlers) GetSpecializations() gin.HandlerFunc {
 
 		specializations := h.specialization.Query(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		total := h.specialization.Count(ctx, filter)
-		result := page.NewPageResponse(toSpecializationsResponse(specializations), total, pageInfo.Number, pageInfo.Size)
+		result := page.NewPageResponse(specializations, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}

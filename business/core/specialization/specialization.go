@@ -79,24 +79,24 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	}
 	if dbSpecSubjects != nil {
 		for _, subject := range dbSpecSubjects {
-			totalSession, err := c.queries.CountSessionsBySubjectID(ctx, subject.ID)
+			totalSessions, err := c.queries.CountSessionsBySubjectID(ctx, subject.ID)
 			if err != nil {
 				return Details{}, err
 			}
 			spec.Subjects = append(spec.Subjects, &struct {
-				ID           uuid.UUID
-				Name         string
-				Image        string
-				Code         string
-				LastUpdated  time.Time
-				TotalSession int64
+				ID            uuid.UUID `json:"id"`
+				Name          string    `json:"name"`
+				Image         string    `json:"image"`
+				Code          string    `json:"code"`
+				LastUpdated   time.Time `json:"lastUpdated"`
+				TotalSessions int64     `json:"totalSessions"`
 			}{
-				ID:           subject.ID,
-				Name:         subject.Name,
-				Image:        *subject.ImageLink,
-				Code:         subject.Code,
-				LastUpdated:  subject.CreatedAt,
-				TotalSession: totalSession,
+				ID:            subject.ID,
+				Name:          subject.Name,
+				Image:         *subject.ImageLink,
+				Code:          subject.Code,
+				LastUpdated:   subject.CreatedAt,
+				TotalSessions: totalSessions,
 			})
 		}
 	}
@@ -207,13 +207,13 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 
 	for _, dbSpec := range dbSpecializations {
 		spec := toCoreSpecialization(dbSpec)
-		totalSubject, err := c.queries.CountSubjectsBySpecializationID(ctx, dbSpec.ID)
+		totalSubjects, err := c.queries.CountSubjectsBySpecializationID(ctx, dbSpec.ID)
 		if err != nil {
 			c.logger.Error(err.Error())
 			return nil
 		}
 
-		spec.TotalSubject = totalSubject
+		spec.TotalSubjects = totalSubjects
 		specializations = append(specializations, spec)
 	}
 
