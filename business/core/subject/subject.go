@@ -479,7 +479,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	}
 
 	const q = `SELECT
-						id, name, code, time_per_session, sessions_per_week, description, updated_at
+						id, name, code, time_per_session, description, updated_at
 			FROM subjects`
 
 	buf := bytes.NewBufferString(q)

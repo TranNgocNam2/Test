@@ -8,7 +8,6 @@ import (
 	"Backend/internal/page"
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
-	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -76,20 +75,17 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			fmt.Println("those")
 			web.Respond(ctx, nil, http.StatusBadRequest, ErrSubjectIDInvalid)
 			return
 		}
 
 		var request payload.UpdateSubject
 		if err := web.Decode(ctx, &request); err != nil {
-			fmt.Println(err)
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
 		if err := validateUpdateSubjectRequest(request); err != nil {
-			fmt.Println("here")
 			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}

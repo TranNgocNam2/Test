@@ -14,7 +14,6 @@ type Subject struct {
 	Description    *string   `json:"description,omitempty"`
 	Image          *string   `json:"image,omitempty"`
 	TimePerSession int16     `json:"timePerSession"`
-	SessionPerWeek int16     `json:"sessionPerWeek"`
 	Skills         []Skill   `json:"skills,omitempty"`
 	TotalSessions  int       `json:"totalSessions"`
 }
