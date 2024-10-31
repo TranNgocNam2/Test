@@ -2,18 +2,16 @@ package classgrp
 
 import (
 	"Backend/business/core/class"
+	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
+	"Backend/internal/web/payload"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"net/http"
-)
-
-var (
-	ErrClassIdInvalid = errors.New("Mã lớp học không hợp lệ!")
 )
 
 type Handlers struct {
@@ -28,7 +26,7 @@ func New(class *class.Core) *Handlers {
 
 func (h *Handlers) CreateClass() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var newClassRequest NewClass
+		var newClassRequest payload.NewClass
 		if err := web.Decode(ctx, &newClassRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -53,15 +51,15 @@ func (h *Handlers) CreateClass() gin.HandlerFunc {
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
 			case
-				errors.Is(err, class.ErrProgramNotFound),
-				errors.Is(err, class.ErrSubjectNotFound):
+				errors.Is(err, model.ErrProgramNotFound),
+				errors.Is(err, model.ErrSubjectNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case
-				errors.Is(err, class.ErrInvalidClassStartTime),
-				errors.Is(err, class.ErrInvalidWeekDay),
-				errors.Is(err, class.ErrClassCodeAlreadyExist):
+				errors.Is(err, model.ErrInvalidClassStartTime),
+				errors.Is(err, model.ErrInvalidWeekDay),
+				errors.Is(err, model.ErrClassCodeAlreadyExist):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
@@ -114,11 +112,11 @@ func (h *Handlers) UpdateClassTeacher() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
 			return
 		}
 
-		var updateClassTeacher UpdateClassTeacher
+		var updateClassTeacher payload.UpdateClassTeacher
 		if err := web.Decode(ctx, &updateClassTeacher); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -133,8 +131,8 @@ func (h *Handlers) UpdateClassTeacher() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, class.ErrClassNotFound),
-				errors.Is(err, class.ErrTeacherNotFound):
+				errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.ErrTeacherNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case
@@ -155,7 +153,7 @@ func (h *Handlers) GetClassById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
 			return
 		}
 
@@ -163,8 +161,8 @@ func (h *Handlers) GetClassById() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, class.ErrClassNotFound),
-				errors.Is(err, class.ErrSubjectNotFound):
+				errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.ErrSubjectNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			default:
@@ -181,14 +179,14 @@ func (h *Handlers) DeleteClass() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
 			return
 		}
 
 		err = h.class.Delete(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, class.ErrClassNotFound):
+			case errors.Is(err, model.ErrClassNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case errors.Is(err, middleware.ErrInvalidUser):
@@ -207,11 +205,11 @@ func (h *Handlers) UpdateClass() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
 			return
 		}
 
-		var updateClassRequest UpdateClass
+		var updateClassRequest payload.UpdateClass
 		if err = web.Decode(ctx, &updateClassRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -231,13 +229,13 @@ func (h *Handlers) UpdateClass() gin.HandlerFunc {
 		err = h.class.Update(ctx, id, updateClass)
 		if err != nil {
 			switch {
-			case errors.Is(err, class.ErrClassNotFound):
+			case errors.Is(err, model.ErrClassNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case errors.Is(err, middleware.ErrInvalidUser):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
-			case errors.Is(err, class.ErrClassCodeAlreadyExist):
+			case errors.Is(err, model.ErrClassCodeAlreadyExist):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			default:
@@ -253,11 +251,11 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
 			return
 		}
 
-		var updateSlot UpdateSlot
+		var updateSlot payload.UpdateSlot
 		if err = web.Decode(ctx, &updateSlot); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -278,21 +276,21 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, class.ErrClassNotFound),
-				errors.Is(err, class.ErrSlotNotFound),
-				errors.Is(err, class.ErrTeacherNotFound):
+				errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.ErrSlotNotFound),
+				errors.Is(err, model.ErrTeacherNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case
 				errors.Is(err, middleware.ErrInvalidUser):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
-			case errors.Is(err, class.ErrInvalidSlotStartTime),
-				errors.Is(err, class.ErrInvalidSlotEndTime),
-				errors.Is(err, class.ErrTeacherNotAvailable),
-				errors.Is(err, class.ErrInvalidSlotTime),
-				errors.Is(err, class.ErrInvalidSlotCount),
-				errors.Is(err, class.ErrTeacherIsNotInClass):
+			case errors.Is(err, model.ErrInvalidSlotStartTime),
+				errors.Is(err, model.ErrInvalidSlotEndTime),
+				errors.Is(err, model.ErrTeacherNotAvailable),
+				errors.Is(err, model.ErrInvalidSlotTime),
+				errors.Is(err, model.ErrInvalidSlotCount),
+				errors.Is(err, model.ErrTeacherIsNotInClass):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
@@ -308,7 +306,7 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 
 func (h *Handlers) CheckTeacherConflict() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var checkTeacherTime CheckTeacherTime
+		var checkTeacherTime payload.CheckTeacherTime
 		if err := web.Decode(ctx, &checkTeacherTime); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 		}
@@ -324,12 +322,23 @@ func (h *Handlers) CheckTeacherConflict() gin.HandlerFunc {
 			return
 		}
 
-		status := h.class.IsTeacherAvailable(ctx, teacherTime)
-
-		response := map[string]bool{
-			"isAvailable": !status,
+		result, err := h.class.IsTeacherAvailable(ctx, teacherTime)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrClassNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
 		}
 
-		web.Respond(ctx, response, http.StatusOK, nil)
+		web.Respond(ctx, result, http.StatusOK, nil)
 	}
 }

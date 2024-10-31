@@ -97,8 +97,7 @@ type Session struct {
 
 type CheckTeacherTime struct {
 	TeacherId *string
-	StartTime *time.Time
-	EndTime   *time.Time
+	ClassId   uuid.UUID
 }
 
 func toCoreSubject(dbSubject sqlc.Subject) Subject {

@@ -4,6 +4,7 @@ import (
 	"Backend/business/db/pgx"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
+	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/weekday"
@@ -13,27 +14,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"time"
-)
-
-var (
-	ErrProgramNotFound       = errors.New("Không tìm thấy chương trình học!")
-	ErrSubjectNotFound       = errors.New("Không tìm thấy môn học!")
-	ErrInvalidClassStartTime = errors.New("Thời gian bắt đầu lớp học không hợp lệ!")
-	ErrInvalidSlotStartTime  = errors.New("Thời gian bắt đầu buổi học không hợp lệ!")
-	ErrInvalidSlotEndTime    = errors.New("Thời gian kết thúc buổi học không hợp lệ!")
-	ErrSessionNotFound       = errors.New("Không có buổi học nào trong môn học này!")
-	ErrInvalidWeekDay        = errors.New("Số ngày học trong tuần không khớp với số buổi học trong môn học!")
-	ErrClassNotFound         = errors.New("Không tìm thấy lớp học!")
-	ErrClassCodeAlreadyExist = errors.New("Mã của lớp học đã tồn tại!")
-	ErrTeacherNotFound       = errors.New("Không tìm thấy giáo viên!")
-	ErrInvalidSlotCount      = errors.New("Số lượng buổi học không hợp lệ!")
-	ErrInvalidSlotTime       = errors.New("Thời gian buổi học không hợp lệ!")
-	ErrSlotNotFound          = errors.New("Không tìm thấy buổi học!")
-	ErrTeacherNotAvailable   = errors.New("Giáo viên không thể dạy vào thời gian này!")
-	ErrTeacherIsNotInClass   = errors.New("Giáo viên không thuộc lớp học này!")
 )
 
 type Core struct {
@@ -60,22 +42,22 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 
 	_, err = c.queries.GetClassByCode(ctx, newClass.Code)
 	if err == nil {
-		return uuid.Nil, ErrClassCodeAlreadyExist
+		return uuid.Nil, model.ErrClassCodeAlreadyExist
 	}
 
 	dbProgram, err := c.queries.GetProgramByID(ctx, newClass.ProgramId)
 	if err != nil {
-		return uuid.Nil, ErrProgramNotFound
+		return uuid.Nil, model.ErrProgramNotFound
 	}
 
 	dbSubject, err := c.queries.GetPublishedSubjectByID(ctx, newClass.SubjectId)
 	if err != nil {
-		return uuid.Nil, ErrSubjectNotFound
+		return uuid.Nil, model.ErrSubjectNotFound
 	}
 
 	sessions, err := c.queries.GetSessionsBySubjectId(ctx, newClass.SubjectId)
 	if err != nil {
-		return uuid.Nil, ErrSessionNotFound
+		return uuid.Nil, model.ErrSessionNotFound
 	}
 
 	slots := generateSlots(newClass, sessions, dbSubject.TimePerSession, dbProgram.EndDate)
@@ -84,7 +66,7 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 	var startDateClass *time.Time
 	firstSlot := slots[0].StartTime
 	if firstSlot != nil && firstSlot.Before(dbProgram.StartDate) {
-		return uuid.Nil, ErrInvalidClassStartTime
+		return uuid.Nil, model.ErrInvalidClassStartTime
 	}
 
 	if firstSlot != nil && firstSlot.After(dbProgram.StartDate) {
@@ -234,7 +216,7 @@ func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	dbClass, err := c.queries.GetClassById(ctx, id)
 	if err != nil {
-		return Details{}, ErrClassNotFound
+		return Details{}, model.ErrClassNotFound
 	}
 
 	class := Details{
@@ -247,13 +229,13 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 
 	dbSubject, err := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
 	if err != nil {
-		return Details{}, ErrSubjectNotFound
+		return Details{}, model.ErrSubjectNotFound
 	}
 	class.Subject = toCoreSubject(dbSubject)
 
 	dbProgram, err := c.queries.GetProgramByID(ctx, dbClass.ProgramID)
 	if err != nil {
-		return Details{}, ErrProgramNotFound
+		return Details{}, model.ErrProgramNotFound
 	}
 	class.Program = toCoreProgram(dbProgram)
 
@@ -263,7 +245,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	}
 
 	var slots []Slot
-	dbSlots, _ := c.queries.GetSlotsByClassID(ctx, dbClass.ID)
+	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
 	for _, dbSlot := range dbSlots {
 		dbSession, _ := c.queries.GetSessionById(ctx, dbSlot.SessionID)
 		session := toCoreSession(dbSession)
@@ -297,13 +279,13 @@ func (c *Core) UpdateClassTeacher(ctx *gin.Context, id uuid.UUID, teacherIds []s
 
 	dbClass, err := c.queries.GetClassById(ctx, id)
 	if err != nil {
-		return ErrClassNotFound
+		return model.ErrClassNotFound
 	}
 
 	for _, teacherId := range teacherIds {
 		_, err = c.queries.GetTeacherByID(ctx, teacherId)
 		if err != nil {
-			return ErrTeacherNotFound
+			return model.ErrTeacherNotFound
 		}
 	}
 
@@ -340,36 +322,21 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 
 	dbClass, err := c.queries.GetClassById(ctx, id)
 	if err != nil {
-		return ErrClassNotFound
+		return model.ErrClassNotFound
 	}
 
 	dbProgram, _ := c.queries.GetProgramByID(ctx, dbClass.ProgramID)
-
-	firstSlot := updateSlots[0].StartTime
-	if firstSlot.Before(dbProgram.StartDate) {
-		return ErrInvalidSlotStartTime
+	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
+		return err
 	}
 
-	firstSlot = time.Date(firstSlot.Year(), firstSlot.Month(), firstSlot.Day(),
-		0, 0, 0, 0, time.Local)
-	dbClass.StartDate = &firstSlot
-
-	lastSlot := updateSlots[len(updateSlots)-1:][0].EndTime
-	if lastSlot.After(dbProgram.EndDate) {
-		return ErrInvalidSlotEndTime
-	}
-
-	lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(),
-		0, 0, 0, 0, time.Local)
-	dbClass.EndDate = &lastSlot
-
-	dbSlots, _ := c.queries.GetSlotsByClassID(ctx, dbClass.ID)
+	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
 	if len(dbSlots) != len(updateSlots) {
-		return ErrInvalidSlotCount
+		return model.ErrInvalidSlotCount
 	}
 
 	if hasOverlappingSlots(updateSlots) {
-		return ErrInvalidSlotTime
+		return model.ErrInvalidSlotTime
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -381,42 +348,40 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 	qtx := c.queries.WithTx(tx)
 
 	for _, updateSlot := range updateSlots {
-		classTeacher := sqlc.CheckTeacherInClassParams{
-			TeacherID: updateSlot.TeacherId,
-			ClassID:   dbClass.ID,
-		}
-
-		isTeacherInClass, err := c.queries.CheckTeacherInClass(ctx, classTeacher)
-		if err != nil || !isTeacherInClass {
-			return ErrTeacherIsNotInClass
-		}
-
-		teacherTime := CheckTeacherTime{
-			TeacherId: &updateSlot.TeacherId,
-			StartTime: &updateSlot.StartTime,
-			EndTime:   &updateSlot.EndTime,
-		}
-
-		if c.IsTeacherAvailable(ctx, teacherTime) {
-			return ErrTeacherNotAvailable
+		dbSlot, err := c.queries.GetSlotById(ctx, updateSlot.ID)
+		if err != nil {
+			return model.ErrSlotNotFound
 		}
 
 		slot := sqlc.UpdateSlotParams{
-			ID:        updateSlot.ID,
+			ID:        dbSlot.ID,
 			StartTime: &updateSlot.StartTime,
 			EndTime:   &updateSlot.EndTime,
-			TeacherID: &updateSlot.TeacherId,
+		}
+
+		if updateSlot.TeacherId != "" {
+			err = c.validateTeacherInClass(ctx, dbClass.ID, updateSlot.TeacherId)
+			if err != nil {
+				return err
+			}
+			slot.TeacherID = &updateSlot.TeacherId
 		}
 
 		if err = qtx.UpdateSlot(ctx, slot); err != nil {
 			return err
 		}
 	}
+	classStatus := INCOMPLETE
+	totalSlots, _ := qtx.CountSlotsHaveTeacherByClassId(ctx, dbClass.ID)
+	if int(totalSlots) == len(updateSlots) {
+		classStatus = COMPLETED
+	}
 
 	updateClass := sqlc.UpdateActiveClassParams{
 		ID:        dbClass.ID,
 		StartDate: dbClass.StartDate,
 		EndDate:   dbClass.EndDate,
+		Status:    int16(classStatus),
 	}
 
 	err = qtx.UpdateActiveClass(ctx, updateClass)
@@ -436,7 +401,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 
 	dbClass, err := c.queries.GetClassById(ctx, id)
 	if err != nil {
-		return ErrClassNotFound
+		return model.ErrClassNotFound
 	}
 	fmt.Println(dbClass.StartDate.Before(time.Now()))
 	if dbClass.StartDate.After(time.Now()) {
@@ -461,12 +426,12 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 
 	dbClass, err := c.queries.GetClassById(ctx, id)
 	if err != nil {
-		return ErrClassNotFound
+		return model.ErrClassNotFound
 	}
 	if updateClass.Code != dbClass.Code {
 		_, err = c.queries.GetClassByCode(ctx, updateClass.Code)
 		if err == nil {
-			return ErrClassCodeAlreadyExist
+			return model.ErrClassCodeAlreadyExist
 		}
 	}
 
@@ -487,19 +452,69 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 	return nil
 }
 
-func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime) bool {
-	checkCondition := sqlc.CheckTeacherTimeOverlapParams{
-		TeacherID: teacherTime.TeacherId,
-		EndTime:   teacherTime.EndTime,
-		StartTime: teacherTime.StartTime,
-	}
-
-	status, err := c.queries.CheckTeacherTimeOverlap(ctx, checkCondition)
+func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime) (map[uuid.UUID]bool, error) {
+	_, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
-		return false
+		return nil, err
 	}
 
-	return status
+	dbClass, err := c.queries.GetClassById(ctx, teacherTime.ClassId)
+	if err != nil {
+		return nil, model.ErrClassNotFound
+	}
+	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
+	availabilityMap := make(map[uuid.UUID]bool)
+
+	for _, dbSlot := range dbSlots {
+		checkCondition := sqlc.CheckTeacherTimeOverlapParams{
+			TeacherID: teacherTime.TeacherId,
+			EndTime:   dbSlot.EndTime,
+			StartTime: dbSlot.StartTime,
+		}
+		status, err := c.queries.CheckTeacherTimeOverlap(ctx, checkCondition)
+		if err != nil {
+			return nil, err
+		}
+		availabilityMap[dbSlot.ID] = !status
+	}
+
+	return availabilityMap, nil
+}
+
+func (c *Core) validateTeacherInClass(ctx *gin.Context, classID uuid.UUID, teacherID string) error {
+	classTeacher := sqlc.CheckTeacherInClassParams{
+		TeacherID: teacherID,
+		ClassID:   classID,
+	}
+	isTeacherInClass, err := c.queries.CheckTeacherInClass(ctx, classTeacher)
+	if err != nil || !isTeacherInClass {
+		return model.ErrTeacherIsNotInClass
+	}
+	return nil
+}
+
+func validateSlotTimes(dbClass sqlc.Class, dbProgram sqlc.Program, updateSlots []UpdateSlot) error {
+	firstSlot := updateSlots[0].StartTime
+	if firstSlot.Before(dbProgram.StartDate) {
+		return model.ErrInvalidSlotStartTime
+	}
+
+	firstSlot = time.Date(firstSlot.Year(), firstSlot.Month(), firstSlot.Day(), 0, 0, 0, 0, time.Local)
+	dbClass.StartDate = &firstSlot
+
+	lastSlot := updateSlots[len(updateSlots)-1].EndTime
+	if lastSlot.After(dbProgram.EndDate) {
+		return model.ErrInvalidSlotEndTime
+	}
+
+	if lastSlot.Hour() != 0 || lastSlot.Minute() != 0 {
+		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day()+1, 0, 0, 0, 0, time.Local)
+	} else {
+		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(), 0, 0, 0, 0, time.Local)
+	}
+	dbClass.EndDate = &lastSlot
+
+	return nil
 }
 
 func hasOverlappingSlots(updateSlots []UpdateSlot) bool {

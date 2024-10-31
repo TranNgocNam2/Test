@@ -4,19 +4,21 @@ import (
 	"Backend/business/db/pgx"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
+	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/slice"
+	"Backend/internal/web/payload"
 	"bytes"
+
+	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
-	"gitlab.com/innovia69420/kit/web/request"
 	"go.uber.org/zap"
 )
 
@@ -36,39 +38,27 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
-var (
-	ErrSkillNotFound       = errors.New("Kỹ năng không có trong hệ thống!")
-	ErrSubjectNotFound     = errors.New("Môn học không có trong hệ thống!")
-	ErrCodeAlreadyExist    = errors.New("Mã môn đã tồn tại!")
-	ErrSkillRequired       = errors.New("Môn học cần có ít nhất một kĩ năng!")
-	ErrInvalidSkillId      = errors.New("Skill id không phải định dạng uuid!")
-	ErrInvalidSessions     = errors.New("Số lượng session cho môn học không hợp lệ!")
-	ErrInvalidMaterials    = errors.New("Buổi học phải có ít nhất 1 nội dung!")
-	ErrInvalidMaterialType = errors.New("Material có type không phù hợp!")
-)
-
-func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, error) {
+func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, error) {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return "", err
 	}
 
-	if _, err := c.queries.GetSubjectByCode(ctx, subject.Code); err == nil {
-		return "", ErrCodeAlreadyExist
+	if _, err := c.queries.IsSubjectCodeExist(ctx, subject.Code); err == nil {
+		return "", model.ErrCodeAlreadyExist
 	}
 
 	subjectId := uuid.New()
 	subjectArgs := sqlc.InsertSubjectParams{
-		ID:              subjectId,
-		Name:            subject.Name,
-		Code:            subject.Code,
-		Description:     &subject.Description,
-		ImageLink:       &subject.Image,
-		Status:          Draft,
-		TimePerSession:  int16(subject.TimePerSession),
-		SessionsPerWeek: int16(subject.SessionPerWeek),
-		CreatedBy:       staffId,
-		CreatedAt:       time.Now(),
+		ID:             subjectId,
+		Name:           subject.Name,
+		Code:           subject.Code,
+		Description:    &subject.Description,
+		ImageLink:      &subject.Image,
+		Status:         Draft,
+		TimePerSession: int16(subject.TimePerSession),
+		CreatedBy:      staffId,
+		CreatedAt:      time.Now(),
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -86,12 +76,12 @@ func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, err
 
 	skills, err := slice.GetUUIDs(subject.Skills)
 	if err != nil {
-		return "", ErrInvalidSkillId
+		return "", model.ErrInvalidSkillId
 	}
 
 	dbSkills, err := qtx.GetSkillsByIds(ctx, skills)
 	if err != nil || len(dbSkills) == 0 {
-		return "", ErrSkillNotFound
+		return "", model.ErrSkillNotFound
 	}
 
 	var subSkillsParams []sqlc.InsertSubjectSkillParams
@@ -113,7 +103,7 @@ func (c *Core) Create(ctx *gin.Context, subject request.NewSubject) (string, err
 	return id.String(), nil
 }
 
-func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UUID) error {
+func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UUID) error {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
@@ -121,25 +111,45 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 
 	_, err = c.queries.GetSubjectById(ctx, id)
 	if err != nil {
-		return ErrSubjectNotFound
+		return model.ErrSubjectNotFound
 	}
 
-	totalSessions := len(s.Sessions)
 	if *s.Status == Published {
-		if totalSessions == 0 {
-			return ErrInvalidSessions
+		if len(s.Sessions) == 0 {
+			return model.ErrInvalidSessions
+		}
+
+		if _, err := c.queries.IsSubjectCodePublished(ctx,
+			sqlc.IsSubjectCodePublishedParams{
+				Code: s.Code,
+				ID:   id,
+			}); err == nil {
+			return model.ErrCodeAlreadyExist
+		}
+
+		if len(s.Transcripts) == 0 {
+			return model.ErrInvalidTranscript
+		}
+		var sum float32
+		sum = 0
+		for _, transcript := range s.Transcripts {
+			sum += transcript.Percentage
+		}
+
+		if sum != 100 {
+			return model.ErrInvalidTranscriptWeight
 		}
 
 		for _, session := range s.Sessions {
 			if len(session.Materials) == 0 {
-				return ErrInvalidMaterials
+				return model.ErrInvalidMaterials
 			}
 		}
 	}
 
 	skills, err := slice.GetUUIDs(s.Skills)
 	if err != nil {
-		return ErrInvalidSkillId
+		return model.ErrInvalidSkillId
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -153,14 +163,17 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 	now := time.Now()
 
 	subParams := sqlc.UpdateSubjectParams{
-		Name:        s.Name,
-		Code:        s.Code,
-		Description: &s.Description,
-		Status:      int16(*s.Status),
-		ImageLink:   &s.Image,
-		ID:          id,
-		UpdatedBy:   &staffId,
-		UpdatedAt:   &now,
+		Name:           s.Name,
+		Code:           s.Code,
+		Description:    &s.Description,
+		TimePerSession: int16(s.TimePerSession),
+		MinPassGrade:   &s.MinPassGrade,
+		MinAttendance:  &s.MinAttendance,
+		Status:         int16(*s.Status),
+		ImageLink:      &s.Image,
+		ID:             id,
+		UpdatedBy:      &staffId,
+		UpdatedAt:      &now,
 	}
 
 	if err := qtx.UpdateSubject(ctx, subParams); err != nil {
@@ -168,7 +181,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 	}
 
 	if dbSkills, err := qtx.GetSkillsByIds(ctx, skills); err != nil || len(dbSkills) == 0 {
-		return ErrSkillNotFound
+		return model.ErrSkillNotFound
 	}
 
 	if err := qtx.DeleteSubjectSkills(ctx, id); err != nil {
@@ -214,12 +227,17 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 
 		for _, material := range session.Materials {
 			if !IsTypeValid(material.Type) {
-				return ErrInvalidMaterialType
+				return model.ErrInvalidMaterialType
 			}
 
 			materialId, err := uuid.Parse(material.ID)
 			if err != nil {
 				return fmt.Errorf("Material với id: %s, không đúng định dạng", material.ID)
+			}
+
+			data, err := json.Marshal(material.Data)
+			if err != nil {
+				return model.ErrDataConversion
 			}
 
 			param := sqlc.InsertMaterialParams{
@@ -228,7 +246,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 				Index:     int32(material.Index),
 				IsShared:  material.IsShared,
 				Name:      &material.Name,
-				Data:      material.Data,
+				Data:      json.RawMessage(data),
 			}
 
 			materialParams = append(materialParams, param)
@@ -239,6 +257,33 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 		}
 	}
 
+	if err := qtx.DeleteSubjectTranscripts(ctx, id); err != nil {
+		return err
+	}
+
+	var transcriptParams []sqlc.InsertTranscriptsParams
+	for _, transcript := range s.Transcripts {
+		transcriptId, err := uuid.Parse(transcript.Id)
+		if err != nil {
+			return fmt.Errorf("Transcript với id: %s, không đúng định dạng", transcriptId)
+		}
+
+		param := sqlc.InsertTranscriptsParams{
+			ID:        transcriptId,
+			SubjectID: id,
+			Name:      transcript.Name,
+			Index:     int32(transcript.Index),
+			MinGrade:  float64(transcript.MinGrade),
+			Weight:    float64(transcript.Percentage),
+		}
+
+		transcriptParams = append(transcriptParams, param)
+	}
+
+	if _, err := qtx.InsertTranscripts(ctx, transcriptParams); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
@@ -246,15 +291,23 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s request.UpdateSubject, id uuid.UU
 	return nil
 }
 
-func (c *Core) UpdatePublished(ctx *gin.Context, s request.UpdateSubject, id uuid.UUID) error {
+func (c *Core) UpdatePublished(ctx *gin.Context, s payload.UpdateSubject, id uuid.UUID) error {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
 	}
 
+	if _, err := c.queries.IsSubjectCodePublished(ctx,
+		sqlc.IsSubjectCodePublishedParams{
+			Code: s.Code,
+			ID:   id,
+		}); err == nil {
+		return model.ErrCodeAlreadyExist
+	}
+
 	skills, err := slice.GetUUIDs(s.Skills)
 	if err != nil {
-		return ErrInvalidSkillId
+		return model.ErrInvalidSkillId
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -266,14 +319,17 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s request.UpdateSubject, id uui
 	qtx := c.queries.WithTx(tx)
 	now := time.Now()
 	subParams := sqlc.UpdateSubjectParams{
-		Name:        s.Name,
-		Code:        s.Code,
-		Description: &s.Description,
-		Status:      Published,
-		ImageLink:   &s.Image,
-		ID:          id,
-		UpdatedBy:   &staffId,
-		UpdatedAt:   &now,
+		Name:           s.Name,
+		Code:           s.Code,
+		Description:    &s.Description,
+		TimePerSession: int16(s.TimePerSession),
+		MinPassGrade:   &s.MinPassGrade,
+		MinAttendance:  &s.MinAttendance,
+		Status:         int16(*s.Status),
+		ImageLink:      &s.Image,
+		ID:             id,
+		UpdatedBy:      &staffId,
+		UpdatedAt:      &now,
 	}
 
 	if err = qtx.UpdateSubject(ctx, subParams); err != nil {
@@ -281,7 +337,7 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s request.UpdateSubject, id uui
 	}
 
 	if dbSkills, err := qtx.GetSkillsByIds(ctx, skills); err != nil || len(dbSkills) == 0 {
-		return ErrSkillNotFound
+		return model.ErrSkillNotFound
 	}
 
 	if err = qtx.DeleteSubjectSkills(ctx, id); err != nil {
@@ -314,7 +370,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 	var result SubjectDetail
 	subject, err := c.queries.GetSubjectById(ctx, id)
 	if err != nil {
-		return nil, ErrSubjectNotFound
+		return nil, model.ErrSubjectNotFound
 	}
 
 	totalSessions, err := c.queries.CountSessionsBySubjectId(ctx, id)
@@ -325,6 +381,13 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 	result.ID = subject.ID
 	result.Name = subject.Name
 	result.Code = subject.Code
+	result.TimePerSession = int(subject.TimePerSession)
+	if subject.MinAttendance != nil {
+		result.MinAttendance = float32(*subject.MinAttendance)
+	}
+	if subject.MinPassGrade != nil {
+		result.MinPassGrade = float32(*subject.MinPassGrade)
+	}
 	result.Description = *subject.Description
 	result.Image = *subject.ImageLink
 	result.Status = int(subject.Status)
@@ -365,6 +428,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 			material := Material{
 				ID:       dbMaterial.ID,
 				Name:     *dbMaterial.Name,
+				Type:     dbMaterial.Type,
 				Index:    int(dbMaterial.Index),
 				IsShared: dbMaterial.IsShared,
 				Data:     dbMaterial.Data,
@@ -375,13 +439,31 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 
 		result.Sessions = append(result.Sessions, session)
 	}
+
+	transcripts, err := c.queries.GetTranscriptsBySubjectId(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, dbTranscript := range transcripts {
+		transcript := Transcript{
+			Id:         dbTranscript.ID,
+			Name:       dbTranscript.Name,
+			Index:      int(dbTranscript.Index),
+			Percentage: float32(dbTranscript.Weight),
+			MinGrade:   float32(dbTranscript.MinGrade),
+		}
+
+		result.Transcripts = append(result.Transcripts, transcript)
+	}
+
 	return &result, nil
 }
 
 func (c *Core) GetStatus(ctx *gin.Context, id uuid.UUID) (int, error) {
 	subject, err := c.queries.GetSubjectById(ctx, id)
 	if err != nil {
-		return -1, ErrSubjectNotFound
+		return -1, model.ErrSubjectNotFound
 	}
 
 	return int(subject.Status), nil
@@ -398,7 +480,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	}
 
 	const q = `SELECT
-						id, name, code, time_per_session, sessions_per_week, description, updated_at
+						id, name, code, time_per_session, description, updated_at
 			FROM subjects`
 
 	buf := bytes.NewBufferString(q)
@@ -482,7 +564,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		return err
 	}
 	if _, err := c.queries.GetSubjectById(ctx, id); err != nil {
-		return ErrSubjectNotFound
+		return model.ErrSubjectNotFound
 	}
 
 	if err = c.queries.DeleteSubject(ctx, sqlc.DeleteSubjectParams{

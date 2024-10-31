@@ -29,9 +29,9 @@ CREATE table transcripts
     id              uuid PRIMARY KEY,
     subject_id      uuid NOT NULL,
     name            character varying(50) NOT NULL,
+    index           int NOT NULL,
     min_grade       float NOT NULL,
-    max_grade       float NOT NULL,
-    percentage      float NOT NULL,
+    weight          float NOT NULL,
 
     CONSTRAINT fk_transcript_subject
         FOREIGN KEY (subject_id)

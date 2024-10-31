@@ -15,7 +15,7 @@ SELECT * FROM classes WHERE code = sqlc.arg(code);
 
 -- name: UpdateActiveClass :exec
 UPDATE classes
-SET status = 1,
+SET status = sqlc.arg(status),
     start_date = sqlc.arg(start_date),
     end_date = sqlc.arg(end_date)
 WHERE id = sqlc.arg(id)::uuid;

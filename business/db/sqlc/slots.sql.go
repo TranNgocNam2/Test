@@ -35,6 +35,17 @@ func (q *Queries) CheckTeacherTimeOverlap(ctx context.Context, arg CheckTeacherT
 	return overlap, err
 }
 
+const countSlotsHaveTeacherByClassId = `-- name: CountSlotsHaveTeacherByClassId :one
+SELECT COUNT(*) FROM slots WHERE class_id = $1 AND teacher_id IS NOT NULL
+`
+
+func (q *Queries) CountSlotsHaveTeacherByClassId(ctx context.Context, classID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countSlotsHaveTeacherByClassId, classID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 type CreateSlotsParams struct {
 	ID        uuid.UUID  `db:"id" json:"id"`
 	SessionID uuid.UUID  `db:"session_id" json:"sessionId"`
@@ -44,12 +55,12 @@ type CreateSlotsParams struct {
 	Index     int32      `db:"index" json:"index"`
 }
 
-const getSlotByID = `-- name: GetSlotByID :one
+const getSlotById = `-- name: GetSlotById :one
 SELECT id, session_id, class_id, start_time, end_time, index, teacher_id FROM slots WHERE id = $1
 `
 
-func (q *Queries) GetSlotByID(ctx context.Context, id uuid.UUID) (Slot, error) {
-	row := q.db.QueryRow(ctx, getSlotByID, id)
+func (q *Queries) GetSlotById(ctx context.Context, id uuid.UUID) (Slot, error) {
+	row := q.db.QueryRow(ctx, getSlotById, id)
 	var i Slot
 	err := row.Scan(
 		&i.ID,
@@ -63,12 +74,12 @@ func (q *Queries) GetSlotByID(ctx context.Context, id uuid.UUID) (Slot, error) {
 	return i, err
 }
 
-const getSlotsByClassID = `-- name: GetSlotsByClassID :many
+const getSlotsByClassId = `-- name: GetSlotsByClassId :many
 SELECT id, session_id, class_id, start_time, end_time, index, teacher_id FROM slots WHERE class_id = $1
 `
 
-func (q *Queries) GetSlotsByClassID(ctx context.Context, classID uuid.UUID) ([]Slot, error) {
-	rows, err := q.db.Query(ctx, getSlotsByClassID, classID)
+func (q *Queries) GetSlotsByClassId(ctx context.Context, classID uuid.UUID) ([]Slot, error) {
+	rows, err := q.db.Query(ctx, getSlotsByClassId, classID)
 	if err != nil {
 		return nil, err
 	}

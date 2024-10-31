@@ -129,20 +129,26 @@ func (q *Queries) SoftDeleteClass(ctx context.Context, id uuid.UUID) error {
 
 const updateActiveClass = `-- name: UpdateActiveClass :exec
 UPDATE classes
-SET status = 1,
-    start_date = $1,
-    end_date = $2
-WHERE id = $3::uuid
+SET status = $1,
+    start_date = $2,
+    end_date = $3
+WHERE id = $4::uuid
 `
 
 type UpdateActiveClassParams struct {
+	Status    int16      `db:"status" json:"status"`
 	StartDate *time.Time `db:"start_date" json:"startDate"`
 	EndDate   *time.Time `db:"end_date" json:"endDate"`
 	ID        uuid.UUID  `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateActiveClass(ctx context.Context, arg UpdateActiveClassParams) error {
-	_, err := q.db.Exec(ctx, updateActiveClass, arg.StartDate, arg.EndDate, arg.ID)
+	_, err := q.db.Exec(ctx, updateActiveClass,
+		arg.Status,
+		arg.StartDate,
+		arg.EndDate,
+		arg.ID,
+	)
 	return err
 }
 
