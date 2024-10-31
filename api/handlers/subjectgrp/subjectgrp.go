@@ -2,17 +2,18 @@ package subjectgrp
 
 import (
 	"Backend/business/core/subject"
+	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
+	"Backend/internal/web/payload"
 	"net/http"
 
 	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gitlab.com/innovia69420/kit/web/request"
 )
 
 var (
@@ -31,7 +32,7 @@ func New(subject *subject.Core) *Handlers {
 
 func (h *Handlers) CreateSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var request request.NewSubject
+		var request payload.NewSubject
 		if err := web.Decode(ctx, &request); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -45,9 +46,9 @@ func (h *Handlers) CreateSubject() gin.HandlerFunc {
 		id, err := h.subject.Create(ctx, request)
 		if err != nil {
 			switch {
-			case errors.Is(err, subject.ErrInvalidSkillId),
-				errors.Is(err, subject.ErrSkillNotFound),
-				errors.Is(err, subject.ErrCodeAlreadyExist):
+			case errors.Is(err, model.ErrInvalidSkillId),
+				errors.Is(err, model.ErrSkillNotFound),
+				errors.Is(err, model.ErrCodeAlreadyExist):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
@@ -78,7 +79,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 			return
 		}
 
-		var request request.UpdateSubject
+		var request payload.UpdateSubject
 		if err := web.Decode(ctx, &request); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -98,15 +99,18 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 			if err = h.subject.UpdateDraft(ctx, request, id); err != nil {
 				switch {
 				case
-					errors.Is(err, subject.ErrSubjectNotFound),
-					errors.Is(err, subject.ErrSkillNotFound):
+					errors.Is(err, model.ErrSubjectNotFound),
+					errors.Is(err, model.ErrSkillNotFound):
 
 					web.Respond(ctx, nil, http.StatusNotFound, err)
 					return
 
 				case
-					errors.Is(err, subject.ErrInvalidMaterials),
-					errors.Is(err, subject.ErrInvalidSessions):
+					errors.Is(err, model.ErrCodeAlreadyExist),
+					errors.Is(err, model.ErrInvalidMaterials),
+					errors.Is(err, model.ErrInvalidTranscript),
+					errors.Is(err, model.ErrInvalidTranscriptWeight),
+					errors.Is(err, model.ErrInvalidSessions):
 
 					web.Respond(ctx, nil, http.StatusBadRequest, err)
 					return
@@ -129,8 +133,13 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 			if err = h.subject.UpdatePublished(ctx, request, id); err != nil {
 				switch {
 				case
-					errors.Is(err, subject.ErrSkillNotFound):
+					errors.Is(err, model.ErrSkillNotFound):
 					web.Respond(ctx, nil, http.StatusNotFound, err)
+					return
+
+				case
+					errors.Is(err, model.ErrCodeAlreadyExist):
+					web.Respond(ctx, nil, http.StatusBadRequest, err)
 					return
 
 				default:
@@ -155,7 +164,7 @@ func (h *Handlers) GetSubjectById() gin.HandlerFunc {
 		}
 
 		res, err := h.subject.GetById(ctx, id)
-		if errors.Is(err, subject.ErrSubjectNotFound) {
+		if errors.Is(err, model.ErrSubjectNotFound) {
 			web.Respond(ctx, nil, http.StatusNotFound, err)
 			return
 		}
@@ -213,7 +222,7 @@ func (h *Handlers) DeleteSubject() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, subject.ErrSubjectNotFound):
+				errors.Is(err, model.ErrSubjectNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
