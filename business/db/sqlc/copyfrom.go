@@ -9,6 +9,43 @@ import (
 	"context"
 )
 
+// iteratorForCreateSlots implements pgx.CopyFromSource.
+type iteratorForCreateSlots struct {
+	rows                 []CreateSlotsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForCreateSlots) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForCreateSlots) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ID,
+		r.rows[0].SessionID,
+		r.rows[0].ClassID,
+		r.rows[0].StartTime,
+		r.rows[0].EndTime,
+		r.rows[0].Index,
+	}, nil
+}
+
+func (r iteratorForCreateSlots) Err() error {
+	return nil
+}
+
+func (q *Queries) CreateSlots(ctx context.Context, arg []CreateSlotsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"slots"}, []string{"id", "session_id", "class_id", "start_time", "end_time", "index"}, &iteratorForCreateSlots{rows: arg})
+}
+
 // iteratorForInsertMaterial implements pgx.CopyFromSource.
 type iteratorForInsertMaterial struct {
 	rows                 []InsertMaterialParams

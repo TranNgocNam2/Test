@@ -23,7 +23,7 @@ CREATE table subjects(
     name                    character varying(100) NOT NULL,
     time_per_session        smallint NOT NULL,
     min_pass_grade          float,
-    min_atendance           float,
+    min_attendance           float,
     image_link              text,
     status                  smallint CHECK (status in (0, 1, 2)) DEFAULT 0 NOT NULL,
     description             text,

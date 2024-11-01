@@ -8,12 +8,12 @@ import (
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"bytes"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Core struct {
@@ -60,12 +60,12 @@ func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) (uuid.UUID, e
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
-	dbSpec, err := c.queries.GetSpecializationByID(ctx, id)
+	dbSpec, err := c.queries.GetSpecializationById(ctx, id)
 	if err != nil {
 		return Details{}, model.ErrSpecNotFound
 	}
 
-	if dbSpec.Status == Draft || dbSpec.Status == Delete {
+	if dbSpec.Status == Draft || dbSpec.Status == Deleted {
 		if _, err = middleware.AuthorizeStaff(ctx, c.queries); err != nil {
 			return Details{}, err
 		}
@@ -78,26 +78,24 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		return Details{}, model.ErrSubjectNotFound
 	}
 	if dbSpecSubjects != nil {
-		for _, subject := range dbSpecSubjects {
-			totalSessions, err := c.queries.CountSessionsBySubjectID(ctx, subject.ID)
+		for _, dbSubject := range dbSpecSubjects {
+			totalSessions, err := c.queries.CountSessionsBySubjectId(ctx, dbSubject.ID)
 			if err != nil {
 				return Details{}, err
 			}
-			spec.Subjects = append(spec.Subjects, &struct {
-				ID            uuid.UUID `json:"id"`
-				Name          string    `json:"name"`
-				Image         string    `json:"image"`
-				Code          string    `json:"code"`
-				LastUpdated   time.Time `json:"lastUpdated"`
-				TotalSessions int64     `json:"totalSessions"`
-			}{
-				ID:            subject.ID,
-				Name:          subject.Name,
-				Image:         *subject.ImageLink,
-				Code:          subject.Code,
-				LastUpdated:   subject.CreatedAt,
-				TotalSessions: totalSessions,
-			})
+
+			subject := toCoreSubject(dbSubject)
+			subject.TotalSessions = totalSessions
+			dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
+			if err != nil {
+				return Details{}, model.ErrSkillNotFound
+			}
+
+			for _, dbSkill := range dbSkills {
+				skill := toCoreSkill(dbSkill)
+				subject.Skills = append(subject.Skills, skill)
+			}
+			spec.Subjects = append(spec.Subjects, subject)
 		}
 	}
 
@@ -110,7 +108,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateSpec UpdateSpecializ
 		return err
 	}
 
-	dbSpec, err := c.queries.GetSpecializationByID(ctx, id)
+	dbSpec, err := c.queries.GetSpecializationById(ctx, id)
 	if err != nil {
 		return model.ErrSpecNotFound
 	}
@@ -124,7 +122,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateSpec UpdateSpecializ
 
 	var dbUpdateSpecialization sqlc.UpdateSpecializationParams
 
-	if dbSpec.Status == Public {
+	if dbSpec.Status == Published {
 		dbUpdateSpecialization = sqlc.UpdateSpecializationParams{
 			ID:          id,
 			TimeAmount:  &updateSpec.TimeAmount,
@@ -226,7 +224,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		return err
 	}
 
-	dbSpec, err := c.queries.GetSpecializationByID(ctx, id)
+	dbSpec, err := c.queries.GetSpecializationById(ctx, id)
 	if err != nil {
 		return model.ErrSpecNotFound
 	}
@@ -249,7 +247,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		}
 	}
 
-	if dbSpec.Status == Public {
+	if dbSpec.Status == Published {
 		if err = qtx.UpdateSpecializationStatus(ctx, sqlc.UpdateSpecializationStatusParams{
 			UpdatedBy: &staffID,
 			ID:        dbSpec.ID,
@@ -297,8 +295,9 @@ func processSpecSubjects(ctx *gin.Context, qtx *sqlc.Queries, specializationID u
 			return err
 		}
 
-		dbSubject, err := qtx.GetSubjectsByIDs(ctx, subjectIDs)
-		if err != nil || (len(dbSubject) != len(subjectIDs)) {
+		dbSubjects, err := qtx.GetSubjectsByIDs(ctx, subjectIDs)
+		fmt.Println(err)
+		if err != nil || (len(dbSubjects) != len(subjectIDs)) {
 			return model.ErrSubjectNotFound
 		}
 

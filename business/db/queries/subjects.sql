@@ -32,7 +32,7 @@ SET name = sqlc.arg(name),
     code = sqlc.arg(code),
     time_per_session = sqlc.arg(time_per_session),
     min_pass_grade = sqlc.arg(min_pass_grade),
-    min_atendance = sqlc.arg(min_atendance),
+    min_attendance = sqlc.arg(min_attendance),
     description = sqlc.arg(description),
     status = sqlc.arg(status),
     image_link = sqlc.arg(image_link),
@@ -48,3 +48,11 @@ FROM subjects WHERE id = sqlc.arg(id)::uuid;
 UPDATE subjects SET status = 2, updated_at = NOW(), updated_by = sqlc.arg(updated_by)
 WHERE id = sqlc.arg(id);
 
+
+-- name: GetPublishedSubjectByID :one
+SELECT *
+FROM subjects
+WHERE id = sqlc.arg(id)::uuid AND status = 1;
+
+-- -- name: GetSubjectsByIDs :many
+-- SELECT * FROM subjects WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]);

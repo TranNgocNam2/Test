@@ -7,7 +7,6 @@ package sqlc
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -50,35 +49,33 @@ func (q *Queries) DeleteSpecializationSubjects(ctx context.Context, specializati
 }
 
 const getSubjectsBySpecialization = `-- name: GetSubjectsBySpecialization :many
-SELECT subjects.id, subjects.name, subjects.code, subjects.image_link, subjects.created_at, subjects.updated_at
+SELECT subjects.id, subjects.code, subjects.name, subjects.time_per_session, subjects.min_pass_grade, subjects.min_attendance, subjects.image_link, subjects.status, subjects.description, subjects.created_by, subjects.updated_by, subjects.created_at, subjects.updated_at
 FROM specialization_subjects
 JOIN subjects ON specialization_subjects.subject_id = subjects.id
 WHERE specialization_subjects.specialization_id = $1::uuid
 `
 
-type GetSubjectsBySpecializationRow struct {
-	ID        uuid.UUID  `db:"id" json:"id"`
-	Name      string     `db:"name" json:"name"`
-	Code      string     `db:"code" json:"code"`
-	ImageLink *string    `db:"image_link" json:"imageLink"`
-	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
-}
-
-func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]GetSubjectsBySpecializationRow, error) {
+func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]Subject, error) {
 	rows, err := q.db.Query(ctx, getSubjectsBySpecialization, specializationID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetSubjectsBySpecializationRow
+	var items []Subject
 	for rows.Next() {
-		var i GetSubjectsBySpecializationRow
+		var i Subject
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
 			&i.Code,
+			&i.Name,
+			&i.TimePerSession,
+			&i.MinPassGrade,
+			&i.MinAttendance,
 			&i.ImageLink,
+			&i.Status,
+			&i.Description,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

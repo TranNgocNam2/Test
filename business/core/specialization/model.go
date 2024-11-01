@@ -15,14 +15,7 @@ type Details struct {
 	TimeAmount  *float64  `json:"timeAmount"`
 	Image       *string   `json:"image"`
 	CreatedAt   time.Time `json:"createdAt"`
-	Subjects    []*struct {
-		ID            uuid.UUID `json:"id"`
-		Name          string    `json:"name"`
-		Image         string    `json:"image"`
-		Code          string    `json:"code"`
-		LastUpdated   time.Time `json:"lastUpdated"`
-		TotalSessions int64     `json:"totalSessions"`
-	}
+	Subjects    []Subject `json:"subjects"`
 }
 
 type NewSpecialization struct {
@@ -52,6 +45,42 @@ type Specialization struct {
 	Status        int16     `json:"status"`
 	Image         *string   `json:"image"`
 	TotalSubjects int64     `json:"totalSubjects"`
+}
+
+type Subject struct {
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	Image         string    `json:"image"`
+	Code          string    `json:"code"`
+	LastUpdated   time.Time `json:"lastUpdated"`
+	Skills        []Skill   `json:"skills"`
+	TotalSessions int64     `json:"totalSessions"`
+}
+
+type Skill struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
+func toCoreSkill(dbSkill sqlc.Skill) Skill {
+	skill := Skill{
+		ID:   dbSkill.ID,
+		Name: dbSkill.Name,
+	}
+
+	return skill
+}
+
+func toCoreSubject(dbSubject sqlc.Subject) Subject {
+	subject := Subject{
+		ID:          dbSubject.ID,
+		Name:        dbSubject.Name,
+		Image:       *dbSubject.ImageLink,
+		Code:        dbSubject.Code,
+		LastUpdated: dbSubject.CreatedAt,
+	}
+
+	return subject
 }
 
 func toCoreSpecialization(dbSpec sqlc.Specialization) Specialization {

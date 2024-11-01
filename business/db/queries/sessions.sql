@@ -7,8 +7,11 @@ DO UPDATE SET
     name = EXCLUDED.name;
 
 
--- name: CountSessionsBySubjectID :one
+-- name: CountSessionsBySubjectId :one
 SELECT count(*) FROM sessions WHERE subject_id = sqlc.arg(subject_id);
 
--- name: GetSessionsBySubjectID :many
+-- name: GetSessionsBySubjectId :many
 SELECT * FROM sessions WHERE subject_id = sqlc.arg(subject_id) ORDER BY index;
+
+-- name: GetSessionById :one
+SELECT * FROM sessions WHERE id = sqlc.arg(id);
