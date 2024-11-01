@@ -36,8 +36,35 @@ func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) 
 	return err
 }
 
+const getPublishedSubjectByID = `-- name: GetPublishedSubjectByID :one
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+FROM subjects
+WHERE id = $1::uuid AND status = 1
+`
+
+func (q *Queries) GetPublishedSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error) {
+	row := q.db.QueryRow(ctx, getPublishedSubjectByID, id)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.TimePerSession,
+		&i.MinPassGrade,
+		&i.MinAttendance,
+		&i.ImageLink,
+		&i.Status,
+		&i.Description,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getSubjectById = `-- name: GetSubjectById :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_atendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects WHERE id = $1::uuid
 `
 
@@ -50,7 +77,7 @@ func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, er
 		&i.Name,
 		&i.TimePerSession,
 		&i.MinPassGrade,
-		&i.MinAtendance,
+		&i.MinAttendance,
 		&i.ImageLink,
 		&i.Status,
 		&i.Description,
@@ -63,7 +90,7 @@ func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, er
 }
 
 const getSubjectsByIDs = `-- name: GetSubjectsByIDs :many
-SELECT id, code, name, time_per_session, min_pass_grade, min_atendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE id = ANY($1::uuid[]) AND status = 1
 `
@@ -83,7 +110,7 @@ func (q *Queries) GetSubjectsByIDs(ctx context.Context, subjectIds []uuid.UUID) 
 			&i.Name,
 			&i.TimePerSession,
 			&i.MinPassGrade,
-			&i.MinAtendance,
+			&i.MinAttendance,
 			&i.ImageLink,
 			&i.Status,
 			&i.Description,
@@ -143,7 +170,7 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 }
 
 const isSubjectCodeExist = `-- name: IsSubjectCodeExist :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_atendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE code = $1 AND status = 1
 `
@@ -157,7 +184,7 @@ func (q *Queries) IsSubjectCodeExist(ctx context.Context, code string) (Subject,
 		&i.Name,
 		&i.TimePerSession,
 		&i.MinPassGrade,
-		&i.MinAtendance,
+		&i.MinAttendance,
 		&i.ImageLink,
 		&i.Status,
 		&i.Description,
@@ -170,7 +197,7 @@ func (q *Queries) IsSubjectCodeExist(ctx context.Context, code string) (Subject,
 }
 
 const isSubjectCodePublished = `-- name: IsSubjectCodePublished :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_atendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE code = $1 AND status = 1 AND id != $2
 `
@@ -189,7 +216,7 @@ func (q *Queries) IsSubjectCodePublished(ctx context.Context, arg IsSubjectCodeP
 		&i.Name,
 		&i.TimePerSession,
 		&i.MinPassGrade,
-		&i.MinAtendance,
+		&i.MinAttendance,
 		&i.ImageLink,
 		&i.Status,
 		&i.Description,
@@ -207,7 +234,7 @@ SET name = $1,
     code = $2,
     time_per_session = $3,
     min_pass_grade = $4,
-    min_atendance = $5,
+    min_attendance = $5,
     description = $6,
     status = $7,
     image_link = $8,
@@ -221,7 +248,7 @@ type UpdateSubjectParams struct {
 	Code           string     `db:"code" json:"code"`
 	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
 	MinPassGrade   *float64   `db:"min_pass_grade" json:"minPassGrade"`
-	MinAtendance   *float64   `db:"min_atendance" json:"minAtendance"`
+	MinAttendance  *float64   `db:"min_attendance" json:"minAttendance"`
 	Description    *string    `db:"description" json:"description"`
 	Status         int16      `db:"status" json:"status"`
 	ImageLink      *string    `db:"image_link" json:"imageLink"`
@@ -236,7 +263,7 @@ func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) er
 		arg.Code,
 		arg.TimePerSession,
 		arg.MinPassGrade,
-		arg.MinAtendance,
+		arg.MinAttendance,
 		arg.Description,
 		arg.Status,
 		arg.ImageLink,

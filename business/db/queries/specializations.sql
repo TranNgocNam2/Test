@@ -6,7 +6,7 @@ VALUES (sqlc.arg(id), sqlc.arg(name), sqlc.arg(code), sqlc.arg(time_amount),
 -- name: GetSpecializationByCode :one
 SELECT * FROM specializations WHERE code = sqlc.arg(code);
 
--- name: GetSpecializationByID :one
+-- name: GetSpecializationById :one
 SELECT * FROM specializations WHERE id = sqlc.arg(id);
 
 -- name: UpdateSpecialization :exec

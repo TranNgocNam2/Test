@@ -11,8 +11,9 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.19.0
-	gitlab.com/innovia69420/kit v0.0.0-20241019050331-5fdc4f16b32e
+	gitlab.com/innovia69420/kit v0.0.0-20241028141916-09d4b34d7c20
 	go.uber.org/zap v1.27.0
+	golang.org/x/crypto v0.27.0
 )
 
 require (
@@ -51,7 +52,6 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.10.0 // indirect
-	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect

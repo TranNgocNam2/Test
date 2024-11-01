@@ -38,3 +38,8 @@ sql:
           - db_type: "date"
             go_type:
               type: "time.Time"
+          - db_type: "date"
+            nullable: true
+            go_type:
+              pointer: true
+              type: "time.Time"

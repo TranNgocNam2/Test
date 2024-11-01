@@ -72,12 +72,12 @@ func (q *Queries) GetSpecializationByCode(ctx context.Context, code string) (Spe
 	return i, err
 }
 
-const getSpecializationByID = `-- name: GetSpecializationByID :one
+const getSpecializationById = `-- name: GetSpecializationById :one
 SELECT id, name, code, time_amount, image_link, status, description, created_by, updated_by, created_at, updated_at FROM specializations WHERE id = $1
 `
 
-func (q *Queries) GetSpecializationByID(ctx context.Context, id uuid.UUID) (Specialization, error) {
-	row := q.db.QueryRow(ctx, getSpecializationByID, id)
+func (q *Queries) GetSpecializationById(ctx context.Context, id uuid.UUID) (Specialization, error) {
+	row := q.db.QueryRow(ctx, getSpecializationById, id)
 	var i Specialization
 	err := row.Scan(
 		&i.ID,

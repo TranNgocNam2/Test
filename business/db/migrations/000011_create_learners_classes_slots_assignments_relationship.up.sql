@@ -27,16 +27,16 @@ CREATE table learner_attendances(
 
 CREATE table learner_assignments(
     id                  uuid PRIMARY KEY,
-    class_lerner_id     uuid NOT NULL,
+    class_learner_id     uuid NOT NULL,
     assignment_id       uuid NOT NULL,
     grade               float NOT NULL,
 
     CONSTRAINT fk_learner_assignments_class_learners
-        FOREIGN KEY (class_lerner_id)
+        FOREIGN KEY (class_learner_id)
             REFERENCES class_learners(id) ON DELETE CASCADE,
     CONSTRAINT fk_learner_assignments_assignment
         FOREIGN KEY (assignment_id)
             REFERENCES assignments(id) ON DELETE CASCADE,
 
-    CONSTRAINT unique_learner_assignment UNIQUE (assignment_id, class_lerner_id)
+    CONSTRAINT unique_learner_assignment UNIQUE (assignment_id, class_learner_id)
 );

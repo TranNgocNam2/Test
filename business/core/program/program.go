@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	ErrProgramNotFound     = errors.New("Không tìm thấy khoá học!")
-	ErrCannotUpdateProgram = errors.New("Không thể cập nhật khoá học!")
+	ErrProgramNotFound     = errors.New("Không tìm thấy chương trình học!")
+	ErrCannotUpdateProgram = errors.New("Không thể cập nhật chương trình học!")
 	ErrSubjectNotFound     = errors.New("Môn học không có trong hệ thống!")
-	ErrCannotDeleteProgram = errors.New("Không thể xóa khoá học!")
+	ErrCannotDeleteProgram = errors.New("Không thể xóa chương trình học!")
 )
 
 type Core struct {
@@ -74,11 +74,6 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateProgram UpdateProgra
 		return ErrCannotUpdateProgram
 	}
 
-	dbSubjects, err := c.queries.GetSubjectsByIDs(ctx, updateProgram.Subjects)
-	if err != nil || (len(dbSubjects) != len(updateProgram.Subjects)) {
-		return ErrSubjectNotFound
-	}
-
 	dbUpdateProgram := sqlc.UpdateProgramParams{
 		Name:        updateProgram.Name,
 		StartDate:   updateProgram.StartDate,
@@ -88,32 +83,10 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateProgram UpdateProgra
 		ID:          id,
 	}
 
-	tx, err := c.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	qtx := c.queries.WithTx(tx)
-	if err = qtx.UpdateProgram(ctx, dbUpdateProgram); err != nil {
+	if err = c.queries.UpdateProgram(ctx, dbUpdateProgram); err != nil {
 		return err
 	}
 
-	if err = qtx.DeleteProgramSubjects(ctx, dbProgram.ID); err != nil {
-		return err
-	}
-
-	programSubjects := sqlc.CreateProgramSubjectsParams{
-		ProgramID:  dbProgram.ID,
-		SubjectIds: updateProgram.Subjects,
-		CreatedBy:  staffID,
-	}
-
-	if err = qtx.CreateProgramSubjects(ctx, programSubjects); err != nil {
-		return err
-	}
-
-	tx.Commit(ctx)
 	return nil
 }
 
@@ -152,7 +125,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	var programs []Program
 	for _, dbProgram := range dbPrograms {
 		program := toCoreProgram(dbProgram)
-		program.TotalSubjects, err = c.queries.CountSubjectsByProgramID(ctx, dbProgram.ID)
+		program.TotalClasses, err = c.queries.CountClassesByProgramId(ctx, dbProgram.ID)
 		if err != nil {
 			c.logger.Error(err.Error())
 			return nil
@@ -200,25 +173,14 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		return ErrProgramNotFound
 	}
 
-	if dbProgram.StartDate.Before(time.Now()) {
+	totalClasses, _ := c.queries.CountClassesByProgramId(ctx, id)
+	if totalClasses > 0 || dbProgram.StartDate.Before(time.Now()) {
 		return ErrCannotDeleteProgram
 	}
 
-	tx, err := c.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	qtx := c.queries.WithTx(tx)
-	if err = qtx.DeleteProgramSubjects(ctx, dbProgram.ID); err != nil {
+	if err = c.queries.DeleteProgram(ctx, id); err != nil {
 		return err
 	}
 
-	if err = qtx.DeleteProgram(ctx, id); err != nil {
-		return err
-	}
-
-	tx.Commit(ctx)
 	return nil
 }

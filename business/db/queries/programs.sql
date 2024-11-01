@@ -18,3 +18,4 @@ SELECT * FROM programs WHERE id = sqlc.arg(id);
 
 -- name: DeleteProgram :exec
 DELETE FROM programs WHERE id = sqlc.arg(id);
+

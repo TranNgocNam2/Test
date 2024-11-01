@@ -1,22 +1,25 @@
 CREATE table classes(
     id                      uuid PRIMARY KEY,
     code                    character varying(10) NOT NULL,
-    is_draft                boolean NOT NULL DEFAULT true,
-    password                character varying(50) NOT NULL,
+    subject_id              uuid NOT NULL,
+    program_id              uuid NOT NULL,
+    password                text NOT NULL,
     name                    character varying(50) NOT NULL,
-    link                    character varying(100) NOT NULL,
-    program_subject_id      uuid NOT NULL,
-    start_time              timestamp NOT NULL,
-    end_time                timestamp NOT NULL,
+    link                    character varying(100),
+    start_date              timestamp,
+    end_date                timestamp,
+    status                  smallint NOT NULL DEFAULT 0,
     created_by              character varying(50) NOT NULL,
     created_at              timestamp NOT NULL DEFAULT now(),
 
-    CONSTRAINT fk_class_program_subject
-        FOREIGN KEY (program_subject_id) REFERENCES program_subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_class_staffs_created_by
         FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_class_subject
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    CONSTRAINT fk_class_program
+        FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
 
-    CONSTRAINT unique_class_subject_program UNIQUE (id, program_subject_id)
+    CONSTRAINT unique_classes_subject UNIQUE (id, subject_id)
 );
 
 CREATE table class_teachers(
@@ -58,13 +61,17 @@ CREATE table slots(
     id                  uuid PRIMARY KEY,
     session_id          uuid NOT NULL,
     class_id            uuid NOT NULL,
-    start_time          timestamp NOT NULL,
-    end_time            timestamp NOT NULL,
+    start_time          timestamp,
+    end_time            timestamp,
+    index               int NOT NULL,
+    teacher_id          character varying(50),
 
     CONSTRAINT fk_slot_sessions
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
     CONSTRAINT fk_slot_class
         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_slot_teacher
+        FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_slot_session_class UNIQUE (session_id, class_id)
 );

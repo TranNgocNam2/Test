@@ -2,7 +2,7 @@ CREATE table sessions(
     id              uuid PRIMARY KEY,
     subject_id      uuid NOT NULL,
     index           int NOT NULL,
-    name            character varying(50) NOT NULL,
+    name            text NOT NULL,
 --     time_amount     int NOT NULL,
 
     CONSTRAINT fk_session_subject
