@@ -16,7 +16,7 @@ VALUES('6838471a-96c9-49c9-b992-281657e04037', 'PRJ', 'Programming with Java', 3
 
 
 INSERT INTO subjects(id, code, name, time_per_session, image_link, status, description, created_by)
-VALUES('aa014905-64d8-456b-af0f-ace63a3ecc2d', 'MAD', 'Discrete Mathematics', 3, 2,
+VALUES('aa014905-64d8-456b-af0f-ace63a3ecc2d', 'MAD', 'Discrete Mathematics', 3,
 'https://notalinkbutalink.com', 1,'Loren ipsum', 'google-oauth2|103166434261305612273');
 
 INSERT INTO subject_skills(id, subject_id, skill_id)
