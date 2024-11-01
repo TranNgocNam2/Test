@@ -10,8 +10,8 @@ SELECT * FROM classes WHERE id = sqlc.arg(id)::uuid;
 -- name: CountClassesByProgramId :one
 SELECT COUNT(*) FROM classes WHERE program_id = sqlc.arg(program_id)::uuid;
 
--- name: GetClassByCode :one
-SELECT * FROM classes WHERE code = sqlc.arg(code);
+-- name: GetClassCompletedByCode :one
+SELECT * FROM classes WHERE code = sqlc.arg(code) AND status = 1;
 
 -- name: UpdateActiveClass :exec
 UPDATE classes

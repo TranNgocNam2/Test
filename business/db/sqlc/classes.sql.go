@@ -68,12 +68,12 @@ func (q *Queries) DeleteClass(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getClassByCode = `-- name: GetClassByCode :one
-SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes WHERE code = $1
+const getClassById = `-- name: GetClassById :one
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes WHERE id = $1::uuid
 `
 
-func (q *Queries) GetClassByCode(ctx context.Context, code string) (Class, error) {
-	row := q.db.QueryRow(ctx, getClassByCode, code)
+func (q *Queries) GetClassById(ctx context.Context, id uuid.UUID) (Class, error) {
+	row := q.db.QueryRow(ctx, getClassById, id)
 	var i Class
 	err := row.Scan(
 		&i.ID,
@@ -92,12 +92,12 @@ func (q *Queries) GetClassByCode(ctx context.Context, code string) (Class, error
 	return i, err
 }
 
-const getClassById = `-- name: GetClassById :one
-SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes WHERE id = $1::uuid
+const getClassCompletedByCode = `-- name: GetClassCompletedByCode :one
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes WHERE code = $1 AND status = 1
 `
 
-func (q *Queries) GetClassById(ctx context.Context, id uuid.UUID) (Class, error) {
-	row := q.db.QueryRow(ctx, getClassById, id)
+func (q *Queries) GetClassCompletedByCode(ctx context.Context, code string) (Class, error) {
+	row := q.db.QueryRow(ctx, getClassCompletedByCode, code)
 	var i Class
 	err := row.Scan(
 		&i.ID,

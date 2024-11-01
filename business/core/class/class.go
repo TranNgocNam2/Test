@@ -40,7 +40,7 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	_, err = c.queries.GetClassByCode(ctx, newClass.Code)
+	_, err = c.queries.GetClassCompletedByCode(ctx, newClass.Code)
 	if err == nil {
 		return uuid.Nil, model.ErrClassCodeAlreadyExist
 	}
@@ -429,7 +429,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 		return model.ErrClassNotFound
 	}
 	if updateClass.Code != dbClass.Code {
-		_, err = c.queries.GetClassByCode(ctx, updateClass.Code)
+		_, err = c.queries.GetClassCompletedByCode(ctx, updateClass.Code)
 		if err == nil {
 			return model.ErrClassCodeAlreadyExist
 		}

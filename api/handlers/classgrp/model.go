@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-var ()
-
 func toCoreNewClass(newClassRequest payload.NewClass) (class.NewClass, error) {
 	subjectId, err := uuid.Parse(newClassRequest.SubjectId)
 	if err != nil {
