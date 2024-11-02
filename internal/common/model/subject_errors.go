@@ -3,6 +3,7 @@ package model
 import "errors"
 
 var (
+	ErrSubjectIDInvalid        = errors.New("ID môn học không hợp lệ!")
 	ErrSkillNotFound           = errors.New("Kỹ năng không có trong hệ thống!")
 	ErrSubjectNotFound         = errors.New("Môn học không có trong hệ thống!")
 	ErrCodeAlreadyExist        = errors.New("Mã môn đã tồn tại!")
