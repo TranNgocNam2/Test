@@ -4,17 +4,13 @@ import (
 	"Backend/business/db/pgx"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
+	"Backend/internal/common/model"
 	"Backend/internal/order"
 	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
-)
-
-var (
-	ErrSchoolNotFound = errors.New("Không tìm thấy trường học!")
 )
 
 type Core struct {
@@ -49,7 +45,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updatedSchool School) erro
 
 	dbSchool, err := c.queries.GetSchoolByID(ctx, id)
 	if err != nil {
-		return ErrSchoolNotFound
+		return model.ErrSchoolNotFound
 	}
 
 	updateSchool := sqlc.UpdateSchoolParams{
@@ -68,7 +64,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updatedSchool School) erro
 func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 	dbSchool, err := c.queries.GetSchoolByID(ctx, id)
 	if err != nil {
-		return ErrSchoolNotFound
+		return model.ErrSchoolNotFound
 	}
 
 	if err = c.queries.DeleteSchool(ctx, dbSchool.ID); err != nil {
@@ -81,7 +77,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (School, error) {
 	school, err := c.queries.GetSchoolByID(ctx, id)
 
 	if err != nil {
-		return School{}, ErrSchoolNotFound
+		return School{}, model.ErrSchoolNotFound
 	}
 
 	return toCoreSchool(school), nil

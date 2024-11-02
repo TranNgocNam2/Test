@@ -3,8 +3,8 @@ package schoolgrp
 import (
 	"Backend/business/core/school"
 	"Backend/internal/validate"
+	"Backend/internal/web/payload"
 	"github.com/google/uuid"
-	"gitlab.com/innovia69420/kit/web/request"
 )
 
 type SchoolResponse struct {
@@ -31,7 +31,7 @@ func toSchoolsResponse(schools []school.School) []SchoolResponse {
 	return items
 }
 
-func toCoreNewSchool(newSchoolRequest request.NewSchool) school.School {
+func toCoreNewSchool(newSchoolRequest payload.NewSchool) school.School {
 	return school.School{
 		Name:       newSchoolRequest.Name,
 		Address:    newSchoolRequest.Address,
@@ -39,7 +39,7 @@ func toCoreNewSchool(newSchoolRequest request.NewSchool) school.School {
 	}
 }
 
-func validateCreateSchoolRequest(newSchoolRequest request.NewSchool) error {
+func validateCreateSchoolRequest(newSchoolRequest payload.NewSchool) error {
 	if err := validate.Check(newSchoolRequest); err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func toDistrictsResponse(districts []school.District) []DistrictResponse {
 	return items
 }
 
-func toCoreUpdateSchool(updateSchoolRequest request.UpdateSchool) school.School {
+func toCoreUpdateSchool(updateSchoolRequest payload.UpdateSchool) school.School {
 	return school.School{
 		Name:       updateSchoolRequest.Name,
 		Address:    updateSchoolRequest.Address,
@@ -95,7 +95,7 @@ func toCoreUpdateSchool(updateSchoolRequest request.UpdateSchool) school.School 
 	}
 }
 
-func validateUpdateSchoolRequest(request request.UpdateSchool) error {
+func validateUpdateSchoolRequest(request payload.UpdateSchool) error {
 	if err := validate.Check(request); err != nil {
 		return err
 	}
