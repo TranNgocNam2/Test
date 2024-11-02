@@ -91,6 +91,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 		status, err := h.subject.GetStatus(ctx, id)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusNotFound, err)
+			return
 		}
 
 		if status == subject.Draft {
