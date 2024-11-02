@@ -157,12 +157,6 @@ type Specialization struct {
 	UpdatedAt   *time.Time `db:"updated_at" json:"updatedAt"`
 }
 
-type SpecializationSkill struct {
-	ID               uuid.UUID `db:"id" json:"id"`
-	SpecializationID uuid.UUID `db:"specialization_id" json:"specializationId"`
-	SkillID          uuid.UUID `db:"skill_id" json:"skillId"`
-}
-
 type SpecializationSubject struct {
 	ID               uuid.UUID `db:"id" json:"id"`
 	SpecializationID uuid.UUID `db:"specialization_id" json:"specializationId"`

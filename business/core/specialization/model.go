@@ -7,26 +7,15 @@ import (
 )
 
 type Details struct {
-	ID          uuid.UUID
-	Name        string
-	Code        string
-	Status      int16
-	Description *string
-	TimeAmount  *float64
-	Image       *string
-	CreatedAt   time.Time
-	Skills      []*struct {
-		ID   uuid.UUID
-		Name string
-	}
-	Subjects []*struct {
-		ID           uuid.UUID
-		Name         string
-		Image        string
-		Code         string
-		LastUpdated  time.Time
-		TotalSession int64
-	}
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Code        string    `json:"code"`
+	Status      int16     `json:"status"`
+	Description *string   `json:"description"`
+	TimeAmount  *float64  `json:"timeAmount"`
+	Image       *string   `json:"image"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Subjects    []Subject `json:"subjects"`
 }
 
 type NewSpecialization struct {
@@ -46,21 +35,52 @@ type UpdateSpecialization struct {
 	Description string
 	TimeAmount  float64
 	Image       string
-	Skills      []uuid.UUID
 	Subjects    []uuid.UUID
 }
 
 type Specialization struct {
-	ID           uuid.UUID
-	Name         string
-	Code         string
-	Status       int16
-	Image        *string
-	TotalSubject int64
-	Skills       []*struct {
-		ID   uuid.UUID
-		Name string
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	Code          string    `json:"code"`
+	Status        int16     `json:"status"`
+	Image         *string   `json:"image"`
+	TotalSubjects int64     `json:"totalSubjects"`
+}
+
+type Subject struct {
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	Image         string    `json:"image"`
+	Code          string    `json:"code"`
+	LastUpdated   time.Time `json:"lastUpdated"`
+	Skills        []Skill   `json:"skills"`
+	TotalSessions int64     `json:"totalSessions"`
+}
+
+type Skill struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
+func toCoreSkill(dbSkill sqlc.Skill) Skill {
+	skill := Skill{
+		ID:   dbSkill.ID,
+		Name: dbSkill.Name,
 	}
+
+	return skill
+}
+
+func toCoreSubject(dbSubject sqlc.Subject) Subject {
+	subject := Subject{
+		ID:          dbSubject.ID,
+		Name:        dbSubject.Name,
+		Image:       *dbSubject.ImageLink,
+		Code:        dbSubject.Code,
+		LastUpdated: dbSubject.CreatedAt,
+	}
+
+	return subject
 }
 
 func toCoreSpecialization(dbSpec sqlc.Specialization) Specialization {
@@ -74,7 +94,7 @@ func toCoreSpecialization(dbSpec sqlc.Specialization) Specialization {
 
 	return spec
 }
-func toCoreSpecializationDetails(dbSpec sqlc.Specialization, dbSpecSkills []sqlc.Skill) Details {
+func toCoreSpecializationDetails(dbSpec sqlc.Specialization) Details {
 	specDetails := Details{
 		ID:          dbSpec.ID,
 		Name:        dbSpec.Name,
@@ -84,16 +104,6 @@ func toCoreSpecializationDetails(dbSpec sqlc.Specialization, dbSpecSkills []sqlc
 		TimeAmount:  dbSpec.TimeAmount,
 		Image:       dbSpec.ImageLink,
 		CreatedAt:   dbSpec.CreatedAt,
-	}
-
-	for _, skill := range dbSpecSkills {
-		specDetails.Skills = append(specDetails.Skills, &struct {
-			ID   uuid.UUID
-			Name string
-		}{
-			ID:   skill.ID,
-			Name: skill.Name,
-		})
 	}
 
 	return specDetails
