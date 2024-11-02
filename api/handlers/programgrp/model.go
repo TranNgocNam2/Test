@@ -2,27 +2,22 @@ package programgrp
 
 import (
 	"Backend/business/core/program"
+	"Backend/internal/common/model"
 	"Backend/internal/validate"
 	"Backend/internal/web/payload"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"time"
-)
-
-var (
-	ErrInvalidStartDate = errors.New("Thời gian bắt đầu khoá học không hợp lệ!")
-	ErrInvalidEndDate   = errors.New("Thời gian kết thúc khoá học không hợp lệ!")
 )
 
 func toCoreNewProgram(newProgramRequest payload.NewProgram) (program.NewProgram, error) {
 	startDate, err := time.Parse(time.DateOnly, newProgramRequest.StartDate)
 	if err != nil || startDate.Before(time.Now()) {
-		return program.NewProgram{}, ErrInvalidStartDate
+		return program.NewProgram{}, model.ErrInvalidStartDate
 	}
 
 	endDate, err := time.Parse(time.DateOnly, newProgramRequest.EndDate)
 	if err != nil || endDate.Before(startDate) {
-		return program.NewProgram{}, ErrInvalidEndDate
+		return program.NewProgram{}, model.ErrInvalidEndDate
 	}
 
 	newProgram := program.NewProgram{
@@ -46,12 +41,12 @@ func validateNewProgramRequest(newProgramRequest payload.NewProgram) error {
 func toCoreUpdateProgram(updateProgramRequest payload.UpdateProgram) (program.UpdateProgram, error) {
 	startDate, err := time.Parse(time.DateOnly, updateProgramRequest.StartDate)
 	if err != nil || startDate.Before(time.Now()) {
-		return program.UpdateProgram{}, ErrInvalidStartDate
+		return program.UpdateProgram{}, model.ErrInvalidStartDate
 	}
 
 	endDate, err := time.Parse(time.DateOnly, updateProgramRequest.EndDate)
 	if err != nil || endDate.Before(startDate) {
-		return program.UpdateProgram{}, ErrInvalidEndDate
+		return program.UpdateProgram{}, model.ErrInvalidEndDate
 	}
 
 	updateProgram := program.UpdateProgram{
