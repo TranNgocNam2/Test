@@ -1,6 +1,8 @@
 package model
 
-import "errors"
+import (
+	"github.com/pkg/errors"
+)
 
 var (
 	ErrSubjectIDInvalid        = errors.New("ID môn học không hợp lệ!")
@@ -15,4 +17,5 @@ var (
 	ErrDataConversion          = errors.New("Không convert qua json được!")
 	ErrInvalidTranscript       = errors.New("Phải có ít nhất 1 cột điểm!")
 	ErrInvalidTranscriptWeight = errors.New("Tổng các cột điểm phải chiếm đủ 100%!")
+	ErrSubjectIDsInvalid       = errors.New("Mã môn học không hợp lệ!")
 )

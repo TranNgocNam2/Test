@@ -2,19 +2,17 @@ package specializationgrp
 
 import (
 	"Backend/business/core/specialization"
+	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
+	"Backend/internal/web/payload"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gitlab.com/innovia69420/kit/web/request"
 	"net/http"
-)
-
-var (
-	ErrSpecIDInvalid = errors.New("ID chuyên ngành không hợp lệ!")
 )
 
 type Handlers struct {
@@ -46,13 +44,13 @@ func (h *Handlers) CreateSpecialization() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, specialization.ErrSkillNotFound),
-				errors.Is(err, specialization.ErrSubjectNotFound):
+				errors.Is(err, model.ErrSkillNotFound),
+				errors.Is(err, model.ErrSubjectNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case
-				errors.Is(err, specialization.ErrSpecCodeAlreadyExist):
+				errors.Is(err, model.ErrSpecCodeAlreadyExist):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
@@ -76,11 +74,11 @@ func (h *Handlers) UpdateSpecialization() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		specID, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrSpecIDInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSpecIDInvalid)
 			return
 		}
 
-		var updateSpecRequest request.UpdateSpecialization
+		var updateSpecRequest payload.UpdateSpecialization
 		if err := web.Decode(ctx, &updateSpecRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -101,14 +99,13 @@ func (h *Handlers) UpdateSpecialization() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, specialization.ErrSkillNotFound),
-				errors.Is(err, specialization.ErrSubjectNotFound),
-				errors.Is(err, specialization.ErrSpecNotFound):
+				errors.Is(err, model.ErrSubjectNotFound),
+				errors.Is(err, model.ErrSpecNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case
-				errors.Is(err, specialization.ErrSpecCodeAlreadyExist):
+				errors.Is(err, model.ErrSpecCodeAlreadyExist):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
@@ -129,7 +126,7 @@ func (h *Handlers) DeleteSpecialization() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		specID, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrSpecIDInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSpecIDInvalid)
 			return
 		}
 
@@ -137,7 +134,7 @@ func (h *Handlers) DeleteSpecialization() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, specialization.ErrSpecNotFound):
+				errors.Is(err, model.ErrSpecNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
@@ -163,16 +160,15 @@ func (h *Handlers) GetSpecializationByID() gin.HandlerFunc {
 			return
 		}
 
-		spec, err := h.specialization.GetByID(ctx, id)
+		specialization, err := h.specialization.GetByID(ctx, id)
 		if err != nil {
 			switch {
 			case
 				errors.Is(err, middleware.ErrInvalidUser):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 			case
-				errors.Is(err, specialization.ErrSpecNotFound),
-				errors.Is(err, specialization.ErrSkillNotFound),
-				errors.Is(err, specialization.ErrSubjectNotFound):
+				errors.Is(err, model.ErrSpecNotFound),
+				errors.Is(err, model.ErrSubjectNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
@@ -182,7 +178,7 @@ func (h *Handlers) GetSpecializationByID() gin.HandlerFunc {
 			}
 		}
 
-		web.Respond(ctx, toResponseSpecializationDetails(spec), http.StatusOK, nil)
+		web.Respond(ctx, specialization, http.StatusOK, nil)
 	}
 }
 
@@ -212,7 +208,7 @@ func (h *Handlers) GetSpecializations() gin.HandlerFunc {
 
 		specializations := h.specialization.Query(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		total := h.specialization.Count(ctx, filter)
-		result := page.NewPageResponse(toSpecializationsResponse(specializations), total, pageInfo.Number, pageInfo.Size)
+		result := page.NewPageResponse(specializations, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}
