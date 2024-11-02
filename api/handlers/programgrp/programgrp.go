@@ -2,19 +2,16 @@ package programgrp
 
 import (
 	"Backend/business/core/program"
+	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
+	"Backend/internal/web/payload"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"gitlab.com/innovia69420/kit/web/request"
 	"net/http"
-)
-
-var (
-	ErrProgramIDInvalid = errors.New("Mã chương trình học không hợp lệ!")
 )
 
 type Handlers struct {
@@ -29,7 +26,7 @@ func New(program *program.Core) *Handlers {
 
 func (h *Handlers) CreateProgram() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var newProgramRequest request.NewProgram
+		var newProgramRequest payload.NewProgram
 		if err := web.Decode(ctx, &newProgramRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -70,11 +67,11 @@ func (h *Handlers) UpdateProgram() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, ErrProgramIDInvalid)
+			web.Respond(ctx, err, http.StatusBadRequest, model.ErrProgramIDInvalid)
 			return
 		}
 
-		var updateProgramRequest UpdateProgram
+		var updateProgramRequest payload.UpdateProgram
 		if err = web.Decode(ctx, &updateProgramRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -95,13 +92,13 @@ func (h *Handlers) UpdateProgram() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, program.ErrCannotUpdateProgram):
+				errors.Is(err, model.ErrCannotUpdateProgram):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
-				errors.Is(err, program.ErrProgramNotFound),
-				errors.Is(err, program.ErrSubjectNotFound):
+				errors.Is(err, model.ErrProgramNotFound),
+				errors.Is(err, model.ErrSubjectNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
@@ -124,7 +121,7 @@ func (h *Handlers) DeleteProgram() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, ErrProgramIDInvalid)
+			web.Respond(ctx, err, http.StatusBadRequest, model.ErrProgramIDInvalid)
 			return
 		}
 
@@ -132,12 +129,12 @@ func (h *Handlers) DeleteProgram() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, program.ErrCannotDeleteProgram):
+				errors.Is(err, model.ErrCannotDeleteProgram):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
-				errors.Is(err, program.ErrProgramNotFound):
+				errors.Is(err, model.ErrProgramNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return

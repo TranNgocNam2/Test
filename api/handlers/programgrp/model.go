@@ -2,27 +2,22 @@ package programgrp
 
 import (
 	"Backend/business/core/program"
+	"Backend/internal/common/model"
 	"Backend/internal/validate"
+	"Backend/internal/web/payload"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	"gitlab.com/innovia69420/kit/web/request"
 	"time"
 )
 
-var (
-	ErrInvalidStartDate = errors.New("Thời gian bắt đầu khoá học không hợp lệ!")
-	ErrInvalidEndDate   = errors.New("Thời gian kết thúc khoá học không hợp lệ!")
-)
-
-func toCoreNewProgram(newProgramRequest request.NewProgram) (program.NewProgram, error) {
+func toCoreNewProgram(newProgramRequest payload.NewProgram) (program.NewProgram, error) {
 	startDate, err := time.Parse(time.DateOnly, newProgramRequest.StartDate)
 	if err != nil || startDate.Before(time.Now()) {
-		return program.NewProgram{}, ErrInvalidStartDate
+		return program.NewProgram{}, model.ErrInvalidStartDate
 	}
 
 	endDate, err := time.Parse(time.DateOnly, newProgramRequest.EndDate)
 	if err != nil || endDate.Before(startDate) {
-		return program.NewProgram{}, ErrInvalidEndDate
+		return program.NewProgram{}, model.ErrInvalidEndDate
 	}
 
 	newProgram := program.NewProgram{
@@ -36,22 +31,22 @@ func toCoreNewProgram(newProgramRequest request.NewProgram) (program.NewProgram,
 	return newProgram, nil
 }
 
-func validateNewProgramRequest(newProgramRequest request.NewProgram) error {
+func validateNewProgramRequest(newProgramRequest payload.NewProgram) error {
 	if err := validate.Check(newProgramRequest); err != nil {
 		return err
 	}
 	return nil
 }
 
-func toCoreUpdateProgram(updateProgramRequest UpdateProgram) (program.UpdateProgram, error) {
+func toCoreUpdateProgram(updateProgramRequest payload.UpdateProgram) (program.UpdateProgram, error) {
 	startDate, err := time.Parse(time.DateOnly, updateProgramRequest.StartDate)
 	if err != nil || startDate.Before(time.Now()) {
-		return program.UpdateProgram{}, ErrInvalidStartDate
+		return program.UpdateProgram{}, model.ErrInvalidStartDate
 	}
 
 	endDate, err := time.Parse(time.DateOnly, updateProgramRequest.EndDate)
 	if err != nil || endDate.Before(startDate) {
-		return program.UpdateProgram{}, ErrInvalidEndDate
+		return program.UpdateProgram{}, model.ErrInvalidEndDate
 	}
 
 	updateProgram := program.UpdateProgram{
@@ -64,16 +59,9 @@ func toCoreUpdateProgram(updateProgramRequest UpdateProgram) (program.UpdateProg
 	return updateProgram, nil
 }
 
-func validateUpdateProgramRequest(updateProgramRequest UpdateProgram) error {
+func validateUpdateProgramRequest(updateProgramRequest payload.UpdateProgram) error {
 	if err := validate.Check(updateProgramRequest); err != nil {
 		return err
 	}
 	return nil
-}
-
-type UpdateProgram struct {
-	Name        string `json:"name" validate:"required"`
-	StartDate   string `json:"startDate" validate:"required"`
-	EndDate     string `json:"endDate" validate:"required"`
-	Description string `json:"description" validate:"required"`
 }

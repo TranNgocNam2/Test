@@ -16,9 +16,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	ErrSubjectIDInvalid = errors.New("ID môn học không hợp lệ!")
-)
+var ()
 
 type Handlers struct {
 	subject *subject.Core
@@ -75,7 +73,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrSubjectIDInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSubjectIDInvalid)
 			return
 		}
 
@@ -93,6 +91,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 		status, err := h.subject.GetStatus(ctx, id)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusNotFound, err)
+			return
 		}
 
 		if status == subject.Draft {
@@ -159,7 +158,7 @@ func (h *Handlers) GetSubjectById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrSubjectIDInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSubjectIDInvalid)
 			return
 		}
 
@@ -214,7 +213,7 @@ func (h *Handlers) DeleteSubject() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		subjectID, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, ErrSubjectIDInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSubjectIDInvalid)
 			return
 		}
 

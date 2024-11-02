@@ -4,6 +4,7 @@ import (
 	"Backend/business/db/pgx"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
+	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"bytes"
@@ -11,16 +12,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"time"
-)
-
-var (
-	ErrProgramNotFound     = errors.New("Không tìm thấy chương trình học!")
-	ErrCannotUpdateProgram = errors.New("Không thể cập nhật chương trình học!")
-	ErrSubjectNotFound     = errors.New("Môn học không có trong hệ thống!")
-	ErrCannotDeleteProgram = errors.New("Không thể xóa chương trình học!")
 )
 
 type Core struct {
@@ -67,11 +60,11 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateProgram UpdateProgra
 
 	dbProgram, err := c.queries.GetProgramByID(ctx, id)
 	if err != nil {
-		return ErrProgramNotFound
+		return model.ErrProgramNotFound
 	}
 
 	if dbProgram.StartDate.Before(time.Now()) {
-		return ErrCannotUpdateProgram
+		return model.ErrCannotUpdateProgram
 	}
 
 	dbUpdateProgram := sqlc.UpdateProgramParams{
@@ -170,12 +163,12 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 
 	dbProgram, err := c.queries.GetProgramByID(ctx, id)
 	if err != nil {
-		return ErrProgramNotFound
+		return model.ErrProgramNotFound
 	}
 
 	totalClasses, _ := c.queries.CountClassesByProgramId(ctx, id)
 	if totalClasses > 0 || dbProgram.StartDate.Before(time.Now()) {
-		return ErrCannotDeleteProgram
+		return model.ErrCannotDeleteProgram
 	}
 
 	if err = c.queries.DeleteProgram(ctx, id); err != nil {
