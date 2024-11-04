@@ -44,13 +44,13 @@ func (q *Queries) DeleteSchool(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getSchoolByID = `-- name: GetSchoolByID :one
+const getSchoolById = `-- name: GetSchoolById :one
 SELECT id, name, address, district_id, is_deleted FROM schools
 WHERE id = $1::uuid AND is_deleted = false
 `
 
-func (q *Queries) GetSchoolByID(ctx context.Context, id uuid.UUID) (School, error) {
-	row := q.db.QueryRow(ctx, getSchoolByID, id)
+func (q *Queries) GetSchoolById(ctx context.Context, id uuid.UUID) (School, error) {
+	row := q.db.QueryRow(ctx, getSchoolById, id)
 	var i School
 	err := row.Scan(
 		&i.ID,
@@ -62,14 +62,14 @@ func (q *Queries) GetSchoolByID(ctx context.Context, id uuid.UUID) (School, erro
 	return i, err
 }
 
-const getSchoolsByDistrictID = `-- name: GetSchoolsByDistrictID :many
+const getSchoolsByDistrictId = `-- name: GetSchoolsByDistrictId :many
 SELECT id, name, address, district_id, is_deleted FROM schools
 WHERE district_id = $1::integer
 AND is_deleted = false
 `
 
-func (q *Queries) GetSchoolsByDistrictID(ctx context.Context, districtID int32) ([]School, error) {
-	rows, err := q.db.Query(ctx, getSchoolsByDistrictID, districtID)
+func (q *Queries) GetSchoolsByDistrictId(ctx context.Context, districtID int32) ([]School, error) {
+	rows, err := q.db.Query(ctx, getSchoolsByDistrictId, districtID)
 	if err != nil {
 		return nil, err
 	}

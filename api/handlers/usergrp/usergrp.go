@@ -57,7 +57,7 @@ func (h *Handlers) CreateUser() gin.HandlerFunc {
 	}
 }
 
-func (h *Handlers) GetUserByID() gin.HandlerFunc {
+func (h *Handlers) GetUserById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id := ctx.Param("id")
 		userRes, err := h.user.GetByID(ctx, id)

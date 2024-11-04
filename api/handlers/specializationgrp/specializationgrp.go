@@ -152,7 +152,7 @@ func (h *Handlers) DeleteSpecialization() gin.HandlerFunc {
 	}
 }
 
-func (h *Handlers) GetSpecializationByID() gin.HandlerFunc {
+func (h *Handlers) GetSpecializationById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {

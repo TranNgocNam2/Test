@@ -13,7 +13,7 @@ SET name = sqlc.arg(name),
     updated_at = now()
 WHERE id = sqlc.arg(id);
 
--- name: GetProgramByID :one
+-- name: GetProgramById :one
 SELECT * FROM programs WHERE id = sqlc.arg(id);
 
 -- name: DeleteProgram :exec

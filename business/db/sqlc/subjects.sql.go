@@ -36,14 +36,14 @@ func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) 
 	return err
 }
 
-const getPublishedSubjectByID = `-- name: GetPublishedSubjectByID :one
+const getPublishedSubjectById = `-- name: GetPublishedSubjectById :one
 SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE id = $1::uuid AND status = 1
 `
 
-func (q *Queries) GetPublishedSubjectByID(ctx context.Context, id uuid.UUID) (Subject, error) {
-	row := q.db.QueryRow(ctx, getPublishedSubjectByID, id)
+func (q *Queries) GetPublishedSubjectById(ctx context.Context, id uuid.UUID) (Subject, error) {
+	row := q.db.QueryRow(ctx, getPublishedSubjectById, id)
 	var i Subject
 	err := row.Scan(
 		&i.ID,
@@ -89,14 +89,14 @@ func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, er
 	return i, err
 }
 
-const getSubjectsByIDs = `-- name: GetSubjectsByIDs :many
+const getSubjectsByIds = `-- name: GetSubjectsByIds :many
 SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
 FROM subjects
 WHERE id = ANY($1::uuid[]) AND status = 1
 `
 
-func (q *Queries) GetSubjectsByIDs(ctx context.Context, subjectIds []uuid.UUID) ([]Subject, error) {
-	rows, err := q.db.Query(ctx, getSubjectsByIDs, subjectIds)
+func (q *Queries) GetSubjectsByIds(ctx context.Context, subjectIds []uuid.UUID) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, getSubjectsByIds, subjectIds)
 	if err != nil {
 		return nil, err
 	}

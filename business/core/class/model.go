@@ -47,14 +47,17 @@ type Details struct {
 }
 
 type Class struct {
-	ID            uuid.UUID `json:"id"`
-	Name          string    `json:"name"`
-	Code          string    `json:"code"`
-	Program       Program   `json:"program"`
-	Subject       Subject   `json:"subject"`
-	Teachers      []Teacher `json:"teachers"`
-	Skills        []Skill   `json:"skills"`
-	TotalLearners int64     `json:"totalLearners"`
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	Code          string     `json:"code"`
+	Program       Program    `json:"program"`
+	StartDate     *time.Time `json:"startDate"`
+	EndDate       *time.Time `json:"endDate"`
+	Status        int16      `json:"status"`
+	Subject       Subject    `json:"subject"`
+	Teachers      []Teacher  `json:"teachers"`
+	Skills        []Skill    `json:"skills"`
+	TotalLearners int64      `json:"totalLearners"`
 }
 
 type Skill struct {
