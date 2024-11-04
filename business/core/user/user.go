@@ -3,20 +3,15 @@ package user
 import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
+	"Backend/internal/common/model"
+	"Backend/internal/middleware"
+	"gitlab.com/innovia69420/kit/enum/role"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
-)
-
-var (
-	ErrEmailAlreadyExists = errors.New("Email đã tồn tại trong hệ thống!")
-	ErrPhoneAlreadyExists = errors.New("Số điện thoại đã tồn tại trong hệ thống!")
-	ErrUserAlreadyExist   = errors.New("Người dùng đã tồn tại trong hệ thống!")
-	ErrUserNotFound       = errors.New("Người dùng không tồn tại trong hệ thống!")
 )
 
 type Core struct {
@@ -35,13 +30,13 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
-func (c *Core) Create(ctx *gin.Context, newUser User) error {
+func (c *Core) Create(ctx *gin.Context, newUser NewUser) error {
 	if _, err := c.queries.GetUserByEmail(ctx, newUser.Email.Address); err == nil {
-		return ErrEmailAlreadyExists
+		return model.ErrEmailAlreadyExists
 	}
 
 	if _, err := c.queries.GetUserByID(ctx, newUser.ID); err == nil {
-		return ErrUserAlreadyExist
+		return model.ErrUserAlreadyExist
 	}
 
 	var dbUser = sqlc.CreateUserParams{
@@ -57,17 +52,48 @@ func (c *Core) Create(ctx *gin.Context, newUser User) error {
 	return nil
 }
 
+func (c *Core) Verify(ctx *gin.Context, id string, verifyUser VerifyUser) error {
+	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+
+	dbUser, err := c.queries.GetUserByID(ctx, id)
+	if err != nil {
+		return model.ErrUserNotFound
+	}
+
+	if dbUser.AuthRole != role.LEARNER {
+		return model.ErrUserCannotBeVerified
+	}
+
+	if dbUser.Image == nil && verifyUser.Status == Verified {
+		return model.ErrInvalidVerificationInfo
+	}
+
+	dbVerifyUser := sqlc.VerifyUserParams{
+		ID:         dbUser.ID,
+		Status:     verifyUser.Status,
+		VerifiedBy: &staffId,
+	}
+	if err = c.queries.VerifyUser(ctx, dbVerifyUser); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
 	dbUser, err := c.queries.GetUserByID(ctx, id)
 	if err != nil {
-		return User{}, ErrUserNotFound
+		return User{}, model.ErrUserNotFound
 	}
 	user := toCoreUser(dbUser)
 	if dbUser.SchoolID != nil {
 		dbSchool, _ := c.queries.GetSchoolByID(ctx, *dbUser.SchoolID)
 		user.School = &struct {
-			ID   *uuid.UUID
-			Name *string
+			ID   *uuid.UUID `json:"id"`
+			Name *string    `json:"name"`
 		}{
 			ID:   &dbSchool.ID,
 			Name: &dbSchool.Name,
@@ -80,18 +106,18 @@ func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
 func (c *Core) Update(ctx *gin.Context, id string, updatedUser UpdateUser) error {
 	dbUser, err := c.queries.GetUserByID(ctx, id)
 	if err != nil {
-		return ErrUserNotFound
+		return model.ErrUserNotFound
 	}
 
 	if updatedUser.Email.Address != dbUser.Email {
 		if _, err = c.queries.GetUserByEmail(ctx, updatedUser.Email.Address); err == nil {
-			return ErrEmailAlreadyExists
+			return model.ErrEmailAlreadyExists
 		}
 	}
 
 	if updatedUser.Phone != "" && updatedUser.Phone != *dbUser.Phone {
 		if _, err = c.queries.GetUserByPhone(ctx, &updatedUser.Phone); err == nil {
-			return ErrPhoneAlreadyExists
+			return model.ErrPhoneAlreadyExists
 		}
 	}
 
@@ -106,6 +132,8 @@ func (c *Core) Update(ctx *gin.Context, id string, updatedUser UpdateUser) error
 		Gender:       &updatedUser.Gender,
 		SchoolID:     updatedUser.SchoolID,
 		ProfilePhoto: &updatedUser.Photo,
+		Status:       Pending,
+		Image:        updatedUser.Image,
 		ID:           dbUser.ID,
 	}
 

@@ -13,7 +13,9 @@ SET full_name = sqlc.arg(full_name),
     phone = sqlc.arg(phone),
     gender = sqlc.arg(gender),
     school_id = sqlc.arg(school_id),
-    profile_photo = sqlc.arg(profile_photo)
+    profile_photo = sqlc.arg(profile_photo),
+    status = sqlc.arg(status),
+    image = sqlc.arg(image)
 WHERE id = sqlc.arg(id);
 
 -- name: GetUserByEmail :one
@@ -27,3 +29,9 @@ WHERE phone = sqlc.arg(phone);
 -- name: GetTeacherByID :one
 SELECT * FROM users
 WHERE id = sqlc.arg(id) AND auth_role = 2;
+
+-- name: VerifyUser :exec
+UPDATE users
+SET verified_by = sqlc.arg(verified_by),
+    status = sqlc.arg(status)
+WHERE id = sqlc.arg(id);

@@ -205,4 +205,6 @@ type User struct {
 	ProfilePhoto *string    `db:"profile_photo" json:"profilePhoto"`
 	Status       int32      `db:"status" json:"status"`
 	SchoolID     *uuid.UUID `db:"school_id" json:"schoolId"`
+	Image        []string   `db:"image" json:"image"`
+	VerifiedBy   *string    `db:"verified_by" json:"verifiedBy"`
 }

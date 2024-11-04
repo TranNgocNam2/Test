@@ -2,111 +2,58 @@ package usergrp
 
 import (
 	"Backend/business/core/user"
+	"Backend/internal/common/model"
 	"Backend/internal/validate"
+	"Backend/internal/web/payload"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"gitlab.com/innovia69420/kit/enum/role"
-	"gitlab.com/innovia69420/kit/web/request"
 	"net/mail"
 )
 
-var (
-	ErrInvalidSchoolID     = errors.New("ID trường học không hợp lệ!")
-	ErrInvalidEmail        = errors.New("Email không hợp lệ!")
-	ErrInvalidPhoneNumber  = errors.New("Số điện thoại không hợp lệ!")
-	ErrUserCannotBeCreated = errors.New("Không thể tạo người dùng!")
-	ErrNilSchool           = errors.New("Vui lòng cung cấp thông tin về trường học!")
-)
-
-type UserResponse struct {
-	ID       string `json:"id"`
-	FullName string `json:"fullName"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
-	Gender   int16  `json:"gender"`
-	Role     int16  `json:"-"`
-	Photo    string `json:"photo"`
-	School   *struct {
-		ID   *uuid.UUID `json:"id,omitempty"`
-		Name *string    `json:"name,omitempty"`
-	} `json:"school,omitempty"`
-}
-
-func toUserResponse(user user.User) UserResponse {
-	userResponse := UserResponse{
-		ID:       user.ID,
-		FullName: *user.FullName,
-		Email:    user.Email.Address,
-		Phone:    *user.Phone,
-		Gender:   *user.Gender,
-		Role:     user.Role,
-		Photo:    *user.Photo,
-	}
-	if user.School != nil {
-		userResponse.School = &struct {
-			ID   *uuid.UUID `json:"id,omitempty"`
-			Name *string    `json:"name,omitempty"`
-		}{
-			ID:   user.School.ID,
-			Name: user.School.Name,
-		}
-	}
-
-	return userResponse
-}
-
-func toUsersResponse(users []user.User) []UserResponse {
-	items := make([]UserResponse, len(users))
-	for i, user := range users {
-		items[i] = toUserResponse(user)
-	}
-	return items
-}
-
-func toCoreNewUser(newUserRequest request.NewUser) (user.User, error) {
+func toCoreNewUser(newUserRequest payload.NewUser) (user.NewUser, error) {
 	authRole := *newUserRequest.Role
 	if authRole == role.ADMIN {
-		return user.User{}, ErrUserCannotBeCreated
+		return user.NewUser{}, model.ErrUserCannotBeCreated
 	}
 
 	emailAddr, err := mail.ParseAddress(newUserRequest.Email)
 	if err != nil {
-		return user.User{}, ErrInvalidEmail
+		return user.NewUser{}, model.ErrInvalidEmail
 	}
 
-	user := user.User{
+	newUser := user.NewUser{
 		ID:    newUserRequest.ID,
 		Email: *emailAddr,
 		Role:  int16(authRole),
 	}
 
-	return user, nil
+	return newUser, nil
 }
-func validateNewUserRequest(newUserRequest request.NewUser) error {
+func validateNewUserRequest(newUserRequest payload.NewUser) error {
 	if err := validate.Check(newUserRequest); err != nil {
 		return err
 	}
 	return nil
 }
 
-func toCoreUpdateUser(updateUserRequest request.UpdateUser) (user.UpdateUser, error) {
+func toCoreUpdateUser(updateUserRequest payload.UpdateUser) (user.UpdateUser, error) {
 	authRole := *updateUserRequest.Role
 	if authRole == role.LEARNER && updateUserRequest.SchoolID == nil {
-		return user.UpdateUser{}, ErrNilSchool
+		return user.UpdateUser{}, model.ErrNilSchool
 	}
 
 	schoolID, err := uuid.Parse(*updateUserRequest.SchoolID)
 	if err != nil && updateUserRequest.SchoolID != nil {
-		return user.UpdateUser{}, ErrInvalidSchoolID
+		return user.UpdateUser{}, model.ErrInvalidSchoolID
 	}
 
 	emailAddr, err := mail.ParseAddress(updateUserRequest.Email)
 	if err != nil {
-		return user.UpdateUser{}, ErrInvalidEmail
+		return user.UpdateUser{}, model.ErrInvalidEmail
 	}
 
 	if !user.IsValidPhoneNumber(updateUserRequest.Phone) {
-		return user.UpdateUser{}, ErrInvalidPhoneNumber
+		return user.UpdateUser{}, model.ErrInvalidPhoneNumber
 	}
 
 	user := user.UpdateUser{
@@ -114,8 +61,9 @@ func toCoreUpdateUser(updateUserRequest request.UpdateUser) (user.UpdateUser, er
 		Email:    *emailAddr,
 		Phone:    updateUserRequest.Phone,
 		Gender:   int16(*updateUserRequest.Gender),
-		Role:     updateUserRequest.Role,
+		Role:     int16(*updateUserRequest.Role),
 		Photo:    updateUserRequest.Photo,
+		Image:    updateUserRequest.ImageLink,
 	}
 	if authRole == role.LEARNER {
 		user.SchoolID = &schoolID
@@ -124,8 +72,24 @@ func toCoreUpdateUser(updateUserRequest request.UpdateUser) (user.UpdateUser, er
 	return user, nil
 }
 
-func validateUpdateUserRequest(updateUserRequest request.UpdateUser) error {
+func validateUpdateUserRequest(updateUserRequest payload.UpdateUser) error {
 	if err := validate.Check(updateUserRequest); err != nil {
+		return err
+	}
+	return nil
+}
+
+func toCoreVerifyUser(verifyUserRequest payload.VerifyUser) (user.VerifyUser, error) {
+	status := int32(verifyUserRequest.Status)
+	if status != user.Verified && status != user.Failed {
+		return user.VerifyUser{}, model.InvalidUserStatus
+	}
+
+	return user.VerifyUser{Status: status}, nil
+}
+
+func validateVerifyUserRequest(verifyUserRequest payload.VerifyUser) error {
+	if err := validate.Check(verifyUserRequest); err != nil {
 		return err
 	}
 	return nil
