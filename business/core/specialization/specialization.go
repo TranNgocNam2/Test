@@ -205,7 +205,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 
 	for _, dbSpec := range dbSpecializations {
 		spec := toCoreSpecialization(dbSpec)
-		totalSubjects, err := c.queries.CountSubjectsBySpecializationID(ctx, dbSpec.ID)
+		totalSubjects, err := c.queries.CountSubjectsBySpecializationId(ctx, dbSpec.ID)
 		if err != nil {
 			c.logger.Error(err.Error())
 			return nil
@@ -295,7 +295,7 @@ func processSpecSubjects(ctx *gin.Context, qtx *sqlc.Queries, specializationID u
 			return err
 		}
 
-		dbSubjects, err := qtx.GetSubjectsByIDs(ctx, subjectIDs)
+		dbSubjects, err := qtx.GetSubjectsByIds(ctx, subjectIDs)
 		fmt.Println(err)
 		if err != nil || (len(dbSubjects) != len(subjectIDs)) {
 			return model.ErrSubjectNotFound

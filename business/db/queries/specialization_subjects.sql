@@ -8,7 +8,7 @@ FROM specialization_subjects
 JOIN subjects ON specialization_subjects.subject_id = subjects.id
 WHERE specialization_subjects.specialization_id = sqlc.arg(specialization_id)::uuid;
 
--- name: CountSubjectsBySpecializationID :one
+-- name: CountSubjectsBySpecializationId :one
 SELECT COUNT(*) FROM specialization_subjects
 WHERE specialization_id = sqlc.arg(specialization_id)::uuid;
 

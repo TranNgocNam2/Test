@@ -5,5 +5,5 @@ VALUES($1, $2, $3, $4, $5, $6, $7);
 -- name: DeleteSessionMaterials :exec
 DELETE FROM materials WHERE session_id = sqlc.arg(session_id);
 
--- name: GetMaterialsBySessionID :many
+-- name: GetMaterialsBySessionId :many
 SELECT * from materials WHERE session_id = sqlc.arg(session_id) ORDER BY index;

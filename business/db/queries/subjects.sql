@@ -11,7 +11,7 @@ RETURNING id;
 -- name: DeleteSubjectSkills :exec
 DELETE FROM subject_skills WHERE subject_id = sqlc.arg(subject_id);
 
--- name: GetSubjectsByIDs :many
+-- name: GetSubjectsByIds :many
 SELECT *
 FROM subjects
 WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]) AND status = 1;
@@ -49,10 +49,7 @@ UPDATE subjects SET status = 2, updated_at = NOW(), updated_by = sqlc.arg(update
 WHERE id = sqlc.arg(id);
 
 
--- name: GetPublishedSubjectByID :one
+-- name: GetPublishedSubjectById :one
 SELECT *
 FROM subjects
 WHERE id = sqlc.arg(id)::uuid AND status = 1;
-
--- -- name: GetSubjectsByIDs :many
--- SELECT * FROM subjects WHERE id = ANY(sqlc.arg(subject_ids)::uuid[]);

@@ -112,7 +112,7 @@ func (h *Handlers) DeleteSchool() gin.HandlerFunc {
 	}
 }
 
-func (h *Handlers) GetSchoolByID() gin.HandlerFunc {
+func (h *Handlers) GetSchoolById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
@@ -174,7 +174,7 @@ func (h *Handlers) GetSchoolsByDistrict() gin.HandlerFunc {
 			return
 		}
 
-		schools, err := h.school.GetSchoolsByDistrictID(ctx, id)
+		schools, err := h.school.GetSchoolsByDistrictId(ctx, id)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusInternalServerError, err)
 			return
@@ -204,7 +204,7 @@ func (h *Handlers) GetDistrictsByProvince() gin.HandlerFunc {
 			return
 		}
 
-		districts, err := h.school.GetDistrictsByProvinceID(ctx, id)
+		districts, err := h.school.GetDistrictsByProvinceId(ctx, id)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusInternalServerError, err)
 			return

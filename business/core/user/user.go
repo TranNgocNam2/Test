@@ -40,7 +40,7 @@ func (c *Core) Create(ctx *gin.Context, newUser User) error {
 		return ErrEmailAlreadyExists
 	}
 
-	if _, err := c.queries.GetUserByID(ctx, newUser.ID); err == nil {
+	if _, err := c.queries.GetUserById(ctx, newUser.ID); err == nil {
 		return ErrUserAlreadyExist
 	}
 
@@ -58,13 +58,13 @@ func (c *Core) Create(ctx *gin.Context, newUser User) error {
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
-	dbUser, err := c.queries.GetUserByID(ctx, id)
+	dbUser, err := c.queries.GetUserById(ctx, id)
 	if err != nil {
 		return User{}, ErrUserNotFound
 	}
 	user := toCoreUser(dbUser)
 	if dbUser.SchoolID != nil {
-		dbSchool, _ := c.queries.GetSchoolByID(ctx, *dbUser.SchoolID)
+		dbSchool, _ := c.queries.GetSchoolById(ctx, *dbUser.SchoolID)
 		user.School = &struct {
 			ID   *uuid.UUID
 			Name *string
@@ -78,7 +78,7 @@ func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
 }
 
 func (c *Core) Update(ctx *gin.Context, id string, updatedUser UpdateUser) error {
-	dbUser, err := c.queries.GetUserByID(ctx, id)
+	dbUser, err := c.queries.GetUserById(ctx, id)
 	if err != nil {
 		return ErrUserNotFound
 	}

@@ -413,7 +413,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 	}
 
 	for _, dbSession := range dbSessions {
-		materials, err := c.queries.GetMaterialsBySessionID(ctx, dbSession.ID)
+		materials, err := c.queries.GetMaterialsBySessionId(ctx, dbSession.ID)
 		if err != nil {
 			return nil, err
 		}
