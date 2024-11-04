@@ -13,7 +13,7 @@ func UserRoutes(router *gin.Engine, app *app.Application) {
 	users := router.Group("/users")
 	{
 		users.POST("", handlers.CreateUser())
-		users.GET("/:id", handlers.GetUserByID())
+		users.GET("/:id", handlers.GetUserById())
 		users.PUT("/:id", handlers.UpdateUser())
 		users.PUT("/:id/verify", handlers.VerifyUser())
 	}

@@ -21,12 +21,12 @@ func (q *Queries) DeleteSessionMaterials(ctx context.Context, sessionID uuid.UUI
 	return err
 }
 
-const getMaterialsBySessionID = `-- name: GetMaterialsBySessionID :many
+const getMaterialsBySessionId = `-- name: GetMaterialsBySessionId :many
 SELECT id, session_id, index, type, data, is_shared, name from materials WHERE session_id = $1 ORDER BY index
 `
 
-func (q *Queries) GetMaterialsBySessionID(ctx context.Context, sessionID uuid.UUID) ([]Material, error) {
-	rows, err := q.db.Query(ctx, getMaterialsBySessionID, sessionID)
+func (q *Queries) GetMaterialsBySessionId(ctx context.Context, sessionID uuid.UUID) ([]Material, error) {
+	rows, err := q.db.Query(ctx, getMaterialsBySessionId, sessionID)
 	if err != nil {
 		return nil, err
 	}

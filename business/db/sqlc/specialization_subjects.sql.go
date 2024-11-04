@@ -11,13 +11,13 @@ import (
 	"github.com/google/uuid"
 )
 
-const countSubjectsBySpecializationID = `-- name: CountSubjectsBySpecializationID :one
+const countSubjectsBySpecializationId = `-- name: CountSubjectsBySpecializationId :one
 SELECT COUNT(*) FROM specialization_subjects
 WHERE specialization_id = $1::uuid
 `
 
-func (q *Queries) CountSubjectsBySpecializationID(ctx context.Context, specializationID uuid.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, countSubjectsBySpecializationID, specializationID)
+func (q *Queries) CountSubjectsBySpecializationId(ctx context.Context, specializationID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countSubjectsBySpecializationId, specializationID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

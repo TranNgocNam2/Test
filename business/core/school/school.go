@@ -43,7 +43,7 @@ func (c *Core) Create(ctx *gin.Context, newSchool School) (uuid.UUID, error) {
 
 func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updatedSchool School) error {
 
-	dbSchool, err := c.queries.GetSchoolByID(ctx, id)
+	dbSchool, err := c.queries.GetSchoolById(ctx, id)
 	if err != nil {
 		return model.ErrSchoolNotFound
 	}
@@ -62,7 +62,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updatedSchool School) erro
 }
 
 func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
-	dbSchool, err := c.queries.GetSchoolByID(ctx, id)
+	dbSchool, err := c.queries.GetSchoolById(ctx, id)
 	if err != nil {
 		return model.ErrSchoolNotFound
 	}
@@ -74,7 +74,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (School, error) {
-	school, err := c.queries.GetSchoolByID(ctx, id)
+	school, err := c.queries.GetSchoolById(ctx, id)
 
 	if err != nil {
 		return School{}, model.ErrSchoolNotFound
@@ -147,8 +147,8 @@ func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
 	return count.Count
 }
 
-func (c *Core) GetSchoolsByDistrictID(ctx *gin.Context, id int) ([]School, error) {
-	schools, err := c.queries.GetSchoolsByDistrictID(ctx, int32(id))
+func (c *Core) GetSchoolsByDistrictId(ctx *gin.Context, id int) ([]School, error) {
+	schools, err := c.queries.GetSchoolsByDistrictId(ctx, int32(id))
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (c *Core) GetAllProvinces(ctx *gin.Context) ([]Province, error) {
 	return toCoreProvinceSlice(provinces), nil
 }
 
-func (c *Core) GetDistrictsByProvinceID(ctx *gin.Context, id int) ([]District, error) {
+func (c *Core) GetDistrictsByProvinceId(ctx *gin.Context, id int) ([]District, error) {
 	districts, err := c.queries.GetDistrictsByProvince(ctx, int32(id))
 	if err != nil {
 		return nil, err

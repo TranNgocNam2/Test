@@ -1,8 +1,8 @@
 package payload
 
 type NewClass struct {
-	ProgramId string `json:"programID" validate:"required"`
-	SubjectId string `json:"subjectID" validate:"required"`
+	ProgramId string `json:"programId" validate:"required"`
+	SubjectId string `json:"subjectId" validate:"required"`
 	Name      string `json:"name" validate:"required"`
 	Code      string `json:"code" validate:"required"`
 	Link      string `json:"link"`

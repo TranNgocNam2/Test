@@ -1,4 +1,4 @@
--- name: GetUserByID :one
+-- name: GetUserById :one
 SELECT * FROM users
 WHERE id = sqlc.arg(id);
 
@@ -26,7 +26,7 @@ WHERE email = sqlc.arg(email);
 SELECT * FROM users
 WHERE phone = sqlc.arg(phone);
 
--- name: GetTeacherByID :one
+-- name: GetTeacherById :one
 SELECT * FROM users
 WHERE id = sqlc.arg(id) AND auth_role = 2;
 

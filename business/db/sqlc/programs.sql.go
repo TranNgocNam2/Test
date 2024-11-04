@@ -48,12 +48,12 @@ func (q *Queries) DeleteProgram(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getProgramByID = `-- name: GetProgramByID :one
+const getProgramById = `-- name: GetProgramById :one
 SELECT id, name, start_date, end_date, created_by, updated_by, description, created_at, updated_at FROM programs WHERE id = $1
 `
 
-func (q *Queries) GetProgramByID(ctx context.Context, id uuid.UUID) (Program, error) {
-	row := q.db.QueryRow(ctx, getProgramByID, id)
+func (q *Queries) GetProgramById(ctx context.Context, id uuid.UUID) (Program, error) {
+	row := q.db.QueryRow(ctx, getProgramById, id)
 	var i Program
 	err := row.Scan(
 		&i.ID,

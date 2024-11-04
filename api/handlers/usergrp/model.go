@@ -38,12 +38,12 @@ func validateNewUserRequest(newUserRequest payload.NewUser) error {
 
 func toCoreUpdateUser(updateUserRequest payload.UpdateUser) (user.UpdateUser, error) {
 	authRole := *updateUserRequest.Role
-	if authRole == role.LEARNER && updateUserRequest.SchoolID == nil {
+	if authRole == role.LEARNER && updateUserRequest.SchoolId == nil {
 		return user.UpdateUser{}, model.ErrNilSchool
 	}
 
-	schoolID, err := uuid.Parse(*updateUserRequest.SchoolID)
-	if err != nil && updateUserRequest.SchoolID != nil {
+	schoolID, err := uuid.Parse(*updateUserRequest.SchoolId)
+	if err != nil && updateUserRequest.SchoolId != nil {
 		return user.UpdateUser{}, model.ErrInvalidSchoolID
 	}
 

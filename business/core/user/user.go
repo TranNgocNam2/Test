@@ -35,7 +35,7 @@ func (c *Core) Create(ctx *gin.Context, newUser NewUser) error {
 		return model.ErrEmailAlreadyExists
 	}
 
-	if _, err := c.queries.GetUserByID(ctx, newUser.ID); err == nil {
+	if _, err := c.queries.GetUserById(ctx, newUser.ID); err == nil {
 		return model.ErrUserAlreadyExist
 	}
 
@@ -58,7 +58,7 @@ func (c *Core) Verify(ctx *gin.Context, id string, verifyUser VerifyUser) error 
 		return err
 	}
 
-	dbUser, err := c.queries.GetUserByID(ctx, id)
+	dbUser, err := c.queries.GetUserById(ctx, id)
 	if err != nil {
 		return model.ErrUserNotFound
 	}
@@ -84,13 +84,13 @@ func (c *Core) Verify(ctx *gin.Context, id string, verifyUser VerifyUser) error 
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
-	dbUser, err := c.queries.GetUserByID(ctx, id)
+	dbUser, err := c.queries.GetUserById(ctx, id)
 	if err != nil {
 		return User{}, model.ErrUserNotFound
 	}
 	user := toCoreUser(dbUser)
 	if dbUser.SchoolID != nil {
-		dbSchool, _ := c.queries.GetSchoolByID(ctx, *dbUser.SchoolID)
+		dbSchool, _ := c.queries.GetSchoolById(ctx, *dbUser.SchoolID)
 		user.School = &struct {
 			ID   *uuid.UUID `json:"id"`
 			Name *string    `json:"name"`
@@ -104,7 +104,7 @@ func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
 }
 
 func (c *Core) Update(ctx *gin.Context, id string, updatedUser UpdateUser) error {
-	dbUser, err := c.queries.GetUserByID(ctx, id)
+	dbUser, err := c.queries.GetUserById(ctx, id)
 	if err != nil {
 		return model.ErrUserNotFound
 	}

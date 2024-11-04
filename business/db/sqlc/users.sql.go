@@ -27,13 +27,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
-const getTeacherByID = `-- name: GetTeacherByID :one
+const getTeacherById = `-- name: GetTeacherById :one
 SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id, image, verified_by FROM users
 WHERE id = $1 AND auth_role = 2
 `
 
-func (q *Queries) GetTeacherByID(ctx context.Context, id string) (User, error) {
-	row := q.db.QueryRow(ctx, getTeacherByID, id)
+func (q *Queries) GetTeacherById(ctx context.Context, id string) (User, error) {
+	row := q.db.QueryRow(ctx, getTeacherById, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -75,13 +75,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
-const getUserByID = `-- name: GetUserByID :one
+const getUserById = `-- name: GetUserById :one
 SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id, image, verified_by FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByID, id)
+func (q *Queries) GetUserById(ctx context.Context, id string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserById, id)
 	var i User
 	err := row.Scan(
 		&i.ID,

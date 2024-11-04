@@ -13,7 +13,7 @@ type UpdateUser struct {
 	Phone     string   `json:"phone" validate:"required,startswith=0,len=10"`
 	Gender    *int     `json:"gender" validate:"required,gte=0,lte=2"`
 	Photo     string   `json:"photo" validate:"required"`
-	SchoolID  *string  `json:"schoolID"`
+	SchoolId  *string  `json:"schoolId"`
 	ImageLink []string `json:"image_links"`
 }
 

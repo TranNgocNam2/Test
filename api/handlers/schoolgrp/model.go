@@ -35,7 +35,7 @@ func toCoreNewSchool(newSchoolRequest payload.NewSchool) school.School {
 	return school.School{
 		Name:       newSchoolRequest.Name,
 		Address:    newSchoolRequest.Address,
-		DistrictID: newSchoolRequest.DistrictID,
+		DistrictID: newSchoolRequest.DistrictId,
 	}
 }
 
@@ -91,7 +91,7 @@ func toCoreUpdateSchool(updateSchoolRequest payload.UpdateSchool) school.School 
 	return school.School{
 		Name:       updateSchoolRequest.Name,
 		Address:    updateSchoolRequest.Address,
-		DistrictID: updateSchoolRequest.DistrictID,
+		DistrictID: updateSchoolRequest.DistrictId,
 	}
 }
 

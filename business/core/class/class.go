@@ -45,12 +45,12 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 		return uuid.Nil, model.ErrClassCodeAlreadyExist
 	}
 
-	dbProgram, err := c.queries.GetProgramByID(ctx, newClass.ProgramId)
+	dbProgram, err := c.queries.GetProgramById(ctx, newClass.ProgramId)
 	if err != nil {
 		return uuid.Nil, model.ErrProgramNotFound
 	}
 
-	dbSubject, err := c.queries.GetPublishedSubjectByID(ctx, newClass.SubjectId)
+	dbSubject, err := c.queries.GetPublishedSubjectById(ctx, newClass.SubjectId)
 	if err != nil {
 		return uuid.Nil, model.ErrSubjectNotFound
 	}
@@ -150,12 +150,15 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 
 	for _, dbClass := range dbClasses {
 		class := Class{
-			ID:   dbClass.ID,
-			Name: dbClass.Name,
-			Code: dbClass.Code,
+			ID:        dbClass.ID,
+			Name:      dbClass.Name,
+			Code:      dbClass.Code,
+			StartDate: dbClass.StartDate,
+			EndDate:   dbClass.EndDate,
+			Status:    dbClass.Status,
 		}
 
-		dbProgram, _ := c.queries.GetProgramByID(ctx, dbClass.ProgramID)
+		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
 		class.Program = toCoreProgram(dbProgram)
 
 		dbSubject, _ := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
@@ -233,7 +236,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	}
 	class.Subject = toCoreSubject(dbSubject)
 
-	dbProgram, err := c.queries.GetProgramByID(ctx, dbClass.ProgramID)
+	dbProgram, err := c.queries.GetProgramById(ctx, dbClass.ProgramID)
 	if err != nil {
 		return Details{}, model.ErrProgramNotFound
 	}
@@ -260,7 +263,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		}
 
 		if dbSlot.TeacherID != nil {
-			dbTeacher, _ := c.queries.GetTeacherByID(ctx, *dbSlot.TeacherID)
+			dbTeacher, _ := c.queries.GetTeacherById(ctx, *dbSlot.TeacherID)
 			slot.Teacher = toCoreTeacher(dbTeacher)
 		}
 
@@ -283,7 +286,7 @@ func (c *Core) UpdateClassTeacher(ctx *gin.Context, id uuid.UUID, teacherIds []s
 	}
 
 	for _, teacherId := range teacherIds {
-		_, err = c.queries.GetTeacherByID(ctx, teacherId)
+		_, err = c.queries.GetTeacherById(ctx, teacherId)
 		if err != nil {
 			return model.ErrTeacherNotFound
 		}
@@ -325,7 +328,7 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 		return model.ErrClassNotFound
 	}
 
-	dbProgram, _ := c.queries.GetProgramByID(ctx, dbClass.ProgramID)
+	dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
 	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
 		return err
 	}

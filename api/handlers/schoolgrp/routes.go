@@ -13,7 +13,7 @@ func SchoolRoutes(router *gin.Engine, app *app.Application) {
 	schools := router.Group("/schools")
 	{
 		schools.POST("", handlers.CreateSchool())
-		schools.GET("/:id", handlers.GetSchoolByID())
+		schools.GET("/:id", handlers.GetSchoolById())
 		schools.DELETE("/:id", handlers.DeleteSchool())
 		schools.PUT("/:id", handlers.UpdateSchool())
 		schools.GET("", handlers.GetSchools())

@@ -58,7 +58,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateProgram UpdateProgra
 		return err
 	}
 
-	dbProgram, err := c.queries.GetProgramByID(ctx, id)
+	dbProgram, err := c.queries.GetProgramById(ctx, id)
 	if err != nil {
 		return model.ErrProgramNotFound
 	}
@@ -161,7 +161,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		return err
 	}
 
-	dbProgram, err := c.queries.GetProgramByID(ctx, id)
+	dbProgram, err := c.queries.GetProgramById(ctx, id)
 	if err != nil {
 		return model.ErrProgramNotFound
 	}
