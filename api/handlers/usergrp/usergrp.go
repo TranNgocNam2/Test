@@ -147,6 +147,10 @@ func (h *Handlers) VerifyUser() gin.HandlerFunc {
 		err = h.user.Verify(ctx, userId, verifyUser)
 		if err != nil {
 			switch {
+			case errors.Is(err, model.ErrInvalidVerificationInfo),
+				errors.Is(err, model.ErrUserCannotBeVerified):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
 			case errors.Is(err, model.ErrUserNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
