@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"gitlab.com/innovia69420/kit/web/request"
 	"net/http"
 )
 
@@ -27,7 +26,7 @@ func New(specialization *specialization.Core) *Handlers {
 
 func (h *Handlers) CreateSpecialization() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var newSpecRequest request.NewSpecialization
+		var newSpecRequest payload.NewSpecialization
 		if err := web.Decode(ctx, &newSpecRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
