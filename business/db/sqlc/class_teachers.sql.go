@@ -49,7 +49,7 @@ func (q *Queries) CheckTeacherInClass(ctx context.Context, arg CheckTeacherInCla
 }
 
 const getTeachersByClassId = `-- name: GetTeachersByClassId :many
-SELECT t.id, t.full_name, t.email, t.phone, t.gender, t.auth_role, t.profile_photo, t.status, t.school_id
+SELECT t.id, t.full_name, t.email, t.phone, t.gender, t.auth_role, t.profile_photo, t.status, t.school_id, t.image, t.verified_by
 FROM class_teachers ct
 JOIN users t ON ct.teacher_id = t.id
 WHERE ct.class_id = $1::uuid AND t.auth_role = 2
@@ -74,6 +74,8 @@ func (q *Queries) GetTeachersByClassId(ctx context.Context, classID uuid.UUID) (
 			&i.ProfilePhoto,
 			&i.Status,
 			&i.SchoolID,
+			&i.Image,
+			&i.VerifiedBy,
 		); err != nil {
 			return nil, err
 		}

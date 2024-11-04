@@ -7,5 +7,11 @@ CREATE table users (
     auth_role           smallint  NOT NULL DEFAULT 0 CHECK (auth_role in (0, 1, 2, 3)),
     profile_photo       text,
     status              int DEFAULT 1 NOT NULL,
-    school_id           uuid
+    school_id           uuid,
+    image               text [],
+    verified_by         character varying(50),
+
+    CONSTRAINT fk_users_verified_by
+        FOREIGN KEY (verified_by)
+            REFERENCES users(id) ON DELETE CASCADE
 );

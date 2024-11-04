@@ -28,7 +28,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const getTeacherById = `-- name: GetTeacherById :one
-SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id FROM users
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id, image, verified_by FROM users
 WHERE id = $1 AND auth_role = 2
 `
 
@@ -45,12 +45,14 @@ func (q *Queries) GetTeacherById(ctx context.Context, id string) (User, error) {
 		&i.ProfilePhoto,
 		&i.Status,
 		&i.SchoolID,
+		&i.Image,
+		&i.VerifiedBy,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id FROM users
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id, image, verified_by FROM users
 WHERE email = $1
 `
 
@@ -67,12 +69,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.ProfilePhoto,
 		&i.Status,
 		&i.SchoolID,
+		&i.Image,
+		&i.VerifiedBy,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id FROM users
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id, image, verified_by FROM users
 WHERE id = $1
 `
 
@@ -89,12 +93,14 @@ func (q *Queries) GetUserById(ctx context.Context, id string) (User, error) {
 		&i.ProfilePhoto,
 		&i.Status,
 		&i.SchoolID,
+		&i.Image,
+		&i.VerifiedBy,
 	)
 	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id FROM users
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id, image, verified_by FROM users
 WHERE phone = $1
 `
 
@@ -111,6 +117,8 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone *string) (User, erro
 		&i.ProfilePhoto,
 		&i.Status,
 		&i.SchoolID,
+		&i.Image,
+		&i.VerifiedBy,
 	)
 	return i, err
 }
@@ -122,8 +130,10 @@ SET full_name = $1,
     phone = $3,
     gender = $4,
     school_id = $5,
-    profile_photo = $6
-WHERE id = $7
+    profile_photo = $6,
+    status = $7,
+    image = $8
+WHERE id = $9
 `
 
 type UpdateUserParams struct {
@@ -133,6 +143,8 @@ type UpdateUserParams struct {
 	Gender       *int16     `db:"gender" json:"gender"`
 	SchoolID     *uuid.UUID `db:"school_id" json:"schoolId"`
 	ProfilePhoto *string    `db:"profile_photo" json:"profilePhoto"`
+	Status       int32      `db:"status" json:"status"`
+	Image        []string   `db:"image" json:"image"`
 	ID           string     `db:"id" json:"id"`
 }
 
@@ -144,7 +156,27 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.Gender,
 		arg.SchoolID,
 		arg.ProfilePhoto,
+		arg.Status,
+		arg.Image,
 		arg.ID,
 	)
+	return err
+}
+
+const verifyUser = `-- name: VerifyUser :exec
+UPDATE users
+SET verified_by = $1,
+    status = $2
+WHERE id = $3
+`
+
+type VerifyUserParams struct {
+	VerifiedBy *string `db:"verified_by" json:"verifiedBy"`
+	Status     int32   `db:"status" json:"status"`
+	ID         string  `db:"id" json:"id"`
+}
+
+func (q *Queries) VerifyUser(ctx context.Context, arg VerifyUserParams) error {
+	_, err := q.db.Exec(ctx, verifyUser, arg.VerifiedBy, arg.Status, arg.ID)
 	return err
 }

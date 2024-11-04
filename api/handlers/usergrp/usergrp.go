@@ -2,10 +2,12 @@ package usergrp
 
 import (
 	"Backend/business/core/user"
+	"Backend/internal/common/model"
+	"Backend/internal/middleware"
 	"Backend/internal/web"
+	"Backend/internal/web/payload"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"gitlab.com/innovia69420/kit/web/request"
 	"net/http"
 )
 
@@ -21,7 +23,7 @@ func New(user *user.Core) *Handlers {
 
 func (h *Handlers) CreateUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var newUserRequest request.NewUser
+		var newUserRequest payload.NewUser
 		if err := web.Decode(ctx, &newUserRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -42,8 +44,8 @@ func (h *Handlers) CreateUser() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, user.ErrEmailAlreadyExists),
-				errors.Is(err, user.ErrUserAlreadyExist):
+				errors.Is(err, model.ErrEmailAlreadyExists),
+				errors.Is(err, model.ErrUserAlreadyExist):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
@@ -63,7 +65,7 @@ func (h *Handlers) GetUserById() gin.HandlerFunc {
 		userRes, err := h.user.GetByID(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, user.ErrUserNotFound):
+			case errors.Is(err, model.ErrUserNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			default:
@@ -72,7 +74,7 @@ func (h *Handlers) GetUserById() gin.HandlerFunc {
 			}
 		}
 
-		web.Respond(ctx, toUserResponse(userRes), http.StatusOK, nil)
+		web.Respond(ctx, userRes, http.StatusOK, nil)
 	}
 }
 
@@ -80,7 +82,7 @@ func (h *Handlers) UpdateUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userID := ctx.Param("id")
 
-		var updateUserRequest request.UpdateUser
+		var updateUserRequest payload.UpdateUser
 		if err := web.Decode(ctx, &updateUserRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -101,15 +103,59 @@ func (h *Handlers) UpdateUser() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, user.ErrPhoneAlreadyExists),
-				errors.Is(err, user.ErrEmailAlreadyExists):
+				errors.Is(err, model.ErrPhoneAlreadyExists),
+				errors.Is(err, model.ErrEmailAlreadyExists):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
-				errors.Is(err, user.ErrUserNotFound):
+				errors.Is(err, model.ErrUserNotFound):
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) VerifyUser() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userId := ctx.Param("id")
+
+		var verifyUserRequest payload.VerifyUser
+		if err := web.Decode(ctx, &verifyUserRequest); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err := validateVerifyUserRequest(verifyUserRequest); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		verifyUser, err := toCoreVerifyUser(verifyUserRequest)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.user.Verify(ctx, userId, verifyUser)
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrInvalidVerificationInfo),
+				errors.Is(err, model.ErrUserCannotBeVerified):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case errors.Is(err, model.ErrUserNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
 			default:
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)
