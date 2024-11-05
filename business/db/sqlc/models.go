@@ -81,6 +81,7 @@ type LearnerAttendance struct {
 }
 
 type LearnerSpecialization struct {
+	ID               uuid.UUID  `db:"id" json:"id"`
 	LearnerID        string     `db:"learner_id" json:"learnerId"`
 	SpecializationID uuid.UUID  `db:"specialization_id" json:"specializationId"`
 	JoinedAt         *time.Time `db:"joined_at" json:"joinedAt"`

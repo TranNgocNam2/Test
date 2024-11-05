@@ -7,6 +7,7 @@ import (
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"net/http"
 )
@@ -48,6 +49,37 @@ func (h *Handlers) AddLearnerToClass() gin.HandlerFunc {
 				errors.Is(err, model.ErrClassStarted),
 				errors.Is(err, model.ErrWrongPassword):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser),
+				errors.Is(err, model.ErrUnauthorizedFeatureAccess):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) AddLearnerToSpecialization() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		specializationId, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSpecIDInvalid)
+			return
+		}
+
+		err = h.learner.JoinSpecialization(ctx, specializationId)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrSpecNotFound):
+
+				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			case
 				errors.Is(err, middleware.ErrInvalidUser),

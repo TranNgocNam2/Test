@@ -7,6 +7,7 @@ import (
 	"Backend/internal/middleware"
 	"Backend/internal/password"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -54,6 +55,32 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 	err = c.queries.AddLearnerToClass(ctx, sqlc.AddLearnerToClassParams{
 		ClassID:   dbClass.ID,
 		LearnerID: learner.ID,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) error {
+	learner, err := middleware.AuthorizeLearner(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+
+	if learner.Status != Verified {
+		return model.ErrUnauthorizedFeatureAccess
+	}
+
+	specialization, err := c.queries.GetPublishedSpecializationById(ctx, specializationId)
+	if err != nil {
+		return model.ErrSpecNotFound
+	}
+
+	err = c.queries.AddLearnerToSpecialization(ctx, sqlc.AddLearnerToSpecializationParams{
+		LearnerID:        learner.ID,
+		SpecializationID: specialization.ID,
 	})
 	if err != nil {
 		return err

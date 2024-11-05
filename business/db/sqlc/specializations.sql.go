@@ -49,6 +49,29 @@ func (q *Queries) DeleteSpecialization(ctx context.Context, id uuid.UUID) error 
 	return err
 }
 
+const getPublishedSpecializationById = `-- name: GetPublishedSpecializationById :one
+SELECT id, name, code, time_amount, image_link, status, description, created_by, updated_by, created_at, updated_at FROM specializations WHERE id = $1 AND status = 1
+`
+
+func (q *Queries) GetPublishedSpecializationById(ctx context.Context, id uuid.UUID) (Specialization, error) {
+	row := q.db.QueryRow(ctx, getPublishedSpecializationById, id)
+	var i Specialization
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Code,
+		&i.TimeAmount,
+		&i.ImageLink,
+		&i.Status,
+		&i.Description,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getSpecializationByCode = `-- name: GetSpecializationByCode :one
 SELECT id, name, code, time_amount, image_link, status, description, created_by, updated_by, created_at, updated_at FROM specializations WHERE code = $1
 `

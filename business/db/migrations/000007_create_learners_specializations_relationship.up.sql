@@ -1,4 +1,5 @@
 CREATE table learner_specializations(
+    id                      uuid PRIMARY KEY,
     learner_id              character varying(50) NOT NULL,
     specialization_id       uuid NOT NULL,
     joined_at               timestamp DEFAULT now(),
