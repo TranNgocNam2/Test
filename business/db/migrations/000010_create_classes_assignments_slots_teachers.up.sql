@@ -1,6 +1,6 @@
 CREATE table classes(
     id                      uuid PRIMARY KEY,
-    code                    character varying(10) NOT NULL,
+    code                    character varying(10) NOT NULL UNIQUE,
     subject_id              uuid NOT NULL,
     program_id              uuid NOT NULL,
     password                text NOT NULL,

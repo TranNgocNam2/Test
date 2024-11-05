@@ -11,6 +11,21 @@ import (
 	"github.com/google/uuid"
 )
 
+const addLearnerToClass = `-- name: AddLearnerToClass :exec
+INSERT INTO class_learners (id, class_id, learner_id)
+VALUES (uuid_generate_v4(), $1::uuid, $2)
+`
+
+type AddLearnerToClassParams struct {
+	ClassID   uuid.UUID `db:"class_id" json:"classId"`
+	LearnerID string    `db:"learner_id" json:"learnerId"`
+}
+
+func (q *Queries) AddLearnerToClass(ctx context.Context, arg AddLearnerToClassParams) error {
+	_, err := q.db.Exec(ctx, addLearnerToClass, arg.ClassID, arg.LearnerID)
+	return err
+}
+
 const countLearnersByClassId = `-- name: CountLearnersByClassId :one
 SELECT COUNT(*) FROM class_learners WHERE class_id = $1::uuid
 `
