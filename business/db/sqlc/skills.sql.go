@@ -11,6 +11,41 @@ import (
 	"github.com/google/uuid"
 )
 
+const createSkill = `-- name: CreateSkill :exec
+INSERT INTO skills (id, name)
+VALUES ($1, $2)
+`
+
+type CreateSkillParams struct {
+	ID   uuid.UUID `db:"id" json:"id"`
+	Name string    `db:"name" json:"name"`
+}
+
+func (q *Queries) CreateSkill(ctx context.Context, arg CreateSkillParams) error {
+	_, err := q.db.Exec(ctx, createSkill, arg.ID, arg.Name)
+	return err
+}
+
+const deleteSkill = `-- name: DeleteSkill :exec
+DELETE FROM skills WHERE id = $1
+`
+
+func (q *Queries) DeleteSkill(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSkill, id)
+	return err
+}
+
+const getSkillById = `-- name: GetSkillById :one
+SELECT id, name FROM skills WHERE id = $1
+`
+
+func (q *Queries) GetSkillById(ctx context.Context, id uuid.UUID) (Skill, error) {
+	row := q.db.QueryRow(ctx, getSkillById, id)
+	var i Skill
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
 const getSkillsByIds = `-- name: GetSkillsByIds :many
 SELECT id, name FROM skills WHERE id = ANY($1::uuid[])
 `
@@ -60,4 +95,20 @@ func (q *Queries) GetSkillsBySubjectId(ctx context.Context, subjectID uuid.UUID)
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSkill = `-- name: UpdateSkill :exec
+UPDATE skills
+SET name = $1
+WHERE id = $2
+`
+
+type UpdateSkillParams struct {
+	Name string    `db:"name" json:"name"`
+	ID   uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateSkill(ctx context.Context, arg UpdateSkillParams) error {
+	_, err := q.db.Exec(ctx, updateSkill, arg.Name, arg.ID)
+	return err
 }
