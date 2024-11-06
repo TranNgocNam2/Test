@@ -65,6 +65,7 @@ CREATE table slots(
     end_time            timestamp,
     index               int NOT NULL,
     teacher_id          character varying(50),
+    attendance_code    character varying(6) DEFAULT NULL,
 
     CONSTRAINT fk_slot_sessions
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,

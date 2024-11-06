@@ -56,7 +56,7 @@ type CreateSlotsParams struct {
 }
 
 const getSlotById = `-- name: GetSlotById :one
-SELECT id, session_id, class_id, start_time, end_time, index, teacher_id FROM slots WHERE id = $1
+SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots WHERE id = $1
 `
 
 func (q *Queries) GetSlotById(ctx context.Context, id uuid.UUID) (Slot, error) {
@@ -70,12 +70,13 @@ func (q *Queries) GetSlotById(ctx context.Context, id uuid.UUID) (Slot, error) {
 		&i.EndTime,
 		&i.Index,
 		&i.TeacherID,
+		&i.AttendanceCode,
 	)
 	return i, err
 }
 
 const getSlotsByClassId = `-- name: GetSlotsByClassId :many
-SELECT id, session_id, class_id, start_time, end_time, index, teacher_id FROM slots WHERE class_id = $1
+SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots WHERE class_id = $1
 `
 
 func (q *Queries) GetSlotsByClassId(ctx context.Context, classID uuid.UUID) ([]Slot, error) {
@@ -95,6 +96,7 @@ func (q *Queries) GetSlotsByClassId(ctx context.Context, classID uuid.UUID) ([]S
 			&i.EndTime,
 			&i.Index,
 			&i.TeacherID,
+			&i.AttendanceCode,
 		); err != nil {
 			return nil, err
 		}

@@ -135,13 +135,14 @@ type Skill struct {
 }
 
 type Slot struct {
-	ID        uuid.UUID  `db:"id" json:"id"`
-	SessionID uuid.UUID  `db:"session_id" json:"sessionId"`
-	ClassID   uuid.UUID  `db:"class_id" json:"classId"`
-	StartTime *time.Time `db:"start_time" json:"startTime"`
-	EndTime   *time.Time `db:"end_time" json:"endTime"`
-	Index     int32      `db:"index" json:"index"`
-	TeacherID *string    `db:"teacher_id" json:"teacherId"`
+	ID             uuid.UUID  `db:"id" json:"id"`
+	SessionID      uuid.UUID  `db:"session_id" json:"sessionId"`
+	ClassID        uuid.UUID  `db:"class_id" json:"classId"`
+	StartTime      *time.Time `db:"start_time" json:"startTime"`
+	EndTime        *time.Time `db:"end_time" json:"endTime"`
+	Index          int32      `db:"index" json:"index"`
+	TeacherID      *string    `db:"teacher_id" json:"teacherId"`
+	AttendanceCode *string    `db:"attendance_code" json:"attendanceCode"`
 }
 
 type Specialization struct {

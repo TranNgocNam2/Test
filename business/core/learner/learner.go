@@ -52,14 +52,37 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 		return model.ErrWrongPassword
 	}
 
-	err = c.queries.AddLearnerToClass(ctx, sqlc.AddLearnerToClassParams{
+	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
+
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	classLearner := sqlc.AddLearnerToClassParams{
+		ID:        uuid.New(),
 		ClassID:   dbClass.ID,
 		LearnerID: learner.ID,
-	})
+	}
+
+	err = qtx.AddLearnerToClass(ctx, classLearner)
 	if err != nil {
 		return err
 	}
 
+	for _, dbSlot := range dbSlots {
+		err = qtx.GenerateLearnerAttendance(ctx, sqlc.GenerateLearnerAttendanceParams{
+			ClassLearnerID: classLearner.ID,
+			SlotID:         dbSlot.ID,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	tx.Commit(ctx)
 	return nil
 }
 
