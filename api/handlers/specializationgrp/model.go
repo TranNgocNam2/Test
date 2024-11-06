@@ -7,10 +7,9 @@ import (
 	"Backend/internal/validate"
 	"Backend/internal/web/payload"
 	"github.com/google/uuid"
-	"gitlab.com/innovia69420/kit/web/request"
 )
 
-func toCoreNewSpecialization(newSpecialization request.NewSpecialization) specialization.NewSpecialization {
+func toCoreNewSpecialization(newSpecialization payload.NewSpecialization) specialization.NewSpecialization {
 	return specialization.NewSpecialization{
 		ID:          uuid.New(),
 		Name:        newSpecialization.Name,
@@ -21,7 +20,7 @@ func toCoreNewSpecialization(newSpecialization request.NewSpecialization) specia
 	}
 }
 
-func validateNewSpecializationRequest(newSpecializationRequest request.NewSpecialization) error {
+func validateNewSpecializationRequest(newSpecializationRequest payload.NewSpecialization) error {
 	if err := validate.Check(newSpecializationRequest); err != nil {
 		return err
 	}
