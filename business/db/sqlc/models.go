@@ -26,9 +26,10 @@ type Certificate struct {
 	SpecializationID *uuid.UUID `db:"specialization_id" json:"specializationId"`
 	SubjectID        *uuid.UUID `db:"subject_id" json:"subjectId"`
 	Name             string     `db:"name" json:"name"`
-	Type             int32      `db:"type" json:"type"`
 	Status           int32      `db:"status" json:"status"`
 	CreatedAt        time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt        *time.Time `db:"updated_at" json:"updatedAt"`
+	UpdatedBy        *string    `db:"updated_by" json:"updatedBy"`
 }
 
 type Class struct {

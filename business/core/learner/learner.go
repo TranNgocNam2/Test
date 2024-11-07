@@ -1,6 +1,7 @@
 package learner
 
 import (
+	"Backend/business/core/learner/certificate"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
@@ -96,6 +97,16 @@ func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) 
 		return model.ErrUnauthorizedFeatureAccess
 	}
 
+	learnerSpec, _ := c.queries.CountLearnerInSpecialization(ctx,
+		sqlc.CountLearnerInSpecializationParams{
+			LearnerID:        learner.ID,
+			SpecializationID: specializationId,
+		})
+
+	if learnerSpec > 0 {
+		return model.ErrAlreadyJoinedSpecialization
+	}
+
 	specialization, err := c.queries.GetPublishedSpecializationById(ctx, specializationId)
 	if err != nil {
 		return model.ErrSpecNotFound
@@ -109,5 +120,30 @@ func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) 
 		return err
 	}
 
+	subjectIds, err := c.queries.GetSubjectIdsBySpecialization(ctx, specializationId)
+	if err != nil {
+		return err
+	}
+
+	learnerCertParams := sqlc.GetCertificationsByLearnerAndSubjectsParams{
+		LearnerID:  learner.ID,
+		SubjectIds: subjectIds,
+		Status:     certificate.Valid,
+	}
+
+	subjectCerts, err := c.queries.GetCertificationsByLearnerAndSubjects(ctx, learnerCertParams)
+	if err == nil && len(subjectCerts) == len(subjectIds) {
+		specCert := sqlc.CreateSpecializationCertificateParams{
+			LearnerID:        learner.ID,
+			SpecializationID: &specialization.ID,
+			Name:             specialization.Name,
+			Status:           certificate.Valid,
+		}
+
+		err = c.queries.CreateSpecializationCertificate(ctx, specCert)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

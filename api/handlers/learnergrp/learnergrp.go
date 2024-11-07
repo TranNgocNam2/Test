@@ -81,6 +81,9 @@ func (h *Handlers) AddLearnerToSpecialization() gin.HandlerFunc {
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
+			case errors.Is(err, model.ErrAlreadyJoinedSpecialization):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
 			case
 				errors.Is(err, middleware.ErrInvalidUser),
 				errors.Is(err, model.ErrUnauthorizedFeatureAccess):

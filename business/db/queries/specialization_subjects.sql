@@ -14,3 +14,8 @@ WHERE specialization_id = sqlc.arg(specialization_id)::uuid;
 
 -- name: DeleteSpecializationSubjects :exec
 DELETE FROM specialization_subjects WHERE specialization_id = sqlc.arg(specialization_id)::uuid;
+
+-- name: GetSubjectIdsBySpecialization :one
+SELECT array_agg(subject_id)::uuid[] as subject_ids
+FROM specialization_subjects
+WHERE specialization_id = sqlc.arg(specialization_id)::uuid;

@@ -25,3 +25,21 @@ func (q *Queries) AddLearnerToSpecialization(ctx context.Context, arg AddLearner
 	_, err := q.db.Exec(ctx, addLearnerToSpecialization, arg.SpecializationID, arg.LearnerID)
 	return err
 }
+
+const countLearnerInSpecialization = `-- name: CountLearnerInSpecialization :one
+SELECT COUNT(*) FROM learner_specializations
+WHERE specialization_id = $1::uuid
+AND learner_id = $2
+`
+
+type CountLearnerInSpecializationParams struct {
+	SpecializationID uuid.UUID `db:"specialization_id" json:"specializationId"`
+	LearnerID        string    `db:"learner_id" json:"learnerId"`
+}
+
+func (q *Queries) CountLearnerInSpecialization(ctx context.Context, arg CountLearnerInSpecializationParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countLearnerInSpecialization, arg.SpecializationID, arg.LearnerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
