@@ -51,8 +51,7 @@ func (h *Handlers) AddLearnerToClass() gin.HandlerFunc {
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
-				errors.Is(err, middleware.ErrInvalidUser),
-				errors.Is(err, model.ErrUnauthorizedFeatureAccess):
+				errors.Is(err, middleware.ErrInvalidUser):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
 			default:
@@ -67,7 +66,7 @@ func (h *Handlers) AddLearnerToClass() gin.HandlerFunc {
 
 func (h *Handlers) AddLearnerToSpecialization() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		specializationId, err := uuid.Parse(ctx.Param("id"))
+		specializationId, err := uuid.Parse(ctx.Param("specializationId"))
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSpecIDInvalid)
 			return
@@ -85,8 +84,55 @@ func (h *Handlers) AddLearnerToSpecialization() gin.HandlerFunc {
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
-				errors.Is(err, middleware.ErrInvalidUser),
-				errors.Is(err, model.ErrUnauthorizedFeatureAccess):
+				errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) SubmitAttendance() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		classId, err := uuid.Parse(ctx.Param("classId"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		var req payload.LearnerAttendance
+		if err := web.Decode(ctx, &req); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err := validateLearnerAttendanceRequest(req); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		attendanceSubmission := toCoreSubmitAttendance(req)
+
+		err = h.learner.SubmitAttendance(ctx, classId, attendanceSubmission)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.LearnerNotInClass),
+				errors.Is(err, model.ErrSlotNotFound):
+
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, model.ErrInvalidAttendanceCode):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
 			default:

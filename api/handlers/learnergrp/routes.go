@@ -12,9 +12,7 @@ func LearnerRoutes(router *gin.Engine, app *app.Application) {
 	learners := router.Group("/learners")
 	{
 		learners.POST("", handlers.AddLearnerToClass())
-		learners.POST("/specializations/:id", handlers.AddLearnerToSpecialization())
-		//learners.GET("", handlers.GetSpecializations())
-		//learners.PUT("/:id", handlers.UpdateSpecialization())
-		//learners.DELETE("/:id", handlers.DeleteSpecialization())
+		learners.POST("/specializations/:specializationId", handlers.AddLearnerToSpecialization())
+		learners.PUT("/classes/:classId/attendance", handlers.SubmitAttendance())
 	}
 }

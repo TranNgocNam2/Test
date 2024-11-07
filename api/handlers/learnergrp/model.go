@@ -19,3 +19,17 @@ func validateNewClassAccessRequest(request payload.ClassAccess) error {
 	}
 	return nil
 }
+
+func toCoreSubmitAttendance(request payload.LearnerAttendance) learner.AttendanceSubmission {
+	return learner.AttendanceSubmission{
+		Index:          int32(request.Index),
+		AttendanceCode: request.AttendanceCode,
+	}
+}
+
+func validateLearnerAttendanceRequest(request payload.LearnerAttendance) error {
+	if err := validate.Check(request); err != nil {
+		return err
+	}
+	return nil
+}

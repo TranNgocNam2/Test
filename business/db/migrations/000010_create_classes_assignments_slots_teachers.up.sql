@@ -65,7 +65,7 @@ CREATE table slots(
     end_time            timestamp,
     index               int NOT NULL,
     teacher_id          character varying(50),
-    attendance_code    character varying(6) DEFAULT NULL,
+    attendance_code     character varying(6) DEFAULT NULL,
 
     CONSTRAINT fk_slot_sessions
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
@@ -73,7 +73,20 @@ CREATE table slots(
         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
     CONSTRAINT fk_slot_teacher
         FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT check_slot_time CHECK (start_time < end_time),
 
     CONSTRAINT unique_slot_session_class UNIQUE (session_id, class_id)
 );
 
+CREATE OR REPLACE FUNCTION update_attendance_status() RETURNS VOID AS $$
+BEGIN
+    UPDATE learner_attendances
+    SET status = 3
+    WHERE status = 0
+      AND slot_id IN (
+        SELECT id
+        FROM slots
+        WHERE end_time < NOW()
+    );
+END;
+$$ LANGUAGE plpgsql;

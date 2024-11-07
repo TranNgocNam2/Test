@@ -123,6 +123,30 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone *string) (User, erro
 	return i, err
 }
 
+const getVerifiedLearnerById = `-- name: GetVerifiedLearnerById :one
+SELECT id, full_name, email, phone, gender, auth_role, profile_photo, status, school_id, image, verified_by FROM users
+WHERE id = $1 AND auth_role = 0 AND status = 1
+`
+
+func (q *Queries) GetVerifiedLearnerById(ctx context.Context, id string) (User, error) {
+	row := q.db.QueryRow(ctx, getVerifiedLearnerById, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
+		&i.Gender,
+		&i.AuthRole,
+		&i.ProfilePhoto,
+		&i.Status,
+		&i.SchoolID,
+		&i.Image,
+		&i.VerifiedBy,
+	)
+	return i, err
+}
+
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
 SET full_name = $1,

@@ -25,3 +25,42 @@ func (q *Queries) GenerateLearnerAttendance(ctx context.Context, arg GenerateLea
 	_, err := q.db.Exec(ctx, generateLearnerAttendance, arg.ClassLearnerID, arg.SlotID)
 	return err
 }
+
+const getLearnerAttendanceByClassLearnerAndSlot = `-- name: GetLearnerAttendanceByClassLearnerAndSlot :one
+SELECT id, class_learner_id, slot_id, status FROM learner_attendances
+    WHERE class_learner_id = $1::uuid
+    AND slot_id = $2::uuid
+`
+
+type GetLearnerAttendanceByClassLearnerAndSlotParams struct {
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	SlotID         uuid.UUID `db:"slot_id" json:"slotId"`
+}
+
+func (q *Queries) GetLearnerAttendanceByClassLearnerAndSlot(ctx context.Context, arg GetLearnerAttendanceByClassLearnerAndSlotParams) (LearnerAttendance, error) {
+	row := q.db.QueryRow(ctx, getLearnerAttendanceByClassLearnerAndSlot, arg.ClassLearnerID, arg.SlotID)
+	var i LearnerAttendance
+	err := row.Scan(
+		&i.ID,
+		&i.ClassLearnerID,
+		&i.SlotID,
+		&i.Status,
+	)
+	return i, err
+}
+
+const submitLearnerAttendance = `-- name: SubmitLearnerAttendance :exec
+UPDATE learner_attendances
+SET status = $1
+WHERE id = $2::uuid
+`
+
+type SubmitLearnerAttendanceParams struct {
+	Status int32     `db:"status" json:"status"`
+	ID     uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) SubmitLearnerAttendance(ctx context.Context, arg SubmitLearnerAttendanceParams) error {
+	_, err := q.db.Exec(ctx, submitLearnerAttendance, arg.Status, arg.ID)
+	return err
+}

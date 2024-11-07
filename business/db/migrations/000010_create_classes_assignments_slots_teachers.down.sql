@@ -17,9 +17,12 @@ ALTER table slots
     DROP CONSTRAINT IF EXISTS fk_slot_sessions,
     DROP CONSTRAINT IF EXISTS fk_slot_class,
     DROP CONSTRAINT IF EXISTS fk_slot_teacher,
-    DROP CONSTRAINT IF EXISTS unique_slot_session_class;
+    DROP CONSTRAINT IF EXISTS unique_slot_session_class,
+    DROP CONSTRAINT IF EXISTS check_slot_time;
 
 DROP table IF EXISTS class_teachers CASCADE;
 DROP table IF EXISTS classes CASCADE;
 DROP table IF EXISTS assignments CASCADE;
 DROP table IF EXISTS slots CASCADE;
+
+DROP FUNCTION IF EXISTS update_attendance_status();

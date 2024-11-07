@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -32,13 +33,9 @@ func NewCore(app *app.Application) *Core {
 }
 
 func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
-	learner, err := middleware.AuthorizeLearner(ctx, c.queries)
+	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
 	if err != nil {
 		return err
-	}
-
-	if learner.Status != Verified {
-		return model.ErrUnauthorizedFeatureAccess
 	}
 
 	dbClass, err := c.queries.GetClassCompletedByCode(ctx, classAccess.Code)
@@ -88,13 +85,9 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 }
 
 func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) error {
-	learner, err := middleware.AuthorizeLearner(ctx, c.queries)
+	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
 	if err != nil {
 		return err
-	}
-
-	if learner.Status != Verified {
-		return model.ErrUnauthorizedFeatureAccess
 	}
 
 	learnerSpec, _ := c.queries.CountLearnerInSpecialization(ctx,
@@ -145,5 +138,56 @@ func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) 
 			return err
 		}
 	}
+	return nil
+}
+
+func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceSubmission AttendanceSubmission) error {
+	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+
+	class, err := c.queries.GetClassById(ctx, classId)
+	if err != nil {
+		return model.ErrClassNotFound
+	}
+
+	classLearner, err := c.queries.GetLearnerByClassId(ctx,
+		sqlc.GetLearnerByClassIdParams{
+			ClassID:   class.ID,
+			LearnerID: learner.ID,
+		})
+	if err != nil {
+		return model.LearnerNotInClass
+	}
+
+	slot, err := c.queries.GetSlotByClassIdAndIndex(ctx,
+		sqlc.GetSlotByClassIdAndIndexParams{
+			ClassID: class.ID,
+			Index:   attendanceSubmission.Index,
+		})
+	if err != nil {
+		return model.ErrSlotNotFound
+	}
+
+	if strings.Compare(*slot.AttendanceCode, attendanceSubmission.AttendanceCode) != 0 {
+		return model.ErrInvalidAttendanceCode
+	}
+
+	learnerAttendance, _ := c.queries.GetLearnerAttendanceByClassLearnerAndSlot(ctx,
+		sqlc.GetLearnerAttendanceByClassLearnerAndSlotParams{
+			ClassLearnerID: classLearner.ID,
+			SlotID:         slot.ID,
+		})
+
+	err = c.queries.SubmitLearnerAttendance(ctx,
+		sqlc.SubmitLearnerAttendanceParams{
+			Status: Attended,
+			ID:     learnerAttendance.ID,
+		})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
