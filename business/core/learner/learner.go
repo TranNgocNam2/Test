@@ -174,6 +174,17 @@ func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceS
 		return model.ErrInvalidAttendanceCode
 	}
 
+	now := time.Now().Format(time.DateTime)
+	currentTime, _ := time.Parse(time.DateTime, now)
+
+	if slot.EndTime.Before(currentTime) {
+		return model.ErrSlotEnded
+	}
+
+	if currentTime.Before(*slot.StartTime) {
+		return model.ErrSlotNotStarted
+	}
+
 	learnerAttendance, _ := c.queries.GetLearnerAttendanceByClassLearnerAndSlot(ctx,
 		sqlc.GetLearnerAttendanceByClassLearnerAndSlotParams{
 			ClassLearnerID: classLearner.ID,

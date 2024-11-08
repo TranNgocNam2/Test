@@ -128,7 +128,9 @@ func (h *Handlers) SubmitAttendance() gin.HandlerFunc {
 
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
-			case errors.Is(err, model.ErrInvalidAttendanceCode):
+			case errors.Is(err, model.ErrInvalidAttendanceCode),
+				errors.Is(err, model.ErrSlotNotStarted),
+				errors.Is(err, model.ErrSlotEnded):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
