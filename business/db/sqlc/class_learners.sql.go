@@ -38,6 +38,44 @@ func (q *Queries) CountLearnersByClassId(ctx context.Context, classID uuid.UUID)
 	return count, err
 }
 
+const getClassesByLearnerId = `-- name: GetClassesByLearnerId :many
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes
+WHERE id IN (SELECT class_id FROM class_learners WHERE learner_id = $1)
+`
+
+func (q *Queries) GetClassesByLearnerId(ctx context.Context, learnerID string) ([]Class, error) {
+	rows, err := q.db.Query(ctx, getClassesByLearnerId, learnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Class
+	for rows.Next() {
+		var i Class
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.SubjectID,
+			&i.ProgramID,
+			&i.Password,
+			&i.Name,
+			&i.Link,
+			&i.StartDate,
+			&i.EndDate,
+			&i.Status,
+			&i.CreatedBy,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLearnerByClassId = `-- name: GetLearnerByClassId :one
 SELECT id, learner_id, class_id FROM class_learners
          WHERE class_id = $1::uuid

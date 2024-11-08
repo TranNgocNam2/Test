@@ -9,3 +9,7 @@ VALUES (sqlc.arg(id)::uuid, sqlc.arg(class_id)::uuid, sqlc.arg(learner_id));
 SELECT * FROM class_learners
          WHERE class_id = sqlc.arg(class_id)::uuid
            AND learner_id = sqlc.arg(learner_id);
+
+-- name: GetClassesByLearnerId :many
+SELECT * FROM classes
+WHERE id IN (SELECT class_id FROM class_learners WHERE learner_id = sqlc.arg(learner_id));
