@@ -115,7 +115,8 @@ func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) 
 
 	subjectIds, err := c.queries.GetSubjectIdsBySpecialization(ctx, specializationId)
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return nil
 	}
 
 	learnerCertParams := sqlc.GetCertificationsByLearnerAndSubjectsParams{
@@ -125,7 +126,11 @@ func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) 
 	}
 
 	subjectCerts, err := c.queries.GetCertificationsByLearnerAndSubjects(ctx, learnerCertParams)
-	if err == nil && len(subjectCerts) == len(subjectIds) {
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil
+	}
+	if len(subjectCerts) == len(subjectIds) {
 		specCert := sqlc.CreateSpecializationCertificateParams{
 			LearnerID:        learner.ID,
 			SpecializationID: &specialization.ID,
@@ -135,7 +140,8 @@ func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) 
 
 		err = c.queries.CreateSpecializationCertificate(ctx, specCert)
 		if err != nil {
-			return err
+			c.logger.Error(err.Error())
+			return nil
 		}
 	}
 	return nil

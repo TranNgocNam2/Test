@@ -13,7 +13,7 @@ import (
 
 const generateLearnerAttendance = `-- name: GenerateLearnerAttendance :exec
 INSERT INTO learner_attendances(id, class_learner_id, slot_id)
-SELECT uuid_generate_v4(), $1, $2::uuid
+VALUES (uuid_generate_v4(), $1, $2::uuid)
 `
 
 type GenerateLearnerAttendanceParams struct {
