@@ -14,8 +14,8 @@ type UpdateSubject struct {
 	Code           string       `json:"code" validate:"required"`
 	Image          string       `json:"image" validate:"required"`
 	TimePerSession int          `json:"timePerSession" validate:"required"`
-	MinPassGrade   float64      `json:"minPassGrade" validate:"required"`
-	MinAttendance  float64      `json:"minAttendance" validate:"required"`
+	MinPassGrade   float32      `json:"minPassGrade" validate:"required"`
+	MinAttendance  float32      `json:"minAttendance" validate:"required"`
 	Description    string       `json:"description"`
 	Status         *int         `json:"status" validate:"gte=0,lte=1,required"`
 	Skills         []string     `json:"skills" validate:"gt=0,dive,required"`

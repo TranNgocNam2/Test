@@ -22,8 +22,8 @@ CREATE table subjects(
     code                    character varying(10) NOT NULL,
     name                    character varying(100) NOT NULL,
     time_per_session        smallint NOT NULL,
-    min_pass_grade          float,
-    min_attendance           float,
+    min_pass_grade          real,
+    min_attendance          real,
     image_link              text,
     status                  smallint CHECK (status in (0, 1, 2)) DEFAULT 0 NOT NULL,
     description             text,
@@ -42,6 +42,7 @@ CREATE table specialization_subjects(
     id                      uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     specialization_id       uuid NOT NULL,
     subject_id              uuid NOT NULL,
+    index                   smallint NOT NULL,
     created_by              character varying(50) NOT NULL,
 
     CONSTRAINT fk_specialization_subjects_specialization

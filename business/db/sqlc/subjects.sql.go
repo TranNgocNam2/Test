@@ -247,8 +247,8 @@ type UpdateSubjectParams struct {
 	Name           string     `db:"name" json:"name"`
 	Code           string     `db:"code" json:"code"`
 	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
-	MinPassGrade   *float64   `db:"min_pass_grade" json:"minPassGrade"`
-	MinAttendance  *float64   `db:"min_attendance" json:"minAttendance"`
+	MinPassGrade   *float32   `db:"min_pass_grade" json:"minPassGrade"`
+	MinAttendance  *float32   `db:"min_attendance" json:"minAttendance"`
 	Description    *string    `db:"description" json:"description"`
 	Status         int16      `db:"status" json:"status"`
 	ImageLink      *string    `db:"image_link" json:"imageLink"`

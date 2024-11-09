@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -23,19 +24,26 @@ func (q *Queries) CountSubjectsBySpecializationId(ctx context.Context, specializ
 	return count, err
 }
 
-const createSpecializationSubjects = `-- name: CreateSpecializationSubjects :exec
-INSERT INTO specialization_subjects (specialization_id, subject_id, created_by)
-SELECT $1::uuid, unnest($2::uuid[]), $3::varchar
+const createSpecializationSubject = `-- name: CreateSpecializationSubject :exec
+INSERT INTO specialization_subjects (specialization_id, subject_id, index, created_by)
+VALUES ($1::uuid, $2::uuid,
+        $3, $4::varchar)
 `
 
-type CreateSpecializationSubjectsParams struct {
-	SpecializationID uuid.UUID   `db:"specialization_id" json:"specializationId"`
-	SubjectIds       []uuid.UUID `db:"subject_ids" json:"subjectIds"`
-	CreatedBy        string      `db:"created_by" json:"createdBy"`
+type CreateSpecializationSubjectParams struct {
+	SpecializationID uuid.UUID `db:"specialization_id" json:"specializationId"`
+	SubjectID        uuid.UUID `db:"subject_id" json:"subjectId"`
+	Index            int16     `db:"index" json:"index"`
+	CreatedBy        string    `db:"created_by" json:"createdBy"`
 }
 
-func (q *Queries) CreateSpecializationSubjects(ctx context.Context, arg CreateSpecializationSubjectsParams) error {
-	_, err := q.db.Exec(ctx, createSpecializationSubjects, arg.SpecializationID, arg.SubjectIds, arg.CreatedBy)
+func (q *Queries) CreateSpecializationSubject(ctx context.Context, arg CreateSpecializationSubjectParams) error {
+	_, err := q.db.Exec(ctx, createSpecializationSubject,
+		arg.SpecializationID,
+		arg.SubjectID,
+		arg.Index,
+		arg.CreatedBy,
+	)
 	return err
 }
 
@@ -62,21 +70,39 @@ func (q *Queries) GetSubjectIdsBySpecialization(ctx context.Context, specializat
 }
 
 const getSubjectsBySpecialization = `-- name: GetSubjectsBySpecialization :many
-SELECT subjects.id, subjects.code, subjects.name, subjects.time_per_session, subjects.min_pass_grade, subjects.min_attendance, subjects.image_link, subjects.status, subjects.description, subjects.created_by, subjects.updated_by, subjects.created_at, subjects.updated_at
+SELECT subjects.id, subjects.code, subjects.name, subjects.time_per_session, subjects.min_pass_grade, subjects.min_attendance, subjects.image_link, subjects.status, subjects.description, subjects.created_by, subjects.updated_by, subjects.created_at, subjects.updated_at, specialization_subjects.index
 FROM specialization_subjects
 JOIN subjects ON specialization_subjects.subject_id = subjects.id
 WHERE specialization_subjects.specialization_id = $1::uuid
+AND subjects.status = 1 ORDER BY specialization_subjects.index
 `
 
-func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]Subject, error) {
+type GetSubjectsBySpecializationRow struct {
+	ID             uuid.UUID  `db:"id" json:"id"`
+	Code           string     `db:"code" json:"code"`
+	Name           string     `db:"name" json:"name"`
+	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
+	MinPassGrade   *float32   `db:"min_pass_grade" json:"minPassGrade"`
+	MinAttendance  *float32   `db:"min_attendance" json:"minAttendance"`
+	ImageLink      *string    `db:"image_link" json:"imageLink"`
+	Status         int16      `db:"status" json:"status"`
+	Description    *string    `db:"description" json:"description"`
+	CreatedBy      string     `db:"created_by" json:"createdBy"`
+	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
+	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
+	Index          int16      `db:"index" json:"index"`
+}
+
+func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]GetSubjectsBySpecializationRow, error) {
 	rows, err := q.db.Query(ctx, getSubjectsBySpecialization, specializationID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Subject
+	var items []GetSubjectsBySpecializationRow
 	for rows.Next() {
-		var i Subject
+		var i GetSubjectsBySpecializationRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Code,
@@ -91,6 +117,7 @@ func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializatio
 			&i.UpdatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Index,
 		); err != nil {
 			return nil, err
 		}

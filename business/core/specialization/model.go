@@ -35,7 +35,12 @@ type UpdateSpecialization struct {
 	Description string
 	TimeAmount  float64
 	Image       string
-	Subjects    []uuid.UUID
+	Subjects    []SpecSubject
+}
+
+type SpecSubject struct {
+	ID    uuid.UUID
+	Index int16
 }
 
 type Specialization struct {
@@ -48,13 +53,19 @@ type Specialization struct {
 }
 
 type Subject struct {
-	ID            uuid.UUID `json:"id"`
-	Name          string    `json:"name"`
-	Image         string    `json:"image"`
-	Code          string    `json:"code"`
-	LastUpdated   time.Time `json:"lastUpdated"`
-	Skills        []Skill   `json:"skills"`
-	TotalSessions int64     `json:"totalSessions"`
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	Image         string     `json:"image"`
+	Code          string     `json:"code"`
+	LastUpdated   *time.Time `json:"lastUpdated"`
+	Skills        []Skill    `json:"skills"`
+	Index         int16      `json:"index"`
+	MinPassGrade  float32    `json:"minPassGrade"`
+	MinAttendance float32    `json:"minAttendance"`
+	CreatedBy     string     `json:"createdBy"`
+	CreatedAt     time.Time  `json:"createdAt"`
+	UpdatedBy     *string    `json:"updatedBy"`
+	TotalSessions int64      `json:"totalSessions"`
 }
 
 type Skill struct {
@@ -69,18 +80,6 @@ func toCoreSkill(dbSkill sqlc.Skill) Skill {
 	}
 
 	return skill
-}
-
-func toCoreSubject(dbSubject sqlc.Subject) Subject {
-	subject := Subject{
-		ID:          dbSubject.ID,
-		Name:        dbSubject.Name,
-		Image:       *dbSubject.ImageLink,
-		Code:        dbSubject.Code,
-		LastUpdated: dbSubject.CreatedAt,
-	}
-
-	return subject
 }
 
 func toCoreSpecialization(dbSpec sqlc.Specialization) Specialization {

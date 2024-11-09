@@ -164,6 +164,7 @@ type SpecializationSubject struct {
 	ID               uuid.UUID `db:"id" json:"id"`
 	SpecializationID uuid.UUID `db:"specialization_id" json:"specializationId"`
 	SubjectID        uuid.UUID `db:"subject_id" json:"subjectId"`
+	Index            int16     `db:"index" json:"index"`
 	CreatedBy        string    `db:"created_by" json:"createdBy"`
 }
 
@@ -172,8 +173,8 @@ type Subject struct {
 	Code           string     `db:"code" json:"code"`
 	Name           string     `db:"name" json:"name"`
 	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
-	MinPassGrade   *float64   `db:"min_pass_grade" json:"minPassGrade"`
-	MinAttendance  *float64   `db:"min_attendance" json:"minAttendance"`
+	MinPassGrade   *float32   `db:"min_pass_grade" json:"minPassGrade"`
+	MinAttendance  *float32   `db:"min_attendance" json:"minAttendance"`
 	ImageLink      *string    `db:"image_link" json:"imageLink"`
 	Status         int16      `db:"status" json:"status"`
 	Description    *string    `db:"description" json:"description"`
