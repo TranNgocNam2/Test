@@ -5,7 +5,7 @@ CREATE table classes(
     program_id              uuid NOT NULL,
     password                text NOT NULL,
     name                    character varying(50) NOT NULL,
-    link                    character varying(100),
+    link                    text,
     start_date              timestamp,
     end_date                timestamp,
     status                  smallint NOT NULL DEFAULT 0,

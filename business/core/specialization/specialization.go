@@ -8,7 +8,6 @@ import (
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"bytes"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -59,7 +58,7 @@ func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) (uuid.UUID, e
 	return dbSpec.ID, nil
 }
 
-func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
+func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	dbSpec, err := c.queries.GetSpecializationById(ctx, id)
 	if err != nil {
 		return Details{}, model.ErrSpecNotFound
@@ -73,18 +72,33 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 
 	spec := toCoreSpecializationDetails(dbSpec)
 
-	dbSpecSubjects, err := c.queries.GetSubjectsBySpecialization(ctx, dbSpec.ID)
+	dbSubjects, err := c.queries.GetSubjectsBySpecialization(ctx, dbSpec.ID)
 	if err != nil {
 		return Details{}, model.ErrSubjectNotFound
 	}
-	if dbSpecSubjects != nil {
-		for _, dbSubject := range dbSpecSubjects {
+	if dbSubjects != nil {
+		for _, dbSubject := range dbSubjects {
 			totalSessions, err := c.queries.CountSessionsBySubjectId(ctx, dbSubject.ID)
 			if err != nil {
 				return Details{}, err
 			}
 
-			subject := toCoreSubject(dbSubject)
+			subject := Subject{
+				ID:            dbSubject.ID,
+				Name:          dbSubject.Name,
+				Image:         *dbSubject.ImageLink,
+				Code:          dbSubject.Code,
+				LastUpdated:   dbSubject.UpdatedAt,
+				Skills:        nil,
+				Index:         dbSubject.Index,
+				MinPassGrade:  *dbSubject.MinPassGrade,
+				MinAttendance: *dbSubject.MinAttendance,
+				CreatedBy:     dbSubject.CreatedBy,
+				CreatedAt:     dbSubject.CreatedAt,
+				UpdatedBy:     dbSubject.UpdatedBy,
+				TotalSessions: 0,
+			}
+
 			subject.TotalSessions = totalSessions
 			dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
 			if err != nil {
@@ -123,6 +137,9 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateSpec UpdateSpecializ
 	var dbUpdateSpecialization sqlc.UpdateSpecializationParams
 
 	if dbSpec.Status == Published {
+		if updateSpec.Status == 0 {
+			return model.ErrSpecStatusCannotBeDraft
+		}
 		dbUpdateSpecialization = sqlc.UpdateSpecializationParams{
 			ID:          id,
 			TimeAmount:  &updateSpec.TimeAmount,
@@ -288,28 +305,28 @@ func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
 	return count.Count
 }
 
-func processSpecSubjects(ctx *gin.Context, qtx *sqlc.Queries, specializationID uuid.UUID, subjectIDs []uuid.UUID, staffID string) error {
-	if subjectIDs != nil {
-		err := qtx.DeleteSpecializationSubjects(ctx, specializationID)
-		if err != nil {
-			return err
-		}
+func processSpecSubjects(ctx *gin.Context, qtx *sqlc.Queries, specializationId uuid.UUID, specSubjects []SpecSubject, staffID string) error {
+	err := qtx.DeleteSpecializationSubjects(ctx, specializationId)
+	if err != nil {
+		return err
+	}
 
-		dbSubjects, err := qtx.GetSubjectsByIds(ctx, subjectIDs)
-		fmt.Println(err)
-		if err != nil || (len(dbSubjects) != len(subjectIDs)) {
+	for _, specSubject := range specSubjects {
+		if _, err := qtx.GetSubjectById(ctx, specSubject.ID); err != nil {
 			return model.ErrSubjectNotFound
 		}
 
-		specSubjects := sqlc.CreateSpecializationSubjectsParams{
-			SpecializationID: specializationID,
-			SubjectIds:       subjectIDs,
+		dbSpecSubject := sqlc.CreateSpecializationSubjectParams{
+			SpecializationID: specializationId,
+			SubjectID:        specSubject.ID,
+			Index:            specSubject.Index,
 			CreatedBy:        staffID,
 		}
-		err = qtx.CreateSpecializationSubjects(ctx, specSubjects)
+		err = qtx.CreateSpecializationSubject(ctx, dbSpecSubject)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
