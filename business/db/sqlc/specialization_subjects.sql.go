@@ -48,6 +48,19 @@ func (q *Queries) DeleteSpecializationSubjects(ctx context.Context, specializati
 	return err
 }
 
+const getSubjectIdsBySpecialization = `-- name: GetSubjectIdsBySpecialization :one
+SELECT array_agg(subject_id)::uuid[] as subject_ids
+FROM specialization_subjects
+WHERE specialization_id = $1::uuid
+`
+
+func (q *Queries) GetSubjectIdsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getSubjectIdsBySpecialization, specializationID)
+	var subject_ids []uuid.UUID
+	err := row.Scan(&subject_ids)
+	return subject_ids, err
+}
+
 const getSubjectsBySpecialization = `-- name: GetSubjectsBySpecialization :many
 SELECT subjects.id, subjects.code, subjects.name, subjects.time_per_session, subjects.min_pass_grade, subjects.min_attendance, subjects.image_link, subjects.status, subjects.description, subjects.created_by, subjects.updated_by, subjects.created_at, subjects.updated_at
 FROM specialization_subjects

@@ -115,6 +115,11 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 }
 
 func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []Class {
+	_, err := middleware.AuthorizeStaff(ctx, c.queries)
+	if err != nil {
+		return nil
+	}
+
 	if err := filter.Validate(); err != nil {
 		return nil
 	}
@@ -136,7 +141,7 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 	c.logger.Info(buf.String())
 
 	var dbClasses []sqlc.Class
-	err := pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbClasses)
+	err = pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbClasses)
 	if err != nil {
 		c.logger.Error(err.Error())
 		return nil
@@ -185,6 +190,62 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 		classes = append(classes, class)
 	}
 
+	return classes
+}
+
+func (c *Core) QueryByLearner(ctx *gin.Context) []Class {
+	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
+	if err != nil {
+		return nil
+	}
+
+	dbClasses, err := c.queries.GetClassesByLearnerId(ctx, learner.ID)
+	if err != nil {
+		return nil
+	}
+
+	if dbClasses == nil {
+		return nil
+	}
+
+	var classes []Class
+
+	for _, dbClass := range dbClasses {
+		class := Class{
+			ID:        dbClass.ID,
+			Name:      dbClass.Name,
+			Code:      dbClass.Code,
+			StartDate: dbClass.StartDate,
+			EndDate:   dbClass.EndDate,
+			Status:    dbClass.Status,
+		}
+
+		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
+		class.Program = toCoreProgram(dbProgram)
+
+		dbSubject, _ := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
+		class.Subject = toCoreSubject(dbSubject)
+
+		dbTeachers, err := c.queries.GetTeachersByClassId(ctx, dbClass.ID)
+		if err != nil {
+			return nil
+		}
+		class.Teachers = toCoreTeacherSlice(dbTeachers)
+
+		dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
+		if err != nil {
+			return nil
+		}
+		class.Skills = toCoreSkillSlice(dbSkills)
+
+		totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
+		if err != nil {
+			return nil
+		}
+		class.TotalLearners = totalLearners
+
+		classes = append(classes, class)
+	}
 	return classes
 }
 

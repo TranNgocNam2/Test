@@ -4,9 +4,11 @@ CREATE table certificates(
     specialization_id   uuid,
     subject_id          uuid,
     name                character varying(50) NOT NULL,
-    type                int NOT NULL,
-    status              int NOT NULL,
-    created_at          timestamp NOT NULL,
+--     type                int NOT NULL DEFAULT 0,
+    status              int NOT NULL DEFAULT 0,
+    created_at          timestamp NOT NULL DEFAULT now(),
+    updated_at          timestamp,
+    updated_by          character varying(50),
 
     CONSTRAINT fk_certificates_learner
         FOREIGN KEY (learner_id)
@@ -16,11 +18,16 @@ CREATE table certificates(
             REFERENCES specializations(id) ON DELETE CASCADE,
     CONSTRAINT fk_certificates_subject
         FOREIGN KEY (subject_id)
-            REFERENCES subjects(id) ON DELETE CASCADE
+            REFERENCES subjects(id) ON DELETE CASCADE,
 
---     CONSTRAINT check_type_specialization_subject
---         CHECK (
---             (type = 1 AND specialization_id IS NOT NULL AND subject_id IS NULL) OR
---             (type = 2 AND subject_id IS NOT NULL AND specialization_id IS NULL)
---             )
+    CONSTRAINT fk_certificates_updated_by
+        FOREIGN KEY (updated_by)
+            REFERENCES users(id) ON DELETE CASCADE,
+
+
+    CONSTRAINT check_type_specialization_subject
+        CHECK (
+            (specialization_id IS NOT NULL AND subject_id IS NULL) OR
+            (subject_id IS NOT NULL AND specialization_id IS NULL)
+            )
 );

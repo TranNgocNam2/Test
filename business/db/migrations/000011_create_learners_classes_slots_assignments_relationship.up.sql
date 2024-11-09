@@ -15,7 +15,7 @@ CREATE table learner_attendances(
     id                  uuid PRIMARY KEY,
     class_learner_id    uuid NOT NULL,
     slot_id             uuid NOT NULL,
-    status              int NOT NULL,
+    status              int NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_learner_attendances_class_learners
         FOREIGN KEY (class_learner_id) REFERENCES class_learners(id) ON DELETE CASCADE,

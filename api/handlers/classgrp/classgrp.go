@@ -108,6 +108,13 @@ func (h *Handlers) GetClassesByManager() gin.HandlerFunc {
 	}
 }
 
+func (h *Handlers) GetClassesByLearner() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		classes := h.class.QueryByLearner(ctx)
+		web.Respond(ctx, classes, http.StatusOK, nil)
+	}
+}
+
 func (h *Handlers) UpdateClassTeacher() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))

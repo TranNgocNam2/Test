@@ -20,3 +20,6 @@ WHERE id = sqlc.arg(id);
 
 -- name: DeleteSpecialization :exec
 DELETE FROM specializations WHERE id = sqlc.arg(id) AND status = 0;
+
+-- name: GetPublishedSpecializationById :one
+SELECT * FROM specializations WHERE id = sqlc.arg(id) AND status = 1;

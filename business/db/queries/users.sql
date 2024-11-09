@@ -35,3 +35,7 @@ UPDATE users
 SET verified_by = sqlc.arg(verified_by),
     status = sqlc.arg(status)
 WHERE id = sqlc.arg(id);
+
+-- name: GetVerifiedLearnerById :one
+SELECT * FROM users
+WHERE id = sqlc.arg(id) AND auth_role = 0 AND status = 1;
