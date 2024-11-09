@@ -131,6 +131,7 @@ func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlot) ([]class.UpdateSlot,
 			StartTime: startTime,
 			EndTime:   endTime,
 			TeacherId: slot.TeacherId,
+			Index:     int32(slot.Index),
 		}
 
 		updateSlots = append(updateSlots, updateSlot)
@@ -140,13 +141,20 @@ func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlot) ([]class.UpdateSlot,
 }
 
 func toCoreCheckTeacherTime(checkTeacherTime payload.CheckTeacherTime) (class.CheckTeacherTime, error) {
-	classId, err := uuid.Parse(checkTeacherTime.ClassId)
+	startTime, err := time.Parse(time.DateTime, checkTeacherTime.StartTime)
 	if err != nil {
-		return class.CheckTeacherTime{}, model.ErrClassIdInvalid
+		return class.CheckTeacherTime{}, model.ErrInvalidTime
 	}
+
+	endTime, err := time.Parse(time.DateTime, checkTeacherTime.EndTime)
+	if err != nil {
+		return class.CheckTeacherTime{}, model.ErrInvalidTime
+	}
+
 	teacherTime := class.CheckTeacherTime{
-		TeacherId: &checkTeacherTime.TeacherId,
-		ClassId:   classId,
+		TeacherId: checkTeacherTime.TeacherId,
+		StartTime: startTime,
+		EndTime:   endTime,
 	}
 
 	return teacherTime, nil

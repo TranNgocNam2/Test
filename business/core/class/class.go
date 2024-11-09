@@ -169,12 +169,6 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 		dbSubject, _ := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
 		class.Subject = toCoreSubject(dbSubject)
 
-		dbTeachers, err := c.queries.GetTeachersByClassId(ctx, dbClass.ID)
-		if err != nil {
-			return nil
-		}
-		class.Teachers = toCoreTeacherSlice(dbTeachers)
-
 		dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
 		if err != nil {
 			return nil
@@ -225,12 +219,6 @@ func (c *Core) QueryByLearner(ctx *gin.Context) []Class {
 
 		dbSubject, _ := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
 		class.Subject = toCoreSubject(dbSubject)
-
-		dbTeachers, err := c.queries.GetTeachersByClassId(ctx, dbClass.ID)
-		if err != nil {
-			return nil
-		}
-		class.Teachers = toCoreTeacherSlice(dbTeachers)
 
 		dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
 		if err != nil {
@@ -303,11 +291,6 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	}
 	class.Program = toCoreProgram(dbProgram)
 
-	dbTeachers, err := c.queries.GetTeachersByClassId(ctx, dbClass.ID)
-	if err == nil {
-		class.Teachers = toCoreTeacherSlice(dbTeachers)
-	}
-
 	var slots []Slot
 	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
 	for _, dbSlot := range dbSlots {
@@ -335,50 +318,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	return class, nil
 }
 
-func (c *Core) UpdateClassTeacher(ctx *gin.Context, id uuid.UUID, teacherIds []string) error {
-	staffID, err := middleware.AuthorizeStaff(ctx, c.queries)
-	if err != nil {
-		return err
-	}
-
-	dbClass, err := c.queries.GetClassById(ctx, id)
-	if err != nil {
-		return model.ErrClassNotFound
-	}
-
-	for _, teacherId := range teacherIds {
-		_, err = c.queries.GetTeacherById(ctx, teacherId)
-		if err != nil {
-			return model.ErrTeacherNotFound
-		}
-	}
-
-	tx, err := c.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-	qtx := c.queries.WithTx(tx)
-
-	classTeacher := sqlc.AddTeacherToClassParams{
-		TeacherIds: teacherIds,
-		ClassID:    dbClass.ID,
-		CreatedBy:  staffID,
-	}
-
-	if err = qtx.RemoveTeacherFromClass(ctx, dbClass.ID); err != nil {
-		return err
-	}
-
-	if err = qtx.AddTeacherToClass(ctx, classTeacher); err != nil {
-		return err
-	}
-
-	tx.Commit(ctx)
-	return nil
-}
-
-func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot) error {
+func (c *Core) UpdateSlots(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, status int) error {
 	_, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
@@ -389,13 +329,15 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 		return model.ErrClassNotFound
 	}
 
+	currentTime, _ := time.Parse(time.DateTime, time.Now().Format(time.DateTime))
+
 	dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
 	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
 		return err
 	}
 
-	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
-	if len(dbSlots) != len(updateSlots) {
+	slotCount, _ := c.queries.CountSlotsByClassId(ctx, dbClass.ID)
+	if int(slotCount) != len(updateSlots) {
 		return model.ErrInvalidSlotCount
 	}
 
@@ -412,43 +354,52 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 	qtx := c.queries.WithTx(tx)
 
 	for _, updateSlot := range updateSlots {
-		dbSlot, err := c.queries.GetSlotById(ctx, updateSlot.ID)
+		dbSlot, err := c.queries.GetSlotByIdAndIndex(ctx,
+			sqlc.GetSlotByIdAndIndexParams{
+				ID:    updateSlot.ID,
+				Index: updateSlot.Index,
+			})
 		if err != nil {
 			return model.ErrSlotNotFound
+		}
+
+		if dbSlot.StartTime != nil && dbSlot.StartTime.Before(currentTime) {
+			updateSlot.StartTime = *dbSlot.StartTime
+			updateSlot.EndTime = *dbSlot.EndTime
+			updateSlot.TeacherId = *dbSlot.TeacherID
+		}
+
+		if dbSlot.StartTime.After(currentTime) {
+			isTeacherAvailable, err := c.IsTeacherAvailable(ctx, CheckTeacherTime{
+				TeacherId: updateSlot.TeacherId,
+				StartTime: updateSlot.StartTime,
+				EndTime:   updateSlot.EndTime,
+			})
+			if err != nil || !isTeacherAvailable {
+				return model.ErrTeacherNotAvailable
+			}
 		}
 
 		slot := sqlc.UpdateSlotParams{
 			ID:        dbSlot.ID,
 			StartTime: &updateSlot.StartTime,
 			EndTime:   &updateSlot.EndTime,
-		}
-
-		if updateSlot.TeacherId != "" {
-			err = c.validateTeacherInClass(ctx, dbClass.ID, updateSlot.TeacherId)
-			if err != nil {
-				return err
-			}
-			slot.TeacherID = &updateSlot.TeacherId
+			TeacherID: &updateSlot.TeacherId,
 		}
 
 		if err = qtx.UpdateSlot(ctx, slot); err != nil {
 			return err
 		}
 	}
-	classStatus := INCOMPLETE
-	totalSlots, _ := qtx.CountSlotsHaveTeacherByClassId(ctx, dbClass.ID)
-	if int(totalSlots) == len(updateSlots) {
-		classStatus = COMPLETED
-	}
 
-	updateClass := sqlc.UpdateActiveClassParams{
+	updateClass := sqlc.UpdateClassStatusAndDateParams{
 		ID:        dbClass.ID,
 		StartDate: dbClass.StartDate,
 		EndDate:   dbClass.EndDate,
-		Status:    int16(classStatus),
+		Status:    int16(status),
 	}
 
-	err = qtx.UpdateActiveClass(ctx, updateClass)
+	err = qtx.UpdateClassStatusAndDate(ctx, updateClass)
 	if err != nil {
 		return err
 	}
@@ -516,45 +467,23 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 	return nil
 }
 
-func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime) (map[uuid.UUID]bool, error) {
-	_, err := middleware.AuthorizeStaff(ctx, c.queries)
+func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime) (bool, error) {
+	teacher, err := c.queries.GetTeacherById(ctx, teacherTime.TeacherId)
 	if err != nil {
-		return nil, err
+		return false, model.ErrTeacherNotFound
+	}
+	checkCondition := sqlc.CheckTeacherTimeOverlapParams{
+		TeacherID: &teacher.ID,
+		EndTime:   &teacherTime.EndTime,
+		StartTime: &teacherTime.StartTime,
 	}
 
-	dbClass, err := c.queries.GetClassById(ctx, teacherTime.ClassId)
+	status, err := c.queries.CheckTeacherTimeOverlap(ctx, checkCondition)
 	if err != nil {
-		return nil, model.ErrClassNotFound
-	}
-	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
-	availabilityMap := make(map[uuid.UUID]bool)
-
-	for _, dbSlot := range dbSlots {
-		checkCondition := sqlc.CheckTeacherTimeOverlapParams{
-			TeacherID: teacherTime.TeacherId,
-			EndTime:   dbSlot.EndTime,
-			StartTime: dbSlot.StartTime,
-		}
-		status, err := c.queries.CheckTeacherTimeOverlap(ctx, checkCondition)
-		if err != nil {
-			return nil, err
-		}
-		availabilityMap[dbSlot.ID] = !status
+		return false, err
 	}
 
-	return availabilityMap, nil
-}
-
-func (c *Core) validateTeacherInClass(ctx *gin.Context, classID uuid.UUID, teacherID string) error {
-	classTeacher := sqlc.CheckTeacherInClassParams{
-		TeacherID: teacherID,
-		ClassID:   classID,
-	}
-	isTeacherInClass, err := c.queries.CheckTeacherInClass(ctx, classTeacher)
-	if err != nil || !isTeacherInClass {
-		return model.ErrTeacherIsNotInClass
-	}
-	return nil
+	return status, nil
 }
 
 func validateSlotTimes(dbClass sqlc.Class, dbProgram sqlc.Program, updateSlots []UpdateSlot) error {

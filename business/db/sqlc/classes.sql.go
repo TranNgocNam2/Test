@@ -127,31 +127,6 @@ func (q *Queries) SoftDeleteClass(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const updateActiveClass = `-- name: UpdateActiveClass :exec
-UPDATE classes
-SET status = $1,
-    start_date = $2,
-    end_date = $3
-WHERE id = $4::uuid
-`
-
-type UpdateActiveClassParams struct {
-	Status    int16      `db:"status" json:"status"`
-	StartDate *time.Time `db:"start_date" json:"startDate"`
-	EndDate   *time.Time `db:"end_date" json:"endDate"`
-	ID        uuid.UUID  `db:"id" json:"id"`
-}
-
-func (q *Queries) UpdateActiveClass(ctx context.Context, arg UpdateActiveClassParams) error {
-	_, err := q.db.Exec(ctx, updateActiveClass,
-		arg.Status,
-		arg.StartDate,
-		arg.EndDate,
-		arg.ID,
-	)
-	return err
-}
-
 const updateClass = `-- name: UpdateClass :exec
 UPDATE classes
 SET name = $1,
@@ -172,6 +147,31 @@ func (q *Queries) UpdateClass(ctx context.Context, arg UpdateClassParams) error 
 		arg.Name,
 		arg.Code,
 		arg.Password,
+		arg.ID,
+	)
+	return err
+}
+
+const updateClassStatusAndDate = `-- name: UpdateClassStatusAndDate :exec
+UPDATE classes
+SET status = $1,
+    start_date = $2,
+    end_date = $3
+WHERE id = $4::uuid
+`
+
+type UpdateClassStatusAndDateParams struct {
+	Status    int16      `db:"status" json:"status"`
+	StartDate *time.Time `db:"start_date" json:"startDate"`
+	EndDate   *time.Time `db:"end_date" json:"endDate"`
+	ID        uuid.UUID  `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateClassStatusAndDate(ctx context.Context, arg UpdateClassStatusAndDateParams) error {
+	_, err := q.db.Exec(ctx, updateClassStatusAndDate,
+		arg.Status,
+		arg.StartDate,
+		arg.EndDate,
 		arg.ID,
 	)
 	return err

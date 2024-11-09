@@ -18,7 +18,7 @@ func ClassRoutes(router *gin.Engine, app *app.Application) {
 		classes.GET("/learners", handlers.GetClassesByLearner())
 		classes.DELETE("/:id", handlers.DeleteClass())
 		classes.PUT("/:id/teachers", handlers.UpdateClassTeacher())
-		classes.PUT("/:id/slots", handlers.UpdateClassSlot())
-		classes.POST("/slots/teachers", handlers.CheckTeacherConflict())
+		classes.PUT("/:id/slots", handlers.UpdateClassSlots())
+		classes.POST("/slots/teachers", handlers.CheckTeacherAvailable())
 	}
 }

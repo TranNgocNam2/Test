@@ -25,16 +25,18 @@ type UpdateClassTeacher struct {
 }
 
 type UpdateSlot struct {
-	Slots []struct {
+	Status *int `json:"status" validate:"required,gte=0,lte=1"`
+	Slots  []struct {
 		ID        string `json:"id" validate:"required"`
 		StartTime string `json:"startTime" validate:"required"`
 		EndTime   string `json:"endTime" validate:"required"`
-		TeacherId string `json:"teacherId"`
+		TeacherId string `json:"teacherId" validate:"required"`
 		Index     int    `json:"index" validate:"required"`
 	} `json:"slots" validate:"required"`
 }
 
 type CheckTeacherTime struct {
 	TeacherId string `json:"teacherId" validate:"required"`
-	ClassId   string `json:"classId" validate:"required"`
+	StartTime string `json:"startTime" validate:"required"`
+	EndTime   string `json:"endTime" validate:"required"`
 }

@@ -35,6 +35,17 @@ func (q *Queries) CheckTeacherTimeOverlap(ctx context.Context, arg CheckTeacherT
 	return overlap, err
 }
 
+const countSlotsByClassId = `-- name: CountSlotsByClassId :one
+SELECT COUNT(*) FROM slots WHERE class_id = $1
+`
+
+func (q *Queries) CountSlotsByClassId(ctx context.Context, classID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countSlotsByClassId, classID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countSlotsHaveTeacherByClassId = `-- name: CountSlotsHaveTeacherByClassId :one
 SELECT COUNT(*) FROM slots WHERE class_id = $1 AND teacher_id IS NOT NULL
 `
@@ -88,6 +99,31 @@ SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attend
 
 func (q *Queries) GetSlotById(ctx context.Context, id uuid.UUID) (Slot, error) {
 	row := q.db.QueryRow(ctx, getSlotById, id)
+	var i Slot
+	err := row.Scan(
+		&i.ID,
+		&i.SessionID,
+		&i.ClassID,
+		&i.StartTime,
+		&i.EndTime,
+		&i.Index,
+		&i.TeacherID,
+		&i.AttendanceCode,
+	)
+	return i, err
+}
+
+const getSlotByIdAndIndex = `-- name: GetSlotByIdAndIndex :one
+SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots WHERE id = $1 AND index = $2
+`
+
+type GetSlotByIdAndIndexParams struct {
+	ID    uuid.UUID `db:"id" json:"id"`
+	Index int32     `db:"index" json:"index"`
+}
+
+func (q *Queries) GetSlotByIdAndIndex(ctx context.Context, arg GetSlotByIdAndIndexParams) (Slot, error) {
+	row := q.db.QueryRow(ctx, getSlotByIdAndIndex, arg.ID, arg.Index)
 	var i Slot
 	err := row.Scan(
 		&i.ID,
