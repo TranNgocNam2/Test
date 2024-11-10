@@ -318,7 +318,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	return class, nil
 }
 
-func (c *Core) UpdateSlots(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, status int) error {
+func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, status int) error {
 	_, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
@@ -476,6 +476,7 @@ func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime
 		TeacherID: &teacher.ID,
 		EndTime:   &teacherTime.EndTime,
 		StartTime: &teacherTime.StartTime,
+		SlotID:    teacherTime.SlotId,
 	}
 
 	status, err := c.queries.CheckTeacherTimeOverlap(ctx, checkCondition)
@@ -483,7 +484,7 @@ func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime
 		return false, err
 	}
 
-	return status, nil
+	return !status, nil
 }
 
 func validateSlotTimes(dbClass sqlc.Class, dbProgram sqlc.Program, updateSlots []UpdateSlot) error {

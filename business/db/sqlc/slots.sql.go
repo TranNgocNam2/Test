@@ -17,19 +17,26 @@ SELECT EXISTS (
     SELECT 1
     FROM slots
     WHERE teacher_id = $1
-      AND start_time < $2
-      AND end_time > $3
+      AND id <> $2
+      AND start_time < $3
+      AND end_time > $4
 ) AS overlap
 `
 
 type CheckTeacherTimeOverlapParams struct {
 	TeacherID *string    `db:"teacher_id" json:"teacherId"`
-	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	SlotID    uuid.UUID  `db:"slot_id" json:"slotId"`
 	StartTime *time.Time `db:"start_time" json:"startTime"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
 }
 
 func (q *Queries) CheckTeacherTimeOverlap(ctx context.Context, arg CheckTeacherTimeOverlapParams) (bool, error) {
-	row := q.db.QueryRow(ctx, checkTeacherTimeOverlap, arg.TeacherID, arg.EndTime, arg.StartTime)
+	row := q.db.QueryRow(ctx, checkTeacherTimeOverlap,
+		arg.TeacherID,
+		arg.SlotID,
+		arg.StartTime,
+		arg.EndTime,
+	)
 	var overlap bool
 	err := row.Scan(&overlap)
 	return overlap, err

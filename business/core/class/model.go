@@ -99,6 +99,7 @@ type Session struct {
 
 type CheckTeacherTime struct {
 	TeacherId string
+	SlotId    uuid.UUID
 	StartTime time.Time
 	EndTime   time.Time
 }

@@ -21,8 +21,9 @@ SELECT EXISTS (
     SELECT 1
     FROM slots
     WHERE teacher_id = sqlc.arg(teacher_id)
-      AND start_time < sqlc.arg(end_time)
-      AND end_time > sqlc.arg(start_time)
+      AND id <> sqlc.arg(slot_id)
+      AND start_time < sqlc.arg(start_time)
+      AND end_time > sqlc.arg(end_time)
 ) AS overlap;
 
 -- name: GetSlotsByClassId :many

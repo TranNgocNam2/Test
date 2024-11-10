@@ -94,13 +94,6 @@ func validateUpdateClassRequest(updateClassRequest payload.UpdateClass) error {
 	return nil
 }
 
-func validateUpdateClassTeacherRequest(updateClassTeacherRequest payload.UpdateClassTeacher) error {
-	if err := validate.Check(updateClassTeacherRequest); err != nil {
-		return err
-	}
-	return nil
-}
-
 func validateUpdateSlotRequest(updateSlotRequest payload.UpdateSlot) error {
 	if err := validate.Check(updateSlotRequest); err != nil {
 		return err
@@ -112,12 +105,12 @@ func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlot) ([]class.UpdateSlot,
 	var updateSlots []class.UpdateSlot
 	for _, slot := range updateSlotRequest.Slots {
 		startTime, err := time.Parse(time.DateTime, slot.StartTime)
-		if err != nil || startTime.Before(time.Now()) {
+		if err != nil {
 			return nil, model.ErrInvalidTime
 		}
 
 		endTime, err := time.Parse(time.DateTime, slot.EndTime)
-		if err != nil || endTime.Before(startTime) {
+		if err != nil {
 			return nil, model.ErrInvalidTime
 		}
 

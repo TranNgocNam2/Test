@@ -37,6 +37,7 @@ type UpdateSlot struct {
 
 type CheckTeacherTime struct {
 	TeacherId string `json:"teacherId" validate:"required"`
+	SlotId    string `json:"slotId" validate:"required"`
 	StartTime string `json:"startTime" validate:"required"`
 	EndTime   string `json:"endTime" validate:"required"`
 }

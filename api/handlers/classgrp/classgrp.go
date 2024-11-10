@@ -115,47 +115,6 @@ func (h *Handlers) GetClassesByLearner() gin.HandlerFunc {
 	}
 }
 
-func (h *Handlers) UpdateClassTeacher() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		id, err := uuid.Parse(ctx.Param("id"))
-		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
-			return
-		}
-
-		var updateClassTeacher payload.UpdateClassTeacher
-		if err := web.Decode(ctx, &updateClassTeacher); err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
-			return
-		}
-
-		if err := validateUpdateClassTeacherRequest(updateClassTeacher); err != nil {
-			web.Respond(ctx, err, http.StatusBadRequest, err)
-			return
-		}
-
-		err = h.class.UpdateClassTeacher(ctx, id, updateClassTeacher.TeacherIds)
-		if err != nil {
-			switch {
-			case
-				errors.Is(err, model.ErrClassNotFound),
-				errors.Is(err, model.ErrTeacherNotFound):
-				web.Respond(ctx, nil, http.StatusNotFound, err)
-				return
-			case
-				errors.Is(err, middleware.ErrInvalidUser):
-				web.Respond(ctx, nil, http.StatusUnauthorized, err)
-				return
-			default:
-				web.Respond(ctx, nil, http.StatusInternalServerError, err)
-				return
-			}
-		}
-
-		web.Respond(ctx, nil, http.StatusOK, nil)
-	}
-}
-
 func (h *Handlers) GetClassById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
@@ -254,7 +213,7 @@ func (h *Handlers) UpdateClass() gin.HandlerFunc {
 	}
 }
 
-func (h *Handlers) UpdateClassSlots() gin.HandlerFunc {
+func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
@@ -279,7 +238,7 @@ func (h *Handlers) UpdateClassSlots() gin.HandlerFunc {
 			return
 		}
 
-		err = h.class.UpdateSlots(ctx, id, updateSlots, *updateSlot.Status)
+		err = h.class.UpdateSlot(ctx, id, updateSlots, *updateSlot.Status)
 		if err != nil {
 			switch {
 			case
