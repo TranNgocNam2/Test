@@ -392,6 +392,10 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 		}
 	}
 
+	if dbClass.Status == COMPLETED {
+		status = COMPLETED
+	}
+
 	updateClass := sqlc.UpdateClassStatusAndDateParams{
 		ID:        dbClass.ID,
 		StartDate: dbClass.StartDate,
