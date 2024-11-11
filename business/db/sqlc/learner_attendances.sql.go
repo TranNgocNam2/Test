@@ -26,6 +26,36 @@ func (q *Queries) GenerateLearnerAttendance(ctx context.Context, arg GenerateLea
 	return err
 }
 
+const getAttendanceByClassLearner = `-- name: GetAttendanceByClassLearner :many
+SELECT id, class_learner_id, slot_id, status FROM learner_attendances
+    WHERE class_learner_id = $1::uuid
+`
+
+func (q *Queries) GetAttendanceByClassLearner(ctx context.Context, classLearnerID uuid.UUID) ([]LearnerAttendance, error) {
+	rows, err := q.db.Query(ctx, getAttendanceByClassLearner, classLearnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LearnerAttendance
+	for rows.Next() {
+		var i LearnerAttendance
+		if err := rows.Scan(
+			&i.ID,
+			&i.ClassLearnerID,
+			&i.SlotID,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLearnerAttendanceByClassLearnerAndSlot = `-- name: GetLearnerAttendanceByClassLearnerAndSlot :one
 SELECT id, class_learner_id, slot_id, status FROM learner_attendances
     WHERE class_learner_id = $1::uuid

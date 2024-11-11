@@ -11,3 +11,7 @@ WHERE id = sqlc.arg(id)::uuid;
 SELECT * FROM learner_attendances
     WHERE class_learner_id = sqlc.arg(class_learner_id)::uuid
     AND slot_id = sqlc.arg(slot_id)::uuid;
+
+-- name: GetAttendanceByClassLearner :many
+SELECT * FROM learner_attendances
+    WHERE class_learner_id = sqlc.arg(class_learner_id)::uuid;

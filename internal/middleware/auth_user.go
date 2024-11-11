@@ -32,3 +32,28 @@ func AuthorizeVerifiedLearner(ctx *gin.Context, queries *sqlc.Queries) (sqlc.Use
 
 	return learner, nil
 }
+
+func AuthorizeTeacher(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return "", ErrInvalidUser
+	}
+
+	teacher, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil || teacher.AuthRole != role.TEACHER {
+		return "", ErrInvalidUser
+	}
+
+	return teacher.ID, nil
+}
+func AuthorizeWithoutLearner(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return "", ErrInvalidUser
+	}
+
+	user, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil || user.AuthRole == role.LEARNER {
+		return "", ErrInvalidUser
+	}
+
+	return user.ID, nil
+}

@@ -71,7 +71,7 @@ type LearnerAssignment struct {
 	ID             uuid.UUID `db:"id" json:"id"`
 	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
 	AssignmentID   uuid.UUID `db:"assignment_id" json:"assignmentId"`
-	Grade          float64   `db:"grade" json:"grade"`
+	Grade          float32   `db:"grade" json:"grade"`
 }
 
 type LearnerAttendance struct {

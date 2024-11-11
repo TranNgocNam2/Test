@@ -29,7 +29,7 @@ CREATE table learner_assignments(
     id                  uuid PRIMARY KEY,
     class_learner_id     uuid NOT NULL,
     assignment_id       uuid NOT NULL,
-    grade               float NOT NULL,
+    grade               real NOT NULL,
 
     CONSTRAINT fk_learner_assignments_class_learners
         FOREIGN KEY (class_learner_id)

@@ -4,6 +4,8 @@ import (
 	"Backend/business/core/learner"
 	"Backend/internal/common/model"
 	"Backend/internal/middleware"
+	"Backend/internal/order"
+	"Backend/internal/page"
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
 	"github.com/gin-gonic/gin"
@@ -144,5 +146,43 @@ func (h *Handlers) SubmitAttendance() gin.HandlerFunc {
 		}
 
 		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) GetLearnerClasses() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		classId, err := uuid.Parse(ctx.Param("classId"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		pageInfo, err := page.Parse(ctx)
+		if err != nil {
+			pageInfo = page.Page{
+				Number: 1,
+				Size:   10,
+			}
+		}
+
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = learner.QueryFilter{
+				FullName:   nil,
+				SchoolName: nil,
+			}
+		}
+
+		orderBy, err := parseOrder(ctx)
+		if err != nil {
+			orderBy = order.NewBy(filterByName, order.ASC)
+		}
+
+		learners := h.learner.GetLearnersInClass(ctx, classId, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		total := h.learner.CountLearnersInClass(ctx, classId, filter)
+		result := page.NewPageResponse(learners, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, result, http.StatusOK, nil)
+
 	}
 }
