@@ -186,3 +186,42 @@ func (h *Handlers) GetLearnerClasses() gin.HandlerFunc {
 
 	}
 }
+
+func (h *Handlers) GetAttendanceRecords() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		slotId, err := uuid.Parse(ctx.Param("slotId"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidSlotId)
+			return
+		}
+
+		pageInfo, err := page.Parse(ctx)
+		if err != nil {
+			pageInfo = page.Page{
+				Number: 1,
+				Size:   10,
+			}
+		}
+
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = learner.QueryFilter{
+				FullName:   nil,
+				SchoolName: nil,
+				Status:     nil,
+			}
+		}
+
+		orderBy, err := parseOrder(ctx)
+		if err != nil {
+			orderBy = order.NewBy(filterByName, order.ASC)
+		}
+
+		learners := h.learner.GetLearnersAttendance(ctx, slotId, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		total := h.learner.CountLearnersAttendance(ctx, slotId, filter)
+		result := page.NewPageResponse(learners, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, result, http.StatusOK, nil)
+
+	}
+}

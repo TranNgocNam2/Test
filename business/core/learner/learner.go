@@ -224,8 +224,8 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 	}
 
 	const q = `SELECT
-						u.id, u.full_name, u.email, u.phone, u.gender, u.profile_photo, 
-						u.school_id, cl.id AS class_learner_id
+						u.id, u.full_name, u.email, u.phone, u.gender, u.profile_photo, u.status AS status, 
+						s.id AS school_id, s.name AS school_name, cl.id AS class_learner_id
 			FROM users u
 				JOIN class_learners cl ON u.id = cl.learner_id
 				JOIN classes c ON cl.class_id = c.id
@@ -295,6 +295,102 @@ func (c *Core) CountLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter 
  							JOIN classes c ON cl.class_id = c.id
 							JOIN schools s ON s.id = u.school_id
 								WHERE c.id = :class_id`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf, true)
+
+	var count struct {
+		Count int `db:"count"`
+	}
+
+	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	return count.Count
+}
+
+func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []AttendanceRecord {
+	_, err := middleware.AuthorizeWithoutLearner(ctx, c.queries)
+	if err != nil {
+		return nil
+	}
+
+	if err := filter.Validate(); err != nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"slot_id":       slotId,
+		"offset":        (pageNumber - 1) * rowsPerPage,
+		"rows_per_page": rowsPerPage,
+	}
+
+	const q = `SELECT
+						u.id, u.full_name, s.id AS school_id, s.name AS school_name, 
+						cl.id AS class_learner_id, la.status AS status
+			FROM users u
+				JOIN class_learners cl ON u.id = cl.learner_id
+				JOIN slots sl ON cl.class_id = s.class_id
+				JOIN schools s ON s.id = u.school_id
+				JOIN learner_attendances la ON la.class_learner_id = cl.id AND la.slot_id = sl.id
+					WHERE sl.id = :slot_id`
+
+	if err := filter.Validate(); err != nil {
+		return nil
+	}
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf, true)
+	buf.WriteString(orderByClause(orderBy))
+	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
+	c.logger.Info(buf.String())
+	var dbAttendanceRecords []sqlc.GetLearnerAttendanceBySlotRow
+	err = pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbAttendanceRecords)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil
+	}
+
+	if dbAttendanceRecords == nil {
+		return nil
+	}
+	var attendanceRecords []AttendanceRecord
+	for _, dbAttendanceRecord := range dbAttendanceRecords {
+		attendanceRecord := AttendanceRecord{
+			ID:       dbAttendanceRecord.ID,
+			FullName: *dbAttendanceRecord.FullName,
+			School: School{
+				ID:   dbAttendanceRecord.SchoolID,
+				Name: dbAttendanceRecord.SchoolName,
+			},
+			Status: dbAttendanceRecord.Status,
+		}
+		attendanceRecords = append(attendanceRecords, attendanceRecord)
+	}
+	return attendanceRecords
+}
+
+func (c *Core) CountLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter QueryFilter) int {
+	if err := filter.Validate(); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	data := map[string]interface{}{
+		"slotId": slotId,
+	}
+
+	const q = `SELECT
+						u.id, u.full_name, s.id AS school_id, s.name AS school_name, 
+						cl.id AS class_learner_id, la.status AS status
+			FROM users u
+				JOIN class_learners cl ON u.id = cl.learner_id
+				JOIN slots sl ON cl.class_id = s.class_id
+				JOIN schools s ON s.id = u.school_id
+				JOIN learner_attendances la ON la.class_learner_id = cl.id AND la.slot_id = sl.id
+					WHERE sl.id = :slot_id`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, true)

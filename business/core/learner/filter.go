@@ -10,6 +10,7 @@ import (
 type QueryFilter struct {
 	FullName   *string `validate:"omitempty"`
 	SchoolName *string `validate:"omitempty"`
+	Status     *int    `validate:"omitempty"`
 }
 
 func (qf *QueryFilter) Validate() error {
@@ -28,6 +29,10 @@ func (qf *QueryFilter) WithSchoolName(schoolName string) {
 	qf.SchoolName = &schoolName
 }
 
+func (qf *QueryFilter) WithStatus(status int) {
+	qf.Status = &status
+}
+
 func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buffer, hasWhere bool) {
 	var wc []string
 
@@ -39,6 +44,11 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 	if filter.SchoolName != nil {
 		data["school_name"] = fmt.Sprintf("%%%s%%", *filter.SchoolName)
 		wc = append(wc, "s.name LIKE :school_name")
+	}
+
+	if filter.Status != nil {
+		data["status"] = *filter.Status
+		wc = append(wc, "status = :status")
 	}
 
 	if len(wc) > 0 {

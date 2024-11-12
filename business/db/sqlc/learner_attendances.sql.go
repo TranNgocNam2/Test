@@ -79,6 +79,49 @@ func (q *Queries) GetLearnerAttendanceByClassLearnerAndSlot(ctx context.Context,
 	return i, err
 }
 
+const getLearnerAttendanceBySlot = `-- name: GetLearnerAttendanceBySlot :many
+SELECT u.id, u.full_name, s.id AS school_id, s.name AS school_name, la.status
+FROM users u
+    JOIN class_learners cl ON u.id = cl.learner_id
+    JOIN schools s ON s.id = u.school_id
+    JOIN learner_attendances la ON la.class_learner_id = cl.id AND la.slot_id = $1::uuid
+    WHERE la.slot_id = $1::uuid
+`
+
+type GetLearnerAttendanceBySlotRow struct {
+	ID         string    `db:"id" json:"id"`
+	FullName   *string   `db:"full_name" json:"fullName"`
+	SchoolID   uuid.UUID `db:"school_id" json:"schoolId"`
+	SchoolName string    `db:"school_name" json:"schoolName"`
+	Status     int32     `db:"status" json:"status"`
+}
+
+func (q *Queries) GetLearnerAttendanceBySlot(ctx context.Context, slotID uuid.UUID) ([]GetLearnerAttendanceBySlotRow, error) {
+	rows, err := q.db.Query(ctx, getLearnerAttendanceBySlot, slotID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetLearnerAttendanceBySlotRow
+	for rows.Next() {
+		var i GetLearnerAttendanceBySlotRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.SchoolID,
+			&i.SchoolName,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const submitLearnerAttendance = `-- name: SubmitLearnerAttendance :exec
 UPDATE learner_attendances
 SET status = $1

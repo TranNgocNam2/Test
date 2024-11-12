@@ -39,6 +39,13 @@ type Attendance struct {
 	Status int32     `json:"status"`
 }
 
+type AttendanceRecord struct {
+	ID       string `json:"id"`
+	FullName string `json:"fullName"`
+	School   School `json:"school"`
+	Status   int32  `json:"status"`
+}
+
 func toCoreAttendance(dbAttendance sqlc.LearnerAttendance) Attendance {
 	return Attendance{
 		ID:     dbAttendance.ID,
