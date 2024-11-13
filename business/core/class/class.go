@@ -604,6 +604,10 @@ func (c *Core) UpdateMeetingLink(ctx *gin.Context, id uuid.UUID, updateMeeting U
 		return model.ErrClassNotCompleted
 	}
 
+	if class.EndDate != nil && class.EndDate.UTC().Before(time.Now().UTC()) {
+		return model.ErrClassIsEnded
+	}
+
 	isTeacherInClass, err := c.queries.CheckTeacherInClass(ctx, sqlc.CheckTeacherInClassParams{
 		TeacherID: &teacherId,
 		ClassID:   id,

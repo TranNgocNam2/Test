@@ -25,4 +25,5 @@ var (
 	ErrInvalidPassword       = errors.New("Mật khẩu không hợp lệ!")
 	ErrInvalidTime           = errors.New("Thời gian không hợp lệ!")
 	ErrClassNotCompleted     = errors.New("Lớp học chưa hoàn thành!")
+	ErrClassIsEnded          = errors.New("Lớp học đã kết thúc!")
 )

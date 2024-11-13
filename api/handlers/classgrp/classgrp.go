@@ -286,6 +286,10 @@ func (h *Handlers) UpdateMeetingLink() gin.HandlerFunc {
 			case errors.Is(err, model.ErrClassNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
+			case errors.Is(err, model.ErrClassNotCompleted),
+				errors.Is(err, model.ErrClassIsEnded):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
 			case errors.Is(err, middleware.ErrInvalidUser),
 				errors.Is(err, model.ErrTeacherIsNotInClass):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
