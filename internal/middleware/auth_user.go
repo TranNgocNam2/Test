@@ -20,15 +20,53 @@ func AuthorizeStaff(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
 	return staff.ID, nil
 }
 
-func AuthorizeVerifiedLearner(ctx *gin.Context, queries *sqlc.Queries) (sqlc.User, error) {
+func AuthorizeVerifiedLearner(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, error) {
 	if ctx.GetHeader(header.XUserId) == "" {
-		return sqlc.User{}, ErrInvalidUser
+		return nil, ErrInvalidUser
 	}
 
 	learner, err := queries.GetVerifiedLearnerById(ctx, ctx.GetHeader(header.XUserId))
 	if err != nil {
-		return sqlc.User{}, ErrInvalidUser
+		return nil, ErrInvalidUser
 	}
 
-	return learner, nil
+	return &learner, nil
+}
+
+func AuthorizeTeacher(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return "", ErrInvalidUser
+	}
+
+	teacher, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil || teacher.AuthRole != role.TEACHER {
+		return "", ErrInvalidUser
+	}
+
+	return teacher.ID, nil
+}
+func AuthorizeWithoutLearner(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return "", ErrInvalidUser
+	}
+
+	user, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil || user.AuthRole == role.LEARNER {
+		return "", ErrInvalidUser
+	}
+
+	return user.ID, nil
+}
+
+func AuthorizeUser(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, error) {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return nil, ErrInvalidUser
+	}
+
+	user, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil {
+		return nil, ErrInvalidUser
+	}
+
+	return &user, nil
 }

@@ -9,11 +9,11 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/weekday"
 	"bytes"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
+	"gitlab.com/innovia69420/kit/enum/role"
 	"go.uber.org/zap"
 	"time"
 )
@@ -71,7 +71,7 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 
 	if firstSlot != nil && firstSlot.After(dbProgram.StartDate) {
 		startDate := time.Date(firstSlot.Year(), firstSlot.Month(), firstSlot.Day(),
-			0, 0, 0, 0, time.Local)
+			0, 0, 0, 0, time.UTC)
 		startDateClass = &startDate
 	}
 
@@ -79,7 +79,7 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 	lastSlot := slots[len(slots)-1:][0].EndTime
 	if lastSlot != nil && lastSlot.Before(dbProgram.EndDate) {
 		endDate := time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(),
-			0, 0, 0, 0, time.Local)
+			0, 0, 0, 0, time.UTC)
 		endDateClass = &endDate
 	}
 
@@ -266,6 +266,11 @@ func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
+	user, err := middleware.AuthorizeUser(ctx, c.queries)
+	if err != nil {
+		return Details{}, err
+	}
+
 	dbClass, err := c.queries.GetClassById(ctx, id)
 	if err != nil {
 		return Details{}, model.ErrClassNotFound
@@ -277,6 +282,11 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		Link:      *dbClass.Link,
 		StartDate: dbClass.StartDate,
 		EndDate:   dbClass.EndDate,
+		Password:  dbClass.Password,
+	}
+
+	if user.AuthRole == role.LEARNER {
+		class.Password = ""
 	}
 
 	dbSubject, err := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
@@ -422,8 +432,8 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 	if err != nil {
 		return model.ErrClassNotFound
 	}
-	fmt.Println(dbClass.StartDate.Before(time.Now()))
-	if dbClass.StartDate.After(time.Now()) {
+
+	if dbClass.StartDate.After(time.Now().UTC()) {
 		err = c.queries.DeleteClass(ctx, dbClass.ID)
 		if err != nil {
 			return err
@@ -497,7 +507,7 @@ func validateSlotTimes(dbClass sqlc.Class, dbProgram sqlc.Program, updateSlots [
 		return model.ErrInvalidSlotStartTime
 	}
 
-	firstSlot = time.Date(firstSlot.Year(), firstSlot.Month(), firstSlot.Day(), 0, 0, 0, 0, time.Local)
+	firstSlot = time.Date(firstSlot.Year(), firstSlot.Month(), firstSlot.Day(), 0, 0, 0, 0, time.UTC)
 	dbClass.StartDate = &firstSlot
 
 	lastSlot := updateSlots[len(updateSlots)-1].EndTime
@@ -506,9 +516,9 @@ func validateSlotTimes(dbClass sqlc.Class, dbProgram sqlc.Program, updateSlots [
 	}
 
 	if lastSlot.Hour() != 0 || lastSlot.Minute() != 0 {
-		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day()+1, 0, 0, 0, 0, time.Local)
+		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day()+1, 0, 0, 0, 0, time.UTC)
 	} else {
-		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(), 0, 0, 0, 0, time.Local)
+		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(), 0, 0, 0, 0, time.UTC)
 	}
 	dbClass.EndDate = &lastSlot
 
@@ -555,7 +565,7 @@ func generateSlots(newClass NewClass, sessions []sqlc.Session, duration int16, e
 		currentDate = &slotDate
 
 		slotStartTime := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(),
-			newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.Local)
+			newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.UTC)
 		slotEndTime := slotStartTime.Add(time.Hour * time.Duration(duration))
 
 		startTime := &slotStartTime

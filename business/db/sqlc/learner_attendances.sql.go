@@ -26,6 +26,36 @@ func (q *Queries) GenerateLearnerAttendance(ctx context.Context, arg GenerateLea
 	return err
 }
 
+const getAttendanceByClassLearner = `-- name: GetAttendanceByClassLearner :many
+SELECT id, class_learner_id, slot_id, status FROM learner_attendances
+    WHERE class_learner_id = $1::uuid
+`
+
+func (q *Queries) GetAttendanceByClassLearner(ctx context.Context, classLearnerID uuid.UUID) ([]LearnerAttendance, error) {
+	rows, err := q.db.Query(ctx, getAttendanceByClassLearner, classLearnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LearnerAttendance
+	for rows.Next() {
+		var i LearnerAttendance
+		if err := rows.Scan(
+			&i.ID,
+			&i.ClassLearnerID,
+			&i.SlotID,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLearnerAttendanceByClassLearnerAndSlot = `-- name: GetLearnerAttendanceByClassLearnerAndSlot :one
 SELECT id, class_learner_id, slot_id, status FROM learner_attendances
     WHERE class_learner_id = $1::uuid
@@ -47,6 +77,50 @@ func (q *Queries) GetLearnerAttendanceByClassLearnerAndSlot(ctx context.Context,
 		&i.Status,
 	)
 	return i, err
+}
+
+const getLearnerAttendanceBySlot = `-- name: GetLearnerAttendanceBySlot :many
+SELECT
+    u.id, u.full_name, s.id AS school_id, s.name AS school_name, la.status
+FROM users u
+         JOIN class_learners cl ON u.id = cl.learner_id
+         JOIN schools s ON s.id = u.school_id
+         JOIN learner_attendances la ON la.class_learner_id = cl.id
+WHERE la.slot_id = $1::uuid
+`
+
+type GetLearnerAttendanceBySlotRow struct {
+	ID         string    `db:"id" json:"id"`
+	FullName   *string   `db:"full_name" json:"fullName"`
+	SchoolID   uuid.UUID `db:"school_id" json:"schoolId"`
+	SchoolName string    `db:"school_name" json:"schoolName"`
+	Status     int32     `db:"status" json:"status"`
+}
+
+func (q *Queries) GetLearnerAttendanceBySlot(ctx context.Context, slotID uuid.UUID) ([]GetLearnerAttendanceBySlotRow, error) {
+	rows, err := q.db.Query(ctx, getLearnerAttendanceBySlot, slotID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetLearnerAttendanceBySlotRow
+	for rows.Next() {
+		var i GetLearnerAttendanceBySlotRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.SchoolID,
+			&i.SchoolName,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const submitLearnerAttendance = `-- name: SubmitLearnerAttendance :exec

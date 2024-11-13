@@ -131,6 +131,9 @@ func (h *Handlers) GetClassById() gin.HandlerFunc {
 				errors.Is(err, model.ErrSubjectNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
 			default:
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)
 				return

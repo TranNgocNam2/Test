@@ -11,7 +11,7 @@ import (
 
 func toCoreNewProgram(newProgramRequest payload.NewProgram) (program.NewProgram, error) {
 	startDate, err := time.Parse(time.DateOnly, newProgramRequest.StartDate)
-	if err != nil || startDate.Before(time.Now()) {
+	if err != nil || startDate.Before(time.Now().UTC()) {
 		return program.NewProgram{}, model.ErrInvalidStartDate
 	}
 
@@ -40,7 +40,7 @@ func validateNewProgramRequest(newProgramRequest payload.NewProgram) error {
 
 func toCoreUpdateProgram(updateProgramRequest payload.UpdateProgram) (program.UpdateProgram, error) {
 	startDate, err := time.Parse(time.DateOnly, updateProgramRequest.StartDate)
-	if err != nil || startDate.Before(time.Now()) {
+	if err != nil || startDate.Before(time.Now().UTC()) {
 		return program.UpdateProgram{}, model.ErrInvalidStartDate
 	}
 
