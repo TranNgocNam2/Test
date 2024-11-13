@@ -22,23 +22,6 @@ CREATE table classes(
     CONSTRAINT unique_classes_subject UNIQUE (id, subject_id)
 );
 
--- CREATE table class_teachers(
---     id             uuid PRIMARY KEY,
---     teacher_id     character varying(50) NOT NULL,
---     class_id       uuid NOT NULL,
---     created_at     timestamp NOT NULL DEFAULT now(),
---     created_by     character varying(50) NOT NULL,
---
---     CONSTRAINT fk_class_teachers_teacher
---         FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
---     CONSTRAINT fk_class_teachers_class
---         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
---     CONSTRAINT fk_class_teachers_staff_created_by
---         FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
---
---     CONSTRAINT unique_class_teachers UNIQUE (teacher_id, class_id)
--- );
-
 CREATE table assignments(
     id                  uuid PRIMARY KEY,
     transcript_id       uuid NOT NULL,
