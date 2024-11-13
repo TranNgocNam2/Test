@@ -3,7 +3,6 @@ package classgrp
 import (
 	"Backend/business/core/class"
 	"Backend/internal/common/model"
-	"Backend/internal/password"
 	"Backend/internal/validate"
 	"Backend/internal/web/payload"
 	"Backend/internal/weekday"
@@ -36,11 +35,6 @@ func toCoreNewClass(newClassRequest payload.NewClass) (class.NewClass, error) {
 		}
 	}
 
-	pwd, err := password.Hash(newClassRequest.Password)
-	if err != nil {
-		return class.NewClass{}, model.ErrInvalidPassword
-	}
-
 	newClass := class.NewClass{
 		ID:        uuid.New(),
 		ProgramId: programId,
@@ -48,7 +42,7 @@ func toCoreNewClass(newClassRequest payload.NewClass) (class.NewClass, error) {
 		Name:      newClassRequest.Name,
 		Link:      &newClassRequest.Link,
 		Code:      newClassRequest.Code,
-		Password:  pwd,
+		Password:  newClassRequest.Password,
 	}
 
 	newClass.Slots = struct {
@@ -72,16 +66,9 @@ func validateNewClassRequest(newClassRequest payload.NewClass) error {
 
 func toCoreUpdateClass(updateClassRequest payload.UpdateClass) (class.UpdateClass, error) {
 	updateClass := class.UpdateClass{
-		Name: updateClassRequest.Name,
-		Code: updateClassRequest.Code,
-	}
-
-	if updateClassRequest.Password != "" {
-		pwd, err := password.Hash(updateClassRequest.Password)
-		if err != nil {
-			return class.UpdateClass{}, model.ErrInvalidPassword
-		}
-		updateClass.Password = &pwd
+		Name:     updateClassRequest.Name,
+		Code:     updateClassRequest.Code,
+		Password: &updateClassRequest.Password,
 	}
 
 	return updateClass, nil

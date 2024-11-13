@@ -6,7 +6,6 @@ import (
 	"Backend/internal/app"
 	"Backend/internal/common/model"
 	"Backend/internal/middleware"
-	"Backend/internal/password"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -46,7 +45,7 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 		return model.ErrClassStarted
 	}
 
-	if !password.Verify(dbClass.Password, classAccess.Password) {
+	if strings.Compare(dbClass.Password, classAccess.Password) != 0 {
 		return model.ErrWrongPassword
 	}
 

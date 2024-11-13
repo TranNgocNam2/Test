@@ -39,6 +39,7 @@ type Details struct {
 	ID        uuid.UUID  `json:"id"`
 	Name      string     `json:"name"`
 	Link      string     `json:"link"`
+	Password  string     `json:"password"`
 	StartDate *time.Time `json:"startDate"`
 	EndDate   *time.Time `json:"endDate"`
 	Program   Program    `json:"program"`
