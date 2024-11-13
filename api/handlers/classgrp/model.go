@@ -3,7 +3,6 @@ package classgrp
 import (
 	"Backend/business/core/class"
 	"Backend/internal/common/model"
-	"Backend/internal/password"
 	"Backend/internal/validate"
 	"Backend/internal/web/payload"
 	"Backend/internal/weekday"
@@ -36,11 +35,6 @@ func toCoreNewClass(newClassRequest payload.NewClass) (class.NewClass, error) {
 		}
 	}
 
-	pwd, err := password.Hash(newClassRequest.Password)
-	if err != nil {
-		return class.NewClass{}, model.ErrInvalidPassword
-	}
-
 	newClass := class.NewClass{
 		ID:        uuid.New(),
 		ProgramId: programId,
@@ -48,7 +42,7 @@ func toCoreNewClass(newClassRequest payload.NewClass) (class.NewClass, error) {
 		Name:      newClassRequest.Name,
 		Link:      &newClassRequest.Link,
 		Code:      newClassRequest.Code,
-		Password:  pwd,
+		Password:  newClassRequest.Password,
 	}
 
 	newClass.Slots = struct {
@@ -72,16 +66,9 @@ func validateNewClassRequest(newClassRequest payload.NewClass) error {
 
 func toCoreUpdateClass(updateClassRequest payload.UpdateClass) (class.UpdateClass, error) {
 	updateClass := class.UpdateClass{
-		Name: updateClassRequest.Name,
-		Code: updateClassRequest.Code,
-	}
-
-	if updateClassRequest.Password != "" {
-		pwd, err := password.Hash(updateClassRequest.Password)
-		if err != nil {
-			return class.UpdateClass{}, model.ErrInvalidPassword
-		}
-		updateClass.Password = &pwd
+		Name:     updateClassRequest.Name,
+		Code:     updateClassRequest.Code,
+		Password: &updateClassRequest.Password,
 	}
 
 	return updateClass, nil
@@ -89,13 +76,6 @@ func toCoreUpdateClass(updateClassRequest payload.UpdateClass) (class.UpdateClas
 
 func validateUpdateClassRequest(updateClassRequest payload.UpdateClass) error {
 	if err := validate.Check(updateClassRequest); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateUpdateClassTeacherRequest(updateClassTeacherRequest payload.UpdateClassTeacher) error {
-	if err := validate.Check(updateClassTeacherRequest); err != nil {
 		return err
 	}
 	return nil
@@ -112,12 +92,12 @@ func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlot) ([]class.UpdateSlot,
 	var updateSlots []class.UpdateSlot
 	for _, slot := range updateSlotRequest.Slots {
 		startTime, err := time.Parse(time.DateTime, slot.StartTime)
-		if err != nil || startTime.Before(time.Now().UTC()) {
+		if err != nil {
 			return nil, model.ErrInvalidTime
 		}
 
 		endTime, err := time.Parse(time.DateTime, slot.EndTime)
-		if err != nil || endTime.Before(startTime) {
+		if err != nil {
 			return nil, model.ErrInvalidTime
 		}
 
@@ -131,6 +111,7 @@ func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlot) ([]class.UpdateSlot,
 			StartTime: startTime,
 			EndTime:   endTime,
 			TeacherId: slot.TeacherId,
+			Index:     int32(slot.Index),
 		}
 
 		updateSlots = append(updateSlots, updateSlot)
@@ -140,13 +121,20 @@ func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlot) ([]class.UpdateSlot,
 }
 
 func toCoreCheckTeacherTime(checkTeacherTime payload.CheckTeacherTime) (class.CheckTeacherTime, error) {
-	classId, err := uuid.Parse(checkTeacherTime.ClassId)
+	startTime, err := time.Parse(time.DateTime, checkTeacherTime.StartTime)
 	if err != nil {
-		return class.CheckTeacherTime{}, model.ErrClassIdInvalid
+		return class.CheckTeacherTime{}, model.ErrInvalidTime
 	}
+
+	endTime, err := time.Parse(time.DateTime, checkTeacherTime.EndTime)
+	if err != nil {
+		return class.CheckTeacherTime{}, model.ErrInvalidTime
+	}
+
 	teacherTime := class.CheckTeacherTime{
-		TeacherId: &checkTeacherTime.TeacherId,
-		ClassId:   classId,
+		TeacherId: checkTeacherTime.TeacherId,
+		StartTime: startTime,
+		EndTime:   endTime,
 	}
 
 	return teacherTime, nil

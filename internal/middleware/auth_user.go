@@ -20,17 +20,17 @@ func AuthorizeStaff(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
 	return staff.ID, nil
 }
 
-func AuthorizeVerifiedLearner(ctx *gin.Context, queries *sqlc.Queries) (sqlc.User, error) {
+func AuthorizeVerifiedLearner(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, error) {
 	if ctx.GetHeader(header.XUserId) == "" {
-		return sqlc.User{}, ErrInvalidUser
+		return nil, ErrInvalidUser
 	}
 
 	learner, err := queries.GetVerifiedLearnerById(ctx, ctx.GetHeader(header.XUserId))
 	if err != nil {
-		return sqlc.User{}, ErrInvalidUser
+		return nil, ErrInvalidUser
 	}
 
-	return learner, nil
+	return &learner, nil
 }
 
 func AuthorizeTeacher(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
@@ -58,15 +58,15 @@ func AuthorizeWithoutLearner(ctx *gin.Context, queries *sqlc.Queries) (string, e
 	return user.ID, nil
 }
 
-func AuthorizeUser(ctx *gin.Context, queries *sqlc.Queries) error {
+func AuthorizeUser(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, error) {
 	if ctx.GetHeader(header.XUserId) == "" {
-		return ErrInvalidUser
+		return nil, ErrInvalidUser
 	}
 
-	_, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	user, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
 	if err != nil {
-		return ErrInvalidUser
+		return nil, ErrInvalidUser
 	}
 
-	return nil
+	return &user, nil
 }

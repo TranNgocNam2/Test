@@ -12,12 +12,13 @@ import (
 )
 
 type Assignment struct {
-	ID             uuid.UUID  `db:"id" json:"id"`
-	TranscriptID   uuid.UUID  `db:"transcript_id" json:"transcriptId"`
-	ClassTeacherID uuid.UUID  `db:"class_teacher_id" json:"classTeacherId"`
-	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
-	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
+	ID           uuid.UUID  `db:"id" json:"id"`
+	TranscriptID uuid.UUID  `db:"transcript_id" json:"transcriptId"`
+	TeacherID    string     `db:"teacher_id" json:"teacherId"`
+	ClassID      uuid.UUID  `db:"class_id" json:"classId"`
+	CreatedAt    time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt    *time.Time `db:"updated_at" json:"updatedAt"`
+	UpdatedBy    *string    `db:"updated_by" json:"updatedBy"`
 }
 
 type Certificate struct {
@@ -51,14 +52,6 @@ type ClassLearner struct {
 	ID        uuid.UUID `db:"id" json:"id"`
 	LearnerID string    `db:"learner_id" json:"learnerId"`
 	ClassID   uuid.UUID `db:"class_id" json:"classId"`
-}
-
-type ClassTeacher struct {
-	ID        uuid.UUID `db:"id" json:"id"`
-	TeacherID string    `db:"teacher_id" json:"teacherId"`
-	ClassID   uuid.UUID `db:"class_id" json:"classId"`
-	CreatedAt time.Time `db:"created_at" json:"createdAt"`
-	CreatedBy string    `db:"created_by" json:"createdBy"`
 }
 
 type District struct {

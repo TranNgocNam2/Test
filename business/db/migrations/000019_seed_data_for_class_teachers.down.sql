@@ -1,1 +1,0 @@
-DELETE FROM class_teachers;

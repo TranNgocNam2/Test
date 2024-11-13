@@ -26,6 +26,7 @@ type UpdateSlot struct {
 	StartTime time.Time
 	EndTime   time.Time
 	TeacherId string
+	Index     int32
 }
 
 type UpdateClass struct {
@@ -38,11 +39,11 @@ type Details struct {
 	ID        uuid.UUID  `json:"id"`
 	Name      string     `json:"name"`
 	Link      string     `json:"link"`
+	Password  string     `json:"password"`
 	StartDate *time.Time `json:"startDate"`
 	EndDate   *time.Time `json:"endDate"`
 	Program   Program    `json:"program"`
 	Subject   Subject    `json:"subject"`
-	Teachers  []Teacher  `json:"teachers"`
 	Slots     []Slot     `json:"slots"`
 }
 
@@ -55,7 +56,6 @@ type Class struct {
 	EndDate       *time.Time `json:"endDate"`
 	Status        int16      `json:"status"`
 	Subject       Subject    `json:"subject"`
-	Teachers      []Teacher  `json:"teachers"`
 	Skills        []Skill    `json:"skills"`
 	TotalLearners int64      `json:"totalLearners"`
 }
@@ -99,8 +99,10 @@ type Session struct {
 }
 
 type CheckTeacherTime struct {
-	TeacherId *string
-	ClassId   uuid.UUID
+	TeacherId string
+	SlotId    uuid.UUID
+	StartTime time.Time
+	EndTime   time.Time
 }
 
 func toCoreSubject(dbSubject sqlc.Subject) Subject {
@@ -133,13 +135,6 @@ func toCoreTeacher(dbTeacher sqlc.User) Teacher {
 		Phone:    *dbTeacher.Phone,
 		Gender:   dbTeacher.Gender,
 	}
-}
-func toCoreTeacherSlice(dbTeachers []sqlc.User) []Teacher {
-	teachers := make([]Teacher, len(dbTeachers))
-	for i, dbTeacher := range dbTeachers {
-		teachers[i] = toCoreTeacher(dbTeacher)
-	}
-	return teachers
 }
 
 func toCoreSkillSlice(dbSkills []sqlc.Skill) []Skill {

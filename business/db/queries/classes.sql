@@ -13,7 +13,7 @@ SELECT COUNT(*) FROM classes WHERE program_id = sqlc.arg(program_id)::uuid;
 -- name: GetClassCompletedByCode :one
 SELECT * FROM classes WHERE code = sqlc.arg(code) AND status = 1;
 
--- name: UpdateActiveClass :exec
+-- name: UpdateClassStatusAndDate :exec
 UPDATE classes
 SET status = sqlc.arg(status),
     start_date = sqlc.arg(start_date),

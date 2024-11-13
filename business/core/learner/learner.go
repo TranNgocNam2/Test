@@ -8,7 +8,6 @@ import (
 	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
-	"Backend/internal/password"
 	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -49,7 +48,7 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 		return model.ErrClassStarted
 	}
 
-	if !password.Verify(dbClass.Password, classAccess.Password) {
+	if strings.Compare(dbClass.Password, classAccess.Password) != 0 {
 		return model.ErrWrongPassword
 	}
 
@@ -213,7 +212,7 @@ func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceS
 }
 
 func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Learner, error) {
-	err := middleware.AuthorizeUser(ctx, c.queries)
+	_, err := middleware.AuthorizeUser(ctx, c.queries)
 	if err != nil {
 		return nil, err
 	}
