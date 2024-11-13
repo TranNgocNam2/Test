@@ -58,7 +58,7 @@ func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, err
 		Status:         Draft,
 		TimePerSession: int16(subject.TimePerSession),
 		CreatedBy:      staffId,
-		CreatedAt:      time.Now(),
+		CreatedAt:      time.Now().UTC(),
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -160,7 +160,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 
 	qtx := c.queries.WithTx(tx)
 
-	now := time.Now()
+	now := time.Now().UTC()
 
 	subParams := sqlc.UpdateSubjectParams{
 		Name:           s.Name,
@@ -317,7 +317,7 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s payload.UpdateSubject, id uui
 	defer tx.Rollback(ctx)
 
 	qtx := c.queries.WithTx(tx)
-	now := time.Now()
+	now := time.Now().UTC()
 	subParams := sqlc.UpdateSubjectParams{
 		Name:           s.Name,
 		Code:           s.Code,

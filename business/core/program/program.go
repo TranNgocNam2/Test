@@ -63,7 +63,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateProgram UpdateProgra
 		return model.ErrProgramNotFound
 	}
 
-	if dbProgram.StartDate.Before(time.Now()) {
+	if dbProgram.StartDate.Before(time.Now().UTC()) {
 		return model.ErrCannotUpdateProgram
 	}
 
@@ -167,7 +167,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 	}
 
 	totalClasses, _ := c.queries.CountClassesByProgramId(ctx, id)
-	if totalClasses > 0 || dbProgram.StartDate.Before(time.Now()) {
+	if totalClasses > 0 || dbProgram.StartDate.Before(time.Now().UTC()) {
 		return model.ErrCannotDeleteProgram
 	}
 

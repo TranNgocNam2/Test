@@ -26,7 +26,7 @@ func toCoreNewClass(newClassRequest payload.NewClass) (class.NewClass, error) {
 	var slotStartTime time.Time
 	if newClassRequest.Slots.StartTime != "" && newClassRequest.Slots.StartDate != "" {
 		slotStartDate, err = time.Parse(time.DateOnly, newClassRequest.Slots.StartDate)
-		if err != nil || slotStartDate.Before(time.Now()) {
+		if err != nil || slotStartDate.Before(time.Now().UTC()) {
 			return class.NewClass{}, model.ErrInvalidSlotStartDate
 		}
 
@@ -112,7 +112,7 @@ func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlot) ([]class.UpdateSlot,
 	var updateSlots []class.UpdateSlot
 	for _, slot := range updateSlotRequest.Slots {
 		startTime, err := time.Parse(time.DateTime, slot.StartTime)
-		if err != nil || startTime.Before(time.Now()) {
+		if err != nil || startTime.Before(time.Now().UTC()) {
 			return nil, model.ErrInvalidTime
 		}
 
