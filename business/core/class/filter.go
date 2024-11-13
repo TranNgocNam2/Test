@@ -33,7 +33,7 @@ func (qf *QueryFilter) WithStatus(status int16) {
 	qf.Status = &status
 }
 
-func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buffer) {
+func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buffer, hasWhere bool) {
 	var wc []string
 
 	if filter.Name != nil {
@@ -52,7 +52,11 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 	}
 
 	if len(wc) > 0 {
-		buf.WriteString(" WHERE ")
+		if !hasWhere {
+			buf.WriteString(" WHERE ")
+		} else {
+			buf.WriteString(" AND ")
+		}
 		buf.WriteString(strings.Join(wc, " AND "))
 	}
 }

@@ -7,9 +7,9 @@ package sqlc
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const checkTeacherTimeOverlap = `-- name: CheckTeacherTimeOverlap :one
@@ -24,10 +24,10 @@ SELECT EXISTS (
 `
 
 type CheckTeacherTimeOverlapParams struct {
-	TeacherID *string    `db:"teacher_id" json:"teacherId"`
-	SlotID    uuid.UUID  `db:"slot_id" json:"slotId"`
-	StartTime *time.Time `db:"start_time" json:"startTime"`
-	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	TeacherID *string            `db:"teacher_id" json:"teacherId"`
+	SlotID    uuid.UUID          `db:"slot_id" json:"slotId"`
+	StartTime pgtype.Timestamptz `db:"start_time" json:"startTime"`
+	EndTime   pgtype.Timestamptz `db:"end_time" json:"endTime"`
 }
 
 func (q *Queries) CheckTeacherTimeOverlap(ctx context.Context, arg CheckTeacherTimeOverlapParams) (bool, error) {
@@ -65,12 +65,12 @@ func (q *Queries) CountSlotsHaveTeacherByClassId(ctx context.Context, classID uu
 }
 
 type CreateSlotsParams struct {
-	ID        uuid.UUID  `db:"id" json:"id"`
-	SessionID uuid.UUID  `db:"session_id" json:"sessionId"`
-	ClassID   uuid.UUID  `db:"class_id" json:"classId"`
-	StartTime *time.Time `db:"start_time" json:"startTime"`
-	EndTime   *time.Time `db:"end_time" json:"endTime"`
-	Index     int32      `db:"index" json:"index"`
+	ID        uuid.UUID          `db:"id" json:"id"`
+	SessionID uuid.UUID          `db:"session_id" json:"sessionId"`
+	ClassID   uuid.UUID          `db:"class_id" json:"classId"`
+	StartTime pgtype.Timestamptz `db:"start_time" json:"startTime"`
+	EndTime   pgtype.Timestamptz `db:"end_time" json:"endTime"`
+	Index     int32              `db:"index" json:"index"`
 }
 
 const getSlotByClassIdAndIndex = `-- name: GetSlotByClassIdAndIndex :one
@@ -178,6 +178,22 @@ func (q *Queries) GetSlotsByClassId(ctx context.Context, classID uuid.UUID) ([]S
 	return items, nil
 }
 
+const updateAttendanceCode = `-- name: UpdateAttendanceCode :exec
+UPDATE slots
+SET attendance_code = $1
+WHERE id = $2
+`
+
+type UpdateAttendanceCodeParams struct {
+	AttendanceCode *string   `db:"attendance_code" json:"attendanceCode"`
+	ID             uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateAttendanceCode(ctx context.Context, arg UpdateAttendanceCodeParams) error {
+	_, err := q.db.Exec(ctx, updateAttendanceCode, arg.AttendanceCode, arg.ID)
+	return err
+}
+
 const updateSlot = `-- name: UpdateSlot :exec
 UPDATE slots
 SET start_time = $1,
@@ -187,10 +203,10 @@ WHERE id = $4
 `
 
 type UpdateSlotParams struct {
-	StartTime *time.Time `db:"start_time" json:"startTime"`
-	EndTime   *time.Time `db:"end_time" json:"endTime"`
-	TeacherID *string    `db:"teacher_id" json:"teacherId"`
-	ID        uuid.UUID  `db:"id" json:"id"`
+	StartTime pgtype.Timestamptz `db:"start_time" json:"startTime"`
+	EndTime   pgtype.Timestamptz `db:"end_time" json:"endTime"`
+	TeacherID *string            `db:"teacher_id" json:"teacherId"`
+	ID        uuid.UUID          `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateSlot(ctx context.Context, arg UpdateSlotParams) error {

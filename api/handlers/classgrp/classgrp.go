@@ -100,7 +100,11 @@ func (h *Handlers) GetClassesByManager() gin.HandlerFunc {
 			orderBy = order.NewBy(filterByCode, order.ASC)
 		}
 
-		classes := h.class.QueryByManager(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		classes, err := h.class.QueryByManager(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusUnauthorized, err)
+			return
+		}
 		total := h.class.Count(ctx, filter)
 		result := page.NewPageResponse(classes, total, pageInfo.Number, pageInfo.Size)
 
@@ -110,8 +114,49 @@ func (h *Handlers) GetClassesByManager() gin.HandlerFunc {
 
 func (h *Handlers) GetClassesByLearner() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		classes := h.class.QueryByLearner(ctx)
+		classes, err := h.class.QueryByLearner(ctx)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusUnauthorized, err)
+			return
+		}
 		web.Respond(ctx, classes, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) GetClassesByTeacher() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		pageInfo, err := page.Parse(ctx)
+		if err != nil {
+			pageInfo = page.Page{
+				Number: 1,
+				Size:   10,
+			}
+		}
+
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = class.QueryFilter{
+				Name:   nil,
+				Code:   nil,
+				Status: nil,
+			}
+		}
+
+		orderBy, err := parseOrder(ctx)
+		if err != nil {
+			orderBy = order.NewBy(filterByCode, order.ASC)
+		}
+
+		classes, err := h.class.QueryByTeacher(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusUnauthorized, err)
+			return
+		}
+
+		total := h.class.CountByTeacher(ctx, filter)
+		result := page.NewPageResponse(classes, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, result, http.StatusOK, nil)
 	}
 }
 
@@ -206,6 +251,44 @@ func (h *Handlers) UpdateClass() gin.HandlerFunc {
 				return
 			case errors.Is(err, model.ErrClassCodeAlreadyExist):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) UpdateMeetingLink() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		var req payload.UpdateMeetingLink
+		if err = web.Decode(ctx, &req); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err = validateUpdateMeetingLinkRequest(req); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.class.UpdateMeetingLink(ctx, id, toCoreUpdateMeetingLink(req))
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrClassNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser),
+				errors.Is(err, model.ErrTeacherIsNotInClass):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
 			default:
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)

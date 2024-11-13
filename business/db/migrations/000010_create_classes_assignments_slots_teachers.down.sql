@@ -2,6 +2,7 @@ ALTER table classes
     DROP CONSTRAINT IF EXISTS fk_class_staffs_created_by,
     DROP CONSTRAINT IF EXISTS fk_class_subject,
     DROP CONSTRAINT IF EXISTS fk_class_program,
+    DROP CONSTRAINT IF EXISTS fk_class_staffs_updated_by,
     DROP CONSTRAINT IF EXISTS unique_classes_subject;
 ALTER table assignments
     DROP CONSTRAINT IF EXISTS fk_assignment_teacher,

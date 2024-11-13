@@ -146,3 +146,17 @@ func validateCheckTeacherTimeRequest(checkTeacherTime payload.CheckTeacherTime) 
 	}
 	return nil
 }
+
+func toCoreUpdateMeetingLink(updateMeetingLink payload.UpdateMeetingLink) class.UpdateMeeting {
+	updateMeeting := class.UpdateMeeting{
+		Link: updateMeetingLink.Link,
+	}
+	return updateMeeting
+}
+
+func validateUpdateMeetingLinkRequest(updateMeetingLink payload.UpdateMeetingLink) error {
+	if err := validate.Check(updateMeetingLink); err != nil {
+		return err
+	}
+	return nil
+}

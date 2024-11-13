@@ -35,11 +35,15 @@ type UpdateClass struct {
 	Password *string
 }
 
+type UpdateMeeting struct {
+	Link string
+}
+
 type Details struct {
 	ID        uuid.UUID  `json:"id"`
 	Name      string     `json:"name"`
 	Link      string     `json:"link"`
-	Password  string     `json:"password"`
+	Password  *string    `json:"password,omitempty"`
 	StartDate *time.Time `json:"startDate"`
 	EndDate   *time.Time `json:"endDate"`
 	Program   Program    `json:"program"`
@@ -54,7 +58,7 @@ type Class struct {
 	Program       Program    `json:"program"`
 	StartDate     *time.Time `json:"startDate"`
 	EndDate       *time.Time `json:"endDate"`
-	Status        int16      `json:"status"`
+	Status        *int16     `json:"status,omitempty"`
 	Subject       Subject    `json:"subject"`
 	Skills        []Skill    `json:"skills"`
 	TotalLearners int64      `json:"totalLearners"`

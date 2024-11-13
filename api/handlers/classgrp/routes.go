@@ -19,5 +19,7 @@ func ClassRoutes(router *gin.Engine, app *app.Application) {
 		classes.DELETE("/:id", handlers.DeleteClass())
 		classes.PUT("/:id/slots", handlers.UpdateClassSlot())
 		classes.POST("/slots/teachers", handlers.CheckTeacherAvailable())
+		classes.GET("/teachers", handlers.GetClassesByTeacher())
+		classes.PUT("/:id/meeting", handlers.UpdateMeetingLink())
 	}
 }

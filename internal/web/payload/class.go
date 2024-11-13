@@ -20,8 +20,8 @@ type UpdateClass struct {
 	Password string `json:"password"`
 }
 
-type UpdateClassTeacher struct {
-	TeacherIds []string `json:"teacherIds" validate:"required"`
+type UpdateMeetingLink struct {
+	Link string `json:"link" validate:"required"`
 }
 
 type UpdateSlot struct {

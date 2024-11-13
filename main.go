@@ -8,6 +8,7 @@ import (
 	"Backend/api/handlers/skillgrp"
 	"Backend/api/handlers/specializationgrp"
 	"Backend/api/handlers/subjectgrp"
+	"Backend/api/handlers/teachergrp"
 	"Backend/api/handlers/testgrp"
 	"Backend/api/handlers/usergrp"
 	"Backend/business/db/sqlc"
@@ -104,4 +105,5 @@ func LoadRoutes(router *gin.Engine, app *app.Application) {
 	classgrp.ClassRoutes(router, app)
 	skillgrp.SkillRoutes(router, app)
 	learnergrp.LearnerRoutes(router, app)
+	teachergrp.TeacherRoutes(router, app)
 }
