@@ -7,9 +7,9 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const checkTeacherInClass = `-- name: CheckTeacherInClass :one
@@ -50,16 +50,16 @@ VALUES ($1::uuid, $2, $3,
 `
 
 type CreateClassParams struct {
-	ID        uuid.UUID          `db:"id" json:"id"`
-	Code      string             `db:"code" json:"code"`
-	Password  string             `db:"password" json:"password"`
-	Name      string             `db:"name" json:"name"`
-	SubjectID uuid.UUID          `db:"subject_id" json:"subjectId"`
-	ProgramID uuid.UUID          `db:"program_id" json:"programId"`
-	Link      *string            `db:"link" json:"link"`
-	StartDate pgtype.Timestamptz `db:"start_date" json:"startDate"`
-	EndDate   pgtype.Timestamptz `db:"end_date" json:"endDate"`
-	CreatedBy string             `db:"created_by" json:"createdBy"`
+	ID        uuid.UUID  `db:"id" json:"id"`
+	Code      string     `db:"code" json:"code"`
+	Password  string     `db:"password" json:"password"`
+	Name      string     `db:"name" json:"name"`
+	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
+	ProgramID uuid.UUID  `db:"program_id" json:"programId"`
+	Link      *string    `db:"link" json:"link"`
+	StartDate *time.Time `db:"start_date" json:"startDate"`
+	EndDate   *time.Time `db:"end_date" json:"endDate"`
+	CreatedBy string     `db:"created_by" json:"createdBy"`
 }
 
 func (q *Queries) CreateClass(ctx context.Context, arg CreateClassParams) error {
@@ -184,10 +184,10 @@ WHERE id = $4::uuid
 `
 
 type UpdateClassStatusAndDateParams struct {
-	Status    int16              `db:"status" json:"status"`
-	StartDate pgtype.Timestamptz `db:"start_date" json:"startDate"`
-	EndDate   pgtype.Timestamptz `db:"end_date" json:"endDate"`
-	ID        uuid.UUID          `db:"id" json:"id"`
+	Status    int16      `db:"status" json:"status"`
+	StartDate *time.Time `db:"start_date" json:"startDate"`
+	EndDate   *time.Time `db:"end_date" json:"endDate"`
+	ID        uuid.UUID  `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateClassStatusAndDate(ctx context.Context, arg UpdateClassStatusAndDateParams) error {

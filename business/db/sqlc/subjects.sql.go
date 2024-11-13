@@ -7,9 +7,9 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const deleteSubject = `-- name: DeleteSubject :exec
@@ -141,15 +141,15 @@ RETURNING id
 `
 
 type InsertSubjectParams struct {
-	ID             uuid.UUID          `db:"id" json:"id"`
-	Name           string             `db:"name" json:"name"`
-	Code           string             `db:"code" json:"code"`
-	Description    *string            `db:"description" json:"description"`
-	ImageLink      *string            `db:"image_link" json:"imageLink"`
-	Status         int16              `db:"status" json:"status"`
-	TimePerSession int16              `db:"time_per_session" json:"timePerSession"`
-	CreatedBy      string             `db:"created_by" json:"createdBy"`
-	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"createdAt"`
+	ID             uuid.UUID `db:"id" json:"id"`
+	Name           string    `db:"name" json:"name"`
+	Code           string    `db:"code" json:"code"`
+	Description    *string   `db:"description" json:"description"`
+	ImageLink      *string   `db:"image_link" json:"imageLink"`
+	Status         int16     `db:"status" json:"status"`
+	TimePerSession int16     `db:"time_per_session" json:"timePerSession"`
+	CreatedBy      string    `db:"created_by" json:"createdBy"`
+	CreatedAt      time.Time `db:"created_at" json:"createdAt"`
 }
 
 func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (uuid.UUID, error) {
@@ -244,17 +244,17 @@ WHERE id = $11::uuid
 `
 
 type UpdateSubjectParams struct {
-	Name           string             `db:"name" json:"name"`
-	Code           string             `db:"code" json:"code"`
-	TimePerSession int16              `db:"time_per_session" json:"timePerSession"`
-	MinPassGrade   *float32           `db:"min_pass_grade" json:"minPassGrade"`
-	MinAttendance  *float32           `db:"min_attendance" json:"minAttendance"`
-	Description    *string            `db:"description" json:"description"`
-	Status         int16              `db:"status" json:"status"`
-	ImageLink      *string            `db:"image_link" json:"imageLink"`
-	UpdatedBy      *string            `db:"updated_by" json:"updatedBy"`
-	UpdatedAt      pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
-	ID             uuid.UUID          `db:"id" json:"id"`
+	Name           string     `db:"name" json:"name"`
+	Code           string     `db:"code" json:"code"`
+	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
+	MinPassGrade   *float32   `db:"min_pass_grade" json:"minPassGrade"`
+	MinAttendance  *float32   `db:"min_attendance" json:"minAttendance"`
+	Description    *string    `db:"description" json:"description"`
+	Status         int16      `db:"status" json:"status"`
+	ImageLink      *string    `db:"image_link" json:"imageLink"`
+	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
+	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
+	ID             uuid.UUID  `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) error {

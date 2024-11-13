@@ -7,9 +7,9 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const checkTeacherTimeOverlap = `-- name: CheckTeacherTimeOverlap :one
@@ -24,10 +24,10 @@ SELECT EXISTS (
 `
 
 type CheckTeacherTimeOverlapParams struct {
-	TeacherID *string            `db:"teacher_id" json:"teacherId"`
-	SlotID    uuid.UUID          `db:"slot_id" json:"slotId"`
-	StartTime pgtype.Timestamptz `db:"start_time" json:"startTime"`
-	EndTime   pgtype.Timestamptz `db:"end_time" json:"endTime"`
+	TeacherID *string    `db:"teacher_id" json:"teacherId"`
+	SlotID    uuid.UUID  `db:"slot_id" json:"slotId"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
 }
 
 func (q *Queries) CheckTeacherTimeOverlap(ctx context.Context, arg CheckTeacherTimeOverlapParams) (bool, error) {
@@ -65,12 +65,12 @@ func (q *Queries) CountSlotsHaveTeacherByClassId(ctx context.Context, classID uu
 }
 
 type CreateSlotsParams struct {
-	ID        uuid.UUID          `db:"id" json:"id"`
-	SessionID uuid.UUID          `db:"session_id" json:"sessionId"`
-	ClassID   uuid.UUID          `db:"class_id" json:"classId"`
-	StartTime pgtype.Timestamptz `db:"start_time" json:"startTime"`
-	EndTime   pgtype.Timestamptz `db:"end_time" json:"endTime"`
-	Index     int32              `db:"index" json:"index"`
+	ID        uuid.UUID  `db:"id" json:"id"`
+	SessionID uuid.UUID  `db:"session_id" json:"sessionId"`
+	ClassID   uuid.UUID  `db:"class_id" json:"classId"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	Index     int32      `db:"index" json:"index"`
 }
 
 const getSlotByClassIdAndIndex = `-- name: GetSlotByClassIdAndIndex :one
@@ -203,10 +203,10 @@ WHERE id = $4
 `
 
 type UpdateSlotParams struct {
-	StartTime pgtype.Timestamptz `db:"start_time" json:"startTime"`
-	EndTime   pgtype.Timestamptz `db:"end_time" json:"endTime"`
-	TeacherID *string            `db:"teacher_id" json:"teacherId"`
-	ID        uuid.UUID          `db:"id" json:"id"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	TeacherID *string    `db:"teacher_id" json:"teacherId"`
+	ID        uuid.UUID  `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateSlot(ctx context.Context, arg UpdateSlotParams) error {

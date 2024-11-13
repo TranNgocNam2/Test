@@ -7,9 +7,9 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const countSubjectsBySpecializationId = `-- name: CountSubjectsBySpecializationId :one
@@ -78,20 +78,20 @@ AND subjects.status = 1 ORDER BY specialization_subjects.index
 `
 
 type GetSubjectsBySpecializationRow struct {
-	ID             uuid.UUID          `db:"id" json:"id"`
-	Code           string             `db:"code" json:"code"`
-	Name           string             `db:"name" json:"name"`
-	TimePerSession int16              `db:"time_per_session" json:"timePerSession"`
-	MinPassGrade   *float32           `db:"min_pass_grade" json:"minPassGrade"`
-	MinAttendance  *float32           `db:"min_attendance" json:"minAttendance"`
-	ImageLink      *string            `db:"image_link" json:"imageLink"`
-	Status         int16              `db:"status" json:"status"`
-	Description    *string            `db:"description" json:"description"`
-	CreatedBy      string             `db:"created_by" json:"createdBy"`
-	UpdatedBy      *string            `db:"updated_by" json:"updatedBy"`
-	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"createdAt"`
-	UpdatedAt      pgtype.Timestamptz `db:"updated_at" json:"updatedAt"`
-	Index          int16              `db:"index" json:"index"`
+	ID             uuid.UUID  `db:"id" json:"id"`
+	Code           string     `db:"code" json:"code"`
+	Name           string     `db:"name" json:"name"`
+	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
+	MinPassGrade   *float32   `db:"min_pass_grade" json:"minPassGrade"`
+	MinAttendance  *float32   `db:"min_attendance" json:"minAttendance"`
+	ImageLink      *string    `db:"image_link" json:"imageLink"`
+	Status         int16      `db:"status" json:"status"`
+	Description    *string    `db:"description" json:"description"`
+	CreatedBy      string     `db:"created_by" json:"createdBy"`
+	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
+	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
+	Index          int16      `db:"index" json:"index"`
 }
 
 func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]GetSubjectsBySpecializationRow, error) {
