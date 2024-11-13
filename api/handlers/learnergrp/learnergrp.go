@@ -178,7 +178,11 @@ func (h *Handlers) GetLearnerClasses() gin.HandlerFunc {
 			orderBy = order.NewBy(filterByName, order.ASC)
 		}
 
-		learners := h.learner.GetLearnersInClass(ctx, classId, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		learners, err := h.learner.GetLearnersInClass(ctx, classId, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusUnauthorized, err)
+			return
+		}
 		total := h.learner.CountLearnersInClass(ctx, classId, filter)
 		result := page.NewPageResponse(learners, total, pageInfo.Number, pageInfo.Size)
 
@@ -217,7 +221,12 @@ func (h *Handlers) GetAttendanceRecords() gin.HandlerFunc {
 			orderBy = order.NewBy(filterByName, order.ASC)
 		}
 
-		learners := h.learner.GetLearnersAttendance(ctx, slotId, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		learners, err := h.learner.GetLearnersAttendance(ctx, slotId, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusUnauthorized, err)
+			return
+		}
+
 		total := h.learner.CountLearnersAttendance(ctx, slotId, filter)
 		result := page.NewPageResponse(learners, total, pageInfo.Number, pageInfo.Size)
 

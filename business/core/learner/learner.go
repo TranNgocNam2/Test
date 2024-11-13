@@ -212,9 +212,13 @@ func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceS
 	return nil
 }
 
-func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []Learner {
+func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Learner, error) {
+	err := middleware.AuthorizeUser(ctx, c.queries)
+	if err != nil {
+		return nil, err
+	}
 	if err := filter.Validate(); err != nil {
-		return nil
+		return nil, nil
 	}
 
 	data := map[string]interface{}{
@@ -224,7 +228,7 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 	}
 
 	const q = `SELECT
-						u.id, u.full_name, u.email, u.phone, u.gender, u.profile_photo, u.status AS status, 
+						u.id, u.full_name AS full_name, u.email, u.phone, u.gender, u.profile_photo, u.status AS status, 
 						s.id AS school_id, s.name AS school_name, cl.id AS class_learner_id
 			FROM users u
 				JOIN class_learners cl ON u.id = cl.learner_id
@@ -238,14 +242,14 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
 	c.logger.Info(buf.String())
 	var dbLearners []sqlc.GetLearnersByClassIdRow
-	err := pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbLearners)
+	err = pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbLearners)
 	if err != nil {
 		c.logger.Error(err.Error())
-		return nil
+		return nil, nil
 	}
 
 	if dbLearners == nil {
-		return nil
+		return nil, nil
 	}
 	var learners []Learner
 
@@ -269,12 +273,12 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 
 		dbAssignments, err := c.queries.GetAssignmentsByClassLearner(ctx, dbLearner.ClassLearnerID)
 		if err != nil {
-			return nil
+			return nil, nil
 		}
 		learner.Assignments = toCoreAssignmentSlice(dbAssignments)
 		learners = append(learners, learner)
 	}
-	return learners
+	return learners, nil
 }
 
 func (c *Core) CountLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter QueryFilter) int {
@@ -311,14 +315,14 @@ func (c *Core) CountLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter 
 	return count.Count
 }
 
-func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []AttendanceRecord {
+func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]AttendanceRecord, error) {
 	_, err := middleware.AuthorizeWithoutLearner(ctx, c.queries)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	if err := filter.Validate(); err != nil {
-		return nil
+		return nil, nil
 	}
 
 	data := map[string]interface{}{
@@ -327,19 +331,13 @@ func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter 
 		"rows_per_page": rowsPerPage,
 	}
 
-	const q = `SELECT
-						u.id, u.full_name, s.id AS school_id, s.name AS school_name, 
-						cl.id AS class_learner_id, la.status AS status
+	const q = `SELECT 
+					u.id, u.full_name AS full_name, s.id AS school_id, s.name AS school_name, la.status
 			FROM users u
-				JOIN class_learners cl ON u.id = cl.learner_id
-				JOIN slots sl ON cl.class_id = s.class_id
-				JOIN schools s ON s.id = u.school_id
-				JOIN learner_attendances la ON la.class_learner_id = cl.id AND la.slot_id = sl.id
-					WHERE sl.id = :slot_id`
-
-	if err := filter.Validate(); err != nil {
-		return nil
-	}
+    			JOIN class_learners cl ON u.id = cl.learner_id
+    			JOIN schools s ON s.id = u.school_id
+    			JOIN learner_attendances la ON la.class_learner_id = cl.id 
+					WHERE la.slot_id = :slot_id`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, true)
@@ -350,11 +348,11 @@ func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter 
 	err = pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbAttendanceRecords)
 	if err != nil {
 		c.logger.Error(err.Error())
-		return nil
+		return nil, nil
 	}
 
 	if dbAttendanceRecords == nil {
-		return nil
+		return nil, nil
 	}
 	var attendanceRecords []AttendanceRecord
 	for _, dbAttendanceRecord := range dbAttendanceRecords {
@@ -369,7 +367,7 @@ func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter 
 		}
 		attendanceRecords = append(attendanceRecords, attendanceRecord)
 	}
-	return attendanceRecords
+	return attendanceRecords, nil
 }
 
 func (c *Core) CountLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter QueryFilter) int {
@@ -379,18 +377,16 @@ func (c *Core) CountLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filte
 	}
 
 	data := map[string]interface{}{
-		"slotId": slotId,
+		"slot_id": slotId,
 	}
 
 	const q = `SELECT
-						u.id, u.full_name, s.id AS school_id, s.name AS school_name, 
-						cl.id AS class_learner_id, la.status AS status
+                         COUNT(u.id) AS count
 			FROM users u
-				JOIN class_learners cl ON u.id = cl.learner_id
-				JOIN slots sl ON cl.class_id = s.class_id
-				JOIN schools s ON s.id = u.school_id
-				JOIN learner_attendances la ON la.class_learner_id = cl.id AND la.slot_id = sl.id
-					WHERE sl.id = :slot_id`
+    			JOIN class_learners cl ON u.id = cl.learner_id
+    			JOIN schools s ON s.id = u.school_id
+    			JOIN learner_attendances la ON la.class_learner_id = cl.id
+					WHERE la.slot_id = :slot_id`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, true)

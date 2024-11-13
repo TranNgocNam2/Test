@@ -57,3 +57,16 @@ func AuthorizeWithoutLearner(ctx *gin.Context, queries *sqlc.Queries) (string, e
 
 	return user.ID, nil
 }
+
+func AuthorizeUser(ctx *gin.Context, queries *sqlc.Queries) error {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return ErrInvalidUser
+	}
+
+	_, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil {
+		return ErrInvalidUser
+	}
+
+	return nil
+}

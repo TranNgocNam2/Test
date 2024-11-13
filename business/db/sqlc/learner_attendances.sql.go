@@ -80,12 +80,13 @@ func (q *Queries) GetLearnerAttendanceByClassLearnerAndSlot(ctx context.Context,
 }
 
 const getLearnerAttendanceBySlot = `-- name: GetLearnerAttendanceBySlot :many
-SELECT u.id, u.full_name, s.id AS school_id, s.name AS school_name, la.status
+SELECT
+    u.id, u.full_name, s.id AS school_id, s.name AS school_name, la.status
 FROM users u
-    JOIN class_learners cl ON u.id = cl.learner_id
-    JOIN schools s ON s.id = u.school_id
-    JOIN learner_attendances la ON la.class_learner_id = cl.id AND la.slot_id = $1::uuid
-    WHERE la.slot_id = $1::uuid
+         JOIN class_learners cl ON u.id = cl.learner_id
+         JOIN schools s ON s.id = u.school_id
+         JOIN learner_attendances la ON la.class_learner_id = cl.id
+WHERE la.slot_id = $1::uuid
 `
 
 type GetLearnerAttendanceBySlotRow struct {
