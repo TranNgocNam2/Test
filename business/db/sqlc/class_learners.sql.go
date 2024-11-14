@@ -39,7 +39,7 @@ func (q *Queries) CountLearnersByClassId(ctx context.Context, classID uuid.UUID)
 }
 
 const getClassesByLearnerId = `-- name: GetClassesByLearnerId :many
-SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at, updated_at, updated_by FROM classes
 WHERE id IN (SELECT class_id FROM class_learners WHERE learner_id = $1)
 `
 
@@ -65,6 +65,8 @@ func (q *Queries) GetClassesByLearnerId(ctx context.Context, learnerID string) (
 			&i.Status,
 			&i.CreatedBy,
 			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}

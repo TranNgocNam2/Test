@@ -12,6 +12,25 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkTeacherInClass = `-- name: CheckTeacherInClass :one
+SELECT EXISTS (SELECT 1
+FROM slots WHERE
+    teacher_id = $1
+AND class_id = $2::uuid)
+`
+
+type CheckTeacherInClassParams struct {
+	TeacherID *string   `db:"teacher_id" json:"teacherId"`
+	ClassID   uuid.UUID `db:"class_id" json:"classId"`
+}
+
+func (q *Queries) CheckTeacherInClass(ctx context.Context, arg CheckTeacherInClassParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkTeacherInClass, arg.TeacherID, arg.ClassID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const countClassesByProgramId = `-- name: CountClassesByProgramId :one
 SELECT COUNT(*) FROM classes WHERE program_id = $1::uuid
 `
@@ -69,7 +88,7 @@ func (q *Queries) DeleteClass(ctx context.Context, id uuid.UUID) error {
 }
 
 const getClassById = `-- name: GetClassById :one
-SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes WHERE id = $1::uuid
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at, updated_at, updated_by FROM classes WHERE id = $1::uuid
 `
 
 func (q *Queries) GetClassById(ctx context.Context, id uuid.UUID) (Class, error) {
@@ -88,12 +107,14 @@ func (q *Queries) GetClassById(ctx context.Context, id uuid.UUID) (Class, error)
 		&i.Status,
 		&i.CreatedBy,
 		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
 
 const getClassCompletedByCode = `-- name: GetClassCompletedByCode :one
-SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at FROM classes WHERE code = $1 AND status = 1
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at, updated_at, updated_by FROM classes WHERE code = $1 AND status = 1
 `
 
 func (q *Queries) GetClassCompletedByCode(ctx context.Context, code string) (Class, error) {
@@ -112,6 +133,8 @@ func (q *Queries) GetClassCompletedByCode(ctx context.Context, code string) (Cla
 		&i.Status,
 		&i.CreatedBy,
 		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -174,5 +197,24 @@ func (q *Queries) UpdateClassStatusAndDate(ctx context.Context, arg UpdateClassS
 		arg.EndDate,
 		arg.ID,
 	)
+	return err
+}
+
+const updateMeetingLink = `-- name: UpdateMeetingLink :exec
+UPDATE classes
+SET link = $1,
+    updated_at = now(),
+    updated_by = $2
+WHERE id = $3::uuid
+`
+
+type UpdateMeetingLinkParams struct {
+	Link      *string   `db:"link" json:"link"`
+	UpdatedBy *string   `db:"updated_by" json:"updatedBy"`
+	ID        uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateMeetingLink(ctx context.Context, arg UpdateMeetingLinkParams) error {
+	_, err := q.db.Exec(ctx, updateMeetingLink, arg.Link, arg.UpdatedBy, arg.ID)
 	return err
 }

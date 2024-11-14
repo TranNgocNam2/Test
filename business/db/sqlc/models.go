@@ -46,6 +46,8 @@ type Class struct {
 	Status    int16      `db:"status" json:"status"`
 	CreatedBy string     `db:"created_by" json:"createdBy"`
 	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
+	UpdatedBy *string    `db:"updated_by" json:"updatedBy"`
 }
 
 type ClassLearner struct {

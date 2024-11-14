@@ -114,14 +114,14 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 	return dbClass.ID, nil
 }
 
-func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) []Class {
+func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Class, error) {
 	_, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	if err := filter.Validate(); err != nil {
-		return nil
+		return nil, nil
 	}
 
 	data := map[string]interface{}{
@@ -134,7 +134,7 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 			FROM classes`
 
 	buf := bytes.NewBufferString(q)
-	applyFilter(filter, data, buf)
+	applyFilter(filter, data, buf, false)
 
 	buf.WriteString(orderByClause(orderBy))
 	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
@@ -144,11 +144,11 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 	err = pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbClasses)
 	if err != nil {
 		c.logger.Error(err.Error())
-		return nil
+		return nil, nil
 	}
 
 	if dbClasses == nil {
-		return nil
+		return nil, nil
 	}
 
 	var classes []Class
@@ -160,7 +160,7 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 			Code:      dbClass.Code,
 			StartDate: dbClass.StartDate,
 			EndDate:   dbClass.EndDate,
-			Status:    dbClass.Status,
+			Status:    &dbClass.Status,
 		}
 
 		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
@@ -171,35 +171,143 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 
 		dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
 		if err != nil {
-			return nil
+			return nil, nil
 		}
 		class.Skills = toCoreSkillSlice(dbSkills)
 
 		totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
 		if err != nil {
-			return nil
+			return nil, nil
 		}
 		class.TotalLearners = totalLearners
 
 		classes = append(classes, class)
 	}
 
-	return classes
+	return classes, nil
 }
 
-func (c *Core) QueryByLearner(ctx *gin.Context) []Class {
+func (c *Core) QueryByTeacher(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Class, error) {
+	teacherId, err := middleware.AuthorizeTeacher(ctx, c.queries)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := filter.Validate(); err != nil {
+		return nil, nil
+	}
+
+	data := map[string]interface{}{
+		"teacher_id":    teacherId,
+		"status":        COMPLETED,
+		"offset":        (pageNumber - 1) * rowsPerPage,
+		"rows_per_page": rowsPerPage,
+	}
+
+	const q = `SELECT
+					c.id, c.name, c.code, c.subject_id, c.program_id, c.link, c.start_date, c.end_date
+			FROM classes c
+				JOIN slots s ON s.class_id = c.id
+					WHERE s.teacher_id = :teacher_id AND c.status = :status`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf, true)
+	buf.WriteString(" GROUP BY c.id")
+	buf.WriteString(orderByClause(orderBy))
+	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
+	c.logger.Info(buf.String())
+
+	var dbClasses []sqlc.Class
+	err = pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbClasses)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, nil
+	}
+
+	if dbClasses == nil {
+		return nil, nil
+	}
+
+	var classes []Class
+
+	for _, dbClass := range dbClasses {
+		class := Class{
+			ID:        dbClass.ID,
+			Name:      dbClass.Name,
+			Code:      dbClass.Code,
+			StartDate: dbClass.StartDate,
+			EndDate:   dbClass.EndDate,
+			Status:    nil,
+		}
+
+		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
+		class.Program = toCoreProgram(dbProgram)
+
+		dbSubject, _ := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
+		class.Subject = toCoreSubject(dbSubject)
+
+		dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
+		if err != nil {
+			return nil, nil
+		}
+		class.Skills = toCoreSkillSlice(dbSkills)
+
+		totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
+		if err != nil {
+			return nil, nil
+		}
+		class.TotalLearners = totalLearners
+
+		classes = append(classes, class)
+	}
+
+	return classes, nil
+}
+
+func (c *Core) CountByTeacher(ctx *gin.Context, filter QueryFilter) int {
+	teacherId, _ := middleware.AuthorizeTeacher(ctx, c.queries)
+
+	data := map[string]interface{}{
+		"teacher_id": teacherId,
+		"status":     COMPLETED,
+	}
+	if err := filter.Validate(); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	const q = `SELECT COUNT (DISTINCT (c.id)) AS count
+			FROM classes c
+				JOIN slots s ON s.class_id = c.id
+					WHERE s.teacher_id = :teacher_id AND c.status = :status`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf, true)
+
+	var count struct {
+		Count int `db:"count"`
+	}
+
+	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	return count.Count
+}
+func (c *Core) QueryByLearner(ctx *gin.Context) ([]Class, error) {
 	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	dbClasses, err := c.queries.GetClassesByLearnerId(ctx, learner.ID)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 
 	if dbClasses == nil {
-		return nil
+		return nil, nil
 	}
 
 	var classes []Class
@@ -211,7 +319,7 @@ func (c *Core) QueryByLearner(ctx *gin.Context) []Class {
 			Code:      dbClass.Code,
 			StartDate: dbClass.StartDate,
 			EndDate:   dbClass.EndDate,
-			Status:    dbClass.Status,
+			Status:    nil,
 		}
 
 		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
@@ -222,19 +330,19 @@ func (c *Core) QueryByLearner(ctx *gin.Context) []Class {
 
 		dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
 		if err != nil {
-			return nil
+			return nil, nil
 		}
 		class.Skills = toCoreSkillSlice(dbSkills)
 
 		totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
 		if err != nil {
-			return nil
+			return nil, nil
 		}
 		class.TotalLearners = totalLearners
 
 		classes = append(classes, class)
 	}
-	return classes
+	return classes, nil
 }
 
 func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
@@ -251,7 +359,7 @@ func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
                         classes`
 
 	buf := bytes.NewBufferString(q)
-	applyFilter(filter, data, buf)
+	applyFilter(filter, data, buf, false)
 
 	var count struct {
 		Count int `db:"count"`
@@ -282,11 +390,11 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		Link:      *dbClass.Link,
 		StartDate: dbClass.StartDate,
 		EndDate:   dbClass.EndDate,
-		Password:  dbClass.Password,
+		Password:  &dbClass.Password,
 	}
 
 	if user.AuthRole == role.LEARNER {
-		class.Password = ""
+		class.Password = nil
 	}
 
 	dbSubject, err := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
@@ -478,6 +586,45 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (c *Core) UpdateMeetingLink(ctx *gin.Context, id uuid.UUID, updateMeeting UpdateMeeting) error {
+	teacherId, err := middleware.AuthorizeTeacher(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+
+	class, err := c.queries.GetClassById(ctx, id)
+	if err != nil {
+		return model.ErrClassNotFound
+	}
+
+	if class.Status != COMPLETED {
+		return model.ErrClassNotCompleted
+	}
+
+	if class.EndDate != nil && class.EndDate.UTC().Before(time.Now().UTC()) {
+		return model.ErrClassIsEnded
+	}
+
+	isTeacherInClass, err := c.queries.CheckTeacherInClass(ctx, sqlc.CheckTeacherInClassParams{
+		TeacherID: &teacherId,
+		ClassID:   id,
+	})
+	if err != nil || !isTeacherInClass {
+		return model.ErrTeacherIsNotInClass
+	}
+
+	err = c.queries.UpdateMeetingLink(ctx, sqlc.UpdateMeetingLinkParams{
+		Link:      &updateMeeting.Link,
+		UpdatedBy: &teacherId,
+		ID:        class.ID,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

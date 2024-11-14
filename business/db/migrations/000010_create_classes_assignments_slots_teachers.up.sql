@@ -6,11 +6,13 @@ CREATE table classes(
     password                text NOT NULL,
     name                    character varying(50) NOT NULL,
     link                    text,
-    start_date              timestamp,
-    end_date                timestamp,
+    start_date              timestamp with time zone,
+    end_date                timestamp with time zone,
     status                  smallint NOT NULL DEFAULT 0,
     created_by              character varying(50) NOT NULL,
-    created_at              timestamp NOT NULL DEFAULT now(),
+    created_at              timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at              timestamp with time zone,
+    updated_by              character varying(50),
 
     CONSTRAINT fk_class_staffs_created_by
         FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
@@ -18,6 +20,8 @@ CREATE table classes(
         FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
     CONSTRAINT fk_class_program
         FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
+    CONSTRAINT fk_class_staffs_updated_by
+        FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE CASCADE,
 
     CONSTRAINT unique_classes_subject UNIQUE (id, subject_id)
 );
@@ -27,8 +31,8 @@ CREATE table assignments(
     transcript_id       uuid NOT NULL,
     teacher_id          character varying(50) NOT NULL,
     class_id            uuid NOT NULL,
-    created_at          timestamp NOT NULL DEFAULT now(),
-    updated_at          timestamp,
+    created_at          timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at          timestamp with time zone,
     updated_by          character varying(50),
 
     CONSTRAINT fk_assignment_teacher
@@ -46,8 +50,8 @@ CREATE table slots(
     id                  uuid PRIMARY KEY,
     session_id          uuid NOT NULL,
     class_id            uuid NOT NULL,
-    start_time          timestamp,
-    end_time            timestamp,
+    start_time          timestamp with time zone,
+    end_time            timestamp with time zone,
     index               int NOT NULL,
     teacher_id          character varying(50),
     attendance_code     character varying(6) DEFAULT NULL,

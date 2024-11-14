@@ -34,3 +34,16 @@ SET name = sqlc.arg(name),
     code = sqlc.arg(code),
     password = sqlc.arg(password)
 WHERE id = sqlc.arg(id)::uuid;
+
+-- name: CheckTeacherInClass :one
+SELECT EXISTS (SELECT 1
+FROM slots WHERE
+    teacher_id = sqlc.arg(teacher_id)
+AND class_id = sqlc.arg(class_id)::uuid);
+
+-- name: UpdateMeetingLink :exec
+UPDATE classes
+SET link = sqlc.arg(link),
+    updated_at = now(),
+    updated_by = sqlc.arg(updated_by)
+WHERE id = sqlc.arg(id)::uuid;

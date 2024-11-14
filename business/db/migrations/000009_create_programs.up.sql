@@ -6,8 +6,8 @@ CREATE table programs(
     created_by      character varying(50) NOT NULL,
     updated_by      character varying(50),
     description     text NOT NULL,
-    created_at      timestamp NOT NULL DEFAULT now(),
-    updated_at      timestamp,
+    created_at      timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at      timestamp with time zone,
 
     CONSTRAINT fk_programs_staff_updated_by
         FOREIGN KEY (updated_by)

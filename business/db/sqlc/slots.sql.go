@@ -178,6 +178,22 @@ func (q *Queries) GetSlotsByClassId(ctx context.Context, classID uuid.UUID) ([]S
 	return items, nil
 }
 
+const updateAttendanceCode = `-- name: UpdateAttendanceCode :exec
+UPDATE slots
+SET attendance_code = $1
+WHERE id = $2
+`
+
+type UpdateAttendanceCodeParams struct {
+	AttendanceCode *string   `db:"attendance_code" json:"attendanceCode"`
+	ID             uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateAttendanceCode(ctx context.Context, arg UpdateAttendanceCodeParams) error {
+	_, err := q.db.Exec(ctx, updateAttendanceCode, arg.AttendanceCode, arg.ID)
+	return err
+}
+
 const updateSlot = `-- name: UpdateSlot :exec
 UPDATE slots
 SET start_time = $1,

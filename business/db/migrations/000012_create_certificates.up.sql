@@ -6,8 +6,8 @@ CREATE table certificates(
     name                character varying(50) NOT NULL,
 --     type                int NOT NULL DEFAULT 0,
     status              int NOT NULL DEFAULT 0,
-    created_at          timestamp NOT NULL DEFAULT now(),
-    updated_at          timestamp,
+    created_at          timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at          timestamp with time zone,
     updated_by          character varying(50),
 
     CONSTRAINT fk_certificates_learner

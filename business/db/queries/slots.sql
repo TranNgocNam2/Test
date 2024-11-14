@@ -39,3 +39,8 @@ SELECT COUNT(*) FROM slots WHERE class_id = sqlc.arg(class_id) AND teacher_id IS
 SELECT * FROM slots
     WHERE class_id = sqlc.arg(class_id)
          AND index = sqlc.arg(index);
+
+-- name: UpdateAttendanceCode :exec
+UPDATE slots
+SET attendance_code = sqlc.arg(attendance_code)
+WHERE id = sqlc.arg(id);
