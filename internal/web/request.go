@@ -20,7 +20,6 @@ type validator interface {
 // If the provided value is a struct then it is checked for validation tags.
 // If the value implements a validate function, it is executed.
 func Decode(c *gin.Context, val any) error {
-
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(val); err != nil {

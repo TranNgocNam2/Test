@@ -180,6 +180,8 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 			return nil, nil
 		}
 		class.TotalLearners = totalLearners
+		class.TotalSlots, _ = c.queries.CountSlotsByClassId(ctx, dbClass.ID)
+		class.CurrentSlot, _ = c.queries.CountCompletedSlotsByClassId(ctx, dbClass.ID)
 
 		classes = append(classes, class)
 	}
@@ -258,6 +260,9 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, filter QueryFilter, orderBy orde
 		}
 		class.TotalLearners = totalLearners
 
+		class.TotalSlots, _ = c.queries.CountSlotsByClassId(ctx, dbClass.ID)
+		class.CurrentSlot, _ = c.queries.CountCompletedSlotsByClassId(ctx, dbClass.ID)
+
 		classes = append(classes, class)
 	}
 
@@ -295,6 +300,7 @@ func (c *Core) CountByTeacher(ctx *gin.Context, filter QueryFilter) int {
 
 	return count.Count
 }
+
 func (c *Core) QueryByLearner(ctx *gin.Context) ([]Class, error) {
 	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
 	if err != nil {
@@ -339,6 +345,8 @@ func (c *Core) QueryByLearner(ctx *gin.Context) ([]Class, error) {
 			return nil, nil
 		}
 		class.TotalLearners = totalLearners
+		class.TotalSlots, _ = c.queries.CountSlotsByClassId(ctx, dbClass.ID)
+		class.CurrentSlot, _ = c.queries.CountCompletedSlotsByClassId(ctx, dbClass.ID)
 
 		classes = append(classes, class)
 	}
@@ -387,6 +395,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	class := Details{
 		ID:        dbClass.ID,
 		Name:      dbClass.Name,
+		Code:      dbClass.Code,
 		Link:      *dbClass.Link,
 		StartDate: dbClass.StartDate,
 		EndDate:   dbClass.EndDate,
@@ -408,6 +417,12 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		return Details{}, model.ErrProgramNotFound
 	}
 	class.Program = toCoreProgram(dbProgram)
+
+	dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
+	if err != nil {
+		return Details{}, model.ErrSkillNotFound
+	}
+	class.Skills = toCoreSkillSlice(dbSkills)
 
 	var slots []Slot
 	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
