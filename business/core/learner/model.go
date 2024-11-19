@@ -23,7 +23,6 @@ type Learner struct {
 	Gender      *int16       `json:"gender"`
 	Photo       string       `json:"photo"`
 	School      School       `json:"school"`
-	ImageLink   []string     `json:"image_links"`
 	Attendances []Attendance `json:"attendances"`
 	Assignments []Assignment `json:"assignments"`
 }
@@ -44,6 +43,12 @@ type AttendanceRecord struct {
 	FullName string `json:"fullName"`
 	School   School `json:"school"`
 	Status   int32  `json:"status"`
+}
+
+type UpdateLearner struct {
+	SchoolId   uuid.UUID
+	ImageLinks []string
+	Type       int16
 }
 
 func toCoreAttendance(dbAttendance sqlc.LearnerAttendance) Attendance {

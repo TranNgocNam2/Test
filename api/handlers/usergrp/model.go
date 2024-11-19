@@ -3,9 +3,9 @@ package usergrp
 import (
 	"Backend/business/core/user"
 	"Backend/internal/common/model"
+	"Backend/internal/common/status"
 	"Backend/internal/validate"
 	"Backend/internal/web/payload"
-	"github.com/google/uuid"
 	"gitlab.com/innovia69420/kit/enum/role"
 	"net/mail"
 )
@@ -22,9 +22,10 @@ func toCoreNewUser(newUserRequest payload.NewUser) (user.NewUser, error) {
 	}
 
 	newUser := user.NewUser{
-		ID:    newUserRequest.ID,
-		Email: *emailAddr,
-		Role:  int16(authRole),
+		ID:       newUserRequest.ID,
+		Email:    *emailAddr,
+		Role:     int16(authRole),
+		FullName: newUserRequest.FullName,
 	}
 
 	return newUser, nil
@@ -36,40 +37,12 @@ func validateNewUserRequest(newUserRequest payload.NewUser) error {
 	return nil
 }
 
-func toCoreUpdateUser(updateUserRequest payload.UpdateUser) (user.UpdateUser, error) {
-	authRole := *updateUserRequest.Role
-	if authRole == role.LEARNER && updateUserRequest.SchoolId == nil {
-		return user.UpdateUser{}, model.ErrNilSchool
-	}
-
-	schoolID, err := uuid.Parse(*updateUserRequest.SchoolId)
-	if err != nil && updateUserRequest.SchoolId != nil {
-		return user.UpdateUser{}, model.ErrInvalidSchoolID
-	}
-
-	emailAddr, err := mail.ParseAddress(updateUserRequest.Email)
-	if err != nil {
-		return user.UpdateUser{}, model.ErrInvalidEmail
-	}
-
-	if !user.IsValidPhoneNumber(updateUserRequest.Phone) {
-		return user.UpdateUser{}, model.ErrInvalidPhoneNumber
-	}
-
-	user := user.UpdateUser{
+func toCoreUpdateUser(updateUserRequest payload.UpdateUser) user.UpdateUser {
+	return user.UpdateUser{
 		FullName: updateUserRequest.FullName,
-		Email:    *emailAddr,
 		Phone:    updateUserRequest.Phone,
-		Gender:   int16(*updateUserRequest.Gender),
-		Role:     int16(*updateUserRequest.Role),
 		Photo:    updateUserRequest.Photo,
-		Image:    updateUserRequest.ImageLink,
 	}
-	if authRole == role.LEARNER {
-		user.SchoolID = &schoolID
-	}
-
-	return user, nil
 }
 
 func validateUpdateUserRequest(updateUserRequest payload.UpdateUser) error {
@@ -79,16 +52,16 @@ func validateUpdateUserRequest(updateUserRequest payload.UpdateUser) error {
 	return nil
 }
 
-func toCoreVerifyUser(verifyUserRequest payload.VerifyUser) (user.VerifyUser, error) {
-	status := int32(verifyUserRequest.Status)
-	if status != user.Verified && status != user.Failed {
-		return user.VerifyUser{}, model.InvalidUserStatus
+func toCoreVerifyUser(verifyUserRequest payload.VerifyLearner) (user.VerifyLearner, error) {
+	if status.Verification(verifyUserRequest.Status) != status.Verified &&
+		status.Verification(verifyUserRequest.Status) != status.Failed {
+		return user.VerifyLearner{}, model.InvalidUserStatus
 	}
 
-	return user.VerifyUser{Status: status}, nil
+	return user.VerifyLearner{Status: verifyUserRequest.Status}, nil
 }
 
-func validateVerifyUserRequest(verifyUserRequest payload.VerifyUser) error {
+func validateVerifyUserRequest(verifyUserRequest payload.VerifyLearner) error {
 	if err := validate.Check(verifyUserRequest); err != nil {
 		return err
 	}

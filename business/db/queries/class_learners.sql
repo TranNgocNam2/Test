@@ -19,5 +19,6 @@ SELECT u.*, cl.id AS class_learner_id, s.id AS school_id, s.name AS school_name
 FROM users u
         JOIN class_learners cl ON cl.learner_id = u.id
         JOIN classes c ON cl.class_id = c.id
-        JOIN schools s ON s.id = u.school_id
+        JOIN verification_learners vl ON u.id = vl.learner_id
+        JOIN schools s ON s.id = vl.school_id
 WHERE c.id = sqlc.arg(class_id)::uuid;

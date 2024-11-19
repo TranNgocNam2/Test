@@ -97,29 +97,26 @@ func (q *Queries) GetLearnerByClassId(ctx context.Context, arg GetLearnerByClass
 }
 
 const getLearnersByClassId = `-- name: GetLearnersByClassId :many
-SELECT u.id, u.full_name, u.email, u.phone, u.gender, u.auth_role, u.profile_photo, u.status, u.school_id, u.image, u.verified_by, cl.id AS class_learner_id, s.id AS school_id, s.name AS school_name
+SELECT u.id, u.full_name, u.email, u.phone, u.auth_role, u.profile_photo, u.status, cl.id AS class_learner_id, s.id AS school_id, s.name AS school_name
 FROM users u
         JOIN class_learners cl ON cl.learner_id = u.id
         JOIN classes c ON cl.class_id = c.id
-        JOIN schools s ON s.id = u.school_id
+        JOIN verification_learners vl ON u.id = vl.learner_id
+        JOIN schools s ON s.id = vl.school_id
 WHERE c.id = $1::uuid
 `
 
 type GetLearnersByClassIdRow struct {
-	ID             string     `db:"id" json:"id"`
-	FullName       *string    `db:"full_name" json:"fullName"`
-	Email          string     `db:"email" json:"email"`
-	Phone          *string    `db:"phone" json:"phone"`
-	Gender         *int16     `db:"gender" json:"gender"`
-	AuthRole       int16      `db:"auth_role" json:"authRole"`
-	ProfilePhoto   *string    `db:"profile_photo" json:"profilePhoto"`
-	Status         int32      `db:"status" json:"status"`
-	SchoolID       *uuid.UUID `db:"school_id" json:"schoolId"`
-	Image          []string   `db:"image" json:"image"`
-	VerifiedBy     *string    `db:"verified_by" json:"verifiedBy"`
-	ClassLearnerID uuid.UUID  `db:"class_learner_id" json:"classLearnerId"`
-	SchoolID_2     uuid.UUID  `db:"school_id_2" json:"schoolId2"`
-	SchoolName     string     `db:"school_name" json:"schoolName"`
+	ID             string    `db:"id" json:"id"`
+	FullName       *string   `db:"full_name" json:"fullName"`
+	Email          string    `db:"email" json:"email"`
+	Phone          *string   `db:"phone" json:"phone"`
+	AuthRole       int16     `db:"auth_role" json:"authRole"`
+	ProfilePhoto   *string   `db:"profile_photo" json:"profilePhoto"`
+	Status         int32     `db:"status" json:"status"`
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	SchoolID       uuid.UUID `db:"school_id" json:"schoolId"`
+	SchoolName     string    `db:"school_name" json:"schoolName"`
 }
 
 func (q *Queries) GetLearnersByClassId(ctx context.Context, classID uuid.UUID) ([]GetLearnersByClassIdRow, error) {
@@ -136,15 +133,11 @@ func (q *Queries) GetLearnersByClassId(ctx context.Context, classID uuid.UUID) (
 			&i.FullName,
 			&i.Email,
 			&i.Phone,
-			&i.Gender,
 			&i.AuthRole,
 			&i.ProfilePhoto,
 			&i.Status,
-			&i.SchoolID,
-			&i.Image,
-			&i.VerifiedBy,
 			&i.ClassLearnerID,
-			&i.SchoolID_2,
+			&i.SchoolID,
 			&i.SchoolName,
 		); err != nil {
 			return nil, err

@@ -2,7 +2,7 @@ ALTER table schools
     DROP CONSTRAINT IF EXISTS fk_district_schools;
 ALTER table districts
     DROP CONSTRAINT IF EXISTS fk_province_districts;
-ALTER table users
+ALTER table verification_learners
     DROP CONSTRAINT IF EXISTS fk_learner_school;
 
 DROP table IF EXISTS provinces CASCADE;

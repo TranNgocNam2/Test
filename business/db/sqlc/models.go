@@ -195,15 +195,22 @@ type Transcript struct {
 }
 
 type User struct {
-	ID           string     `db:"id" json:"id"`
-	FullName     *string    `db:"full_name" json:"fullName"`
-	Email        string     `db:"email" json:"email"`
-	Phone        *string    `db:"phone" json:"phone"`
-	Gender       *int16     `db:"gender" json:"gender"`
-	AuthRole     int16      `db:"auth_role" json:"authRole"`
-	ProfilePhoto *string    `db:"profile_photo" json:"profilePhoto"`
-	Status       int32      `db:"status" json:"status"`
-	SchoolID     *uuid.UUID `db:"school_id" json:"schoolId"`
-	Image        []string   `db:"image" json:"image"`
-	VerifiedBy   *string    `db:"verified_by" json:"verifiedBy"`
+	ID           string  `db:"id" json:"id"`
+	FullName     *string `db:"full_name" json:"fullName"`
+	Email        string  `db:"email" json:"email"`
+	Phone        *string `db:"phone" json:"phone"`
+	AuthRole     int16   `db:"auth_role" json:"authRole"`
+	ProfilePhoto *string `db:"profile_photo" json:"profilePhoto"`
+	Status       int32   `db:"status" json:"status"`
+}
+
+type VerificationLearner struct {
+	ID         uuid.UUID  `db:"id" json:"id"`
+	SchoolID   uuid.UUID  `db:"school_id" json:"schoolId"`
+	LearnerID  string     `db:"learner_id" json:"learnerId"`
+	ImageLink  []string   `db:"image_link" json:"imageLink"`
+	Status     int16      `db:"status" json:"status"`
+	VerifiedBy *string    `db:"verified_by" json:"verifiedBy"`
+	Type       int16      `db:"type" json:"type"`
+	VerifiedAt *time.Time `db:"verified_at" json:"verifiedAt"`
 }

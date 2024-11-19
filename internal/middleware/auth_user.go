@@ -25,7 +25,7 @@ func AuthorizeVerifiedLearner(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.Us
 		return nil, ErrInvalidUser
 	}
 
-	learner, err := queries.GetVerifiedLearnerById(ctx, ctx.GetHeader(header.XUserId))
+	learner, err := queries.GetVerifiedLearnersByLearnerId(ctx, ctx.GetHeader(header.XUserId))
 	if err != nil {
 		return nil, ErrInvalidUser
 	}
@@ -69,4 +69,30 @@ func AuthorizeUser(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, error) 
 	}
 
 	return &user, nil
+}
+
+func AuthorizeAdmin(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, error) {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return nil, ErrInvalidUser
+	}
+
+	admin, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil || admin.AuthRole != role.ADMIN {
+		return nil, ErrInvalidUser
+	}
+
+	return &admin, nil
+}
+
+func AuthorizeLearner(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, error) {
+	if ctx.GetHeader(header.XUserId) == "" {
+		return nil, ErrInvalidUser
+	}
+
+	learner, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
+	if err != nil || learner.AuthRole != role.LEARNER {
+		return nil, ErrInvalidUser
+	}
+
+	return &learner, nil
 }
