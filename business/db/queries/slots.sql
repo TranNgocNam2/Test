@@ -27,7 +27,7 @@ SELECT EXISTS (
 ) AS overlap;
 
 -- name: GetSlotsByClassId :many
-SELECT * FROM slots WHERE class_id = sqlc.arg(class_id);
+SELECT * FROM slots WHERE class_id = sqlc.arg(class_id) ORDER BY index;
 
 -- name: CountSlotsByClassId :one
 SELECT COUNT(*) FROM slots WHERE class_id = sqlc.arg(class_id);
@@ -44,3 +44,8 @@ SELECT * FROM slots
 UPDATE slots
 SET attendance_code = sqlc.arg(attendance_code)
 WHERE id = sqlc.arg(id);
+
+-- name: CountCompletedSlotsByClassId :one
+SELECT COUNT(*) FROM slots
+WHERE class_id = sqlc.arg(class_id)
+    AND end_time < now();

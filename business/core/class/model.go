@@ -42,6 +42,7 @@ type UpdateMeeting struct {
 type Details struct {
 	ID        uuid.UUID  `json:"id"`
 	Name      string     `json:"name"`
+	Code      string     `json:"code"`
 	Link      string     `json:"link"`
 	Password  *string    `json:"password,omitempty"`
 	StartDate *time.Time `json:"startDate"`
@@ -49,6 +50,7 @@ type Details struct {
 	Program   Program    `json:"program"`
 	Subject   Subject    `json:"subject"`
 	Slots     []Slot     `json:"slots"`
+	Skills    []Skill    `json:"skills"`
 }
 
 type Class struct {
@@ -62,6 +64,8 @@ type Class struct {
 	Subject       Subject    `json:"subject"`
 	Skills        []Skill    `json:"skills"`
 	TotalLearners int64      `json:"totalLearners"`
+	TotalSlots    int64      `json:"totalSlots,omitempty"`
+	CurrentSlot   int64      `json:"currentSlot,omitempty"`
 }
 
 type Skill struct {

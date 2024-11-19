@@ -42,6 +42,19 @@ func (q *Queries) CheckTeacherTimeOverlap(ctx context.Context, arg CheckTeacherT
 	return overlap, err
 }
 
+const countCompletedSlotsByClassId = `-- name: CountCompletedSlotsByClassId :one
+SELECT COUNT(*) FROM slots
+WHERE class_id = $1
+    AND end_time < now()
+`
+
+func (q *Queries) CountCompletedSlotsByClassId(ctx context.Context, classID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countCompletedSlotsByClassId, classID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countSlotsByClassId = `-- name: CountSlotsByClassId :one
 SELECT COUNT(*) FROM slots WHERE class_id = $1
 `
@@ -146,7 +159,7 @@ func (q *Queries) GetSlotByIdAndIndex(ctx context.Context, arg GetSlotByIdAndInd
 }
 
 const getSlotsByClassId = `-- name: GetSlotsByClassId :many
-SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots WHERE class_id = $1
+SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots WHERE class_id = $1 ORDER BY index
 `
 
 func (q *Queries) GetSlotsByClassId(ctx context.Context, classID uuid.UUID) ([]Slot, error) {
