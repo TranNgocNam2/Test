@@ -24,4 +24,4 @@ CREATE table verification_learners(
     CONSTRAINT fk_users_verified_by
         FOREIGN KEY (verified_by)
             REFERENCES users(id) ON DELETE CASCADE
-)
+);
