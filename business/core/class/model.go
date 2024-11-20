@@ -89,7 +89,6 @@ type Teacher struct {
 	FullName string `json:"fullName"`
 	Email    string `json:"email"`
 	Phone    string `json:"phone"`
-	Gender   *int16 `json:"gender"`
 }
 
 type Slot struct {
@@ -141,7 +140,6 @@ func toCoreTeacher(dbTeacher sqlc.User) Teacher {
 		FullName: *dbTeacher.FullName,
 		Email:    dbTeacher.Email,
 		Phone:    *dbTeacher.Phone,
-		Gender:   dbTeacher.Gender,
 	}
 }
 

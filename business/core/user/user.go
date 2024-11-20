@@ -4,11 +4,11 @@ import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
+	"Backend/internal/common/status"
 	"Backend/internal/middleware"
 	"gitlab.com/innovia69420/kit/enum/role"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -43,6 +43,7 @@ func (c *Core) Create(ctx *gin.Context, newUser NewUser) error {
 		ID:       newUser.ID,
 		Email:    newUser.Email.Address,
 		AuthRole: newUser.Role,
+		FullName: &newUser.FullName,
 	}
 
 	if err := c.queries.CreateUser(ctx, dbUser); err != nil {
@@ -52,7 +53,7 @@ func (c *Core) Create(ctx *gin.Context, newUser NewUser) error {
 	return nil
 }
 
-func (c *Core) Verify(ctx *gin.Context, id string, verifyUser VerifyUser) error {
+func (c *Core) Verify(ctx *gin.Context, id string, verifyLearner VerifyLearner) error {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
@@ -67,37 +68,61 @@ func (c *Core) Verify(ctx *gin.Context, id string, verifyUser VerifyUser) error 
 		return model.ErrUserCannotBeVerified
 	}
 
-	if dbUser.Image == nil && verifyUser.Status == Verified {
+	verifyUser, err := c.queries.GetLearnerVerificationByUserId(ctx, dbUser.ID)
+	if err != nil || (verifyUser.ImageLink == nil &&
+		status.Verification(verifyLearner.Status) == status.Verified) {
 		return model.ErrInvalidVerificationInfo
 	}
 
-	dbVerifyUser := sqlc.VerifyUserParams{
-		ID:         dbUser.ID,
-		Status:     verifyUser.Status,
+	dbVerifyUser := sqlc.VerifyLearnerParams{
 		VerifiedBy: &staffId,
+		Status:     verifyLearner.Status,
+		LearnerID:  dbUser.ID,
 	}
-	if err = c.queries.VerifyUser(ctx, dbVerifyUser); err != nil {
+	if err = c.queries.VerifyLearner(ctx, dbVerifyUser); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *Core) GetByID(ctx *gin.Context, id string) (User, error) {
+func (c *Core) GetByID(ctx *gin.Context, id string) (Details, error) {
 	dbUser, err := c.queries.GetUserById(ctx, id)
 	if err != nil {
-		return User{}, model.ErrUserNotFound
+		return Details{}, model.ErrUserNotFound
 	}
 	user := toCoreUser(dbUser)
-	if dbUser.SchoolID != nil {
-		dbSchool, _ := c.queries.GetSchoolById(ctx, *dbUser.SchoolID)
-		user.School = &struct {
-			ID   *uuid.UUID `json:"id"`
-			Name *string    `json:"name"`
-		}{
-			ID:   &dbSchool.ID,
-			Name: &dbSchool.Name,
+
+	if dbUser.AuthRole == role.LEARNER {
+		learnerVerification, _ := c.queries.GetLearnerVerificationByUserId(ctx, dbUser.ID)
+		dbSchool, _ := c.queries.GetSchoolById(ctx, learnerVerification.SchoolID)
+		user.School = &School{
+			ID:   dbSchool.ID,
+			Name: dbSchool.Name,
 		}
+		user.Type = &learnerVerification.Type
+		user.VerifiedStatus = &learnerVerification.Status
+	}
+
+	return user, nil
+}
+
+func (c *Core) GetCurrent(ctx *gin.Context) (Details, error) {
+	dbUser, err := middleware.AuthorizeUser(ctx, c.queries)
+	if err != nil {
+		return Details{}, model.ErrUserNotFound
+	}
+	user := toCoreUser(*dbUser)
+
+	if dbUser.AuthRole == role.LEARNER {
+		learnerVerification, _ := c.queries.GetLearnerVerificationByUserId(ctx, dbUser.ID)
+		dbSchool, _ := c.queries.GetSchoolById(ctx, learnerVerification.SchoolID)
+		user.School = &School{
+			ID:   dbSchool.ID,
+			Name: dbSchool.Name,
+		}
+		user.Type = &learnerVerification.Type
+		user.VerifiedStatus = &learnerVerification.Status
 	}
 
 	return user, nil
@@ -109,35 +134,38 @@ func (c *Core) Update(ctx *gin.Context, id string, updatedUser UpdateUser) error
 		return model.ErrUserNotFound
 	}
 
-	if updatedUser.Email.Address != dbUser.Email {
-		if _, err = c.queries.GetUserByEmail(ctx, updatedUser.Email.Address); err == nil {
-			return model.ErrEmailAlreadyExists
-		}
-	}
-
-	if updatedUser.Phone != "" && updatedUser.Phone != *dbUser.Phone {
-		if _, err = c.queries.GetUserByPhone(ctx, &updatedUser.Phone); err == nil {
-			return model.ErrPhoneAlreadyExists
-		}
-	}
-
-	if updatedUser.SchoolID == nil {
-		updatedUser.SchoolID = dbUser.SchoolID
-	}
-
-	var dbUserUpdate = sqlc.UpdateUserParams{
+	if err = c.queries.UpdateUser(ctx, sqlc.UpdateUserParams{
 		FullName:     &updatedUser.FullName,
-		Email:        updatedUser.Email.Address,
 		Phone:        &updatedUser.Phone,
-		Gender:       &updatedUser.Gender,
-		SchoolID:     updatedUser.SchoolID,
 		ProfilePhoto: &updatedUser.Photo,
-		Status:       Pending,
-		Image:        updatedUser.Image,
 		ID:           dbUser.ID,
+	}); err != nil {
+		return err
 	}
 
-	if err = c.queries.UpdateUser(ctx, dbUserUpdate); err != nil {
+	return nil
+}
+
+func (c *Core) Handle(ctx *gin.Context, id string) error {
+	_, err := middleware.AuthorizeAdmin(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+
+	user, err := c.queries.GetUserById(ctx, id)
+	if err != nil {
+		return model.ErrUserNotFound
+	}
+	if status.User(user.Status) == status.Valid {
+		user.Status = int32(status.Invalid)
+	} else {
+		user.Status = int32(status.Valid)
+	}
+
+	if err := c.queries.HandleUserStatus(ctx, sqlc.HandleUserStatusParams{
+		ID:     user.ID,
+		Status: user.Status,
+	}); err != nil {
 		return err
 	}
 

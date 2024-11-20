@@ -93,13 +93,9 @@ func (h *Handlers) UpdateUser() gin.HandlerFunc {
 			return
 		}
 
-		updateUser, err := toCoreUpdateUser(updateUserRequest)
-		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
-			return
-		}
+		updateUser := toCoreUpdateUser(updateUserRequest)
 
-		err = h.user.Update(ctx, userID, updateUser)
+		err := h.user.Update(ctx, userID, updateUser)
 		if err != nil {
 			switch {
 			case
@@ -123,11 +119,29 @@ func (h *Handlers) UpdateUser() gin.HandlerFunc {
 	}
 }
 
+func (h *Handlers) GetCurrentUser() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userRes, err := h.user.GetCurrent(ctx)
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrUserNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, userRes, http.StatusOK, nil)
+	}
+}
+
 func (h *Handlers) VerifyUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userId := ctx.Param("id")
 
-		var verifyUserRequest payload.VerifyUser
+		var verifyUserRequest payload.VerifyLearner
 		if err := web.Decode(ctx, &verifyUserRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -148,9 +162,33 @@ func (h *Handlers) VerifyUser() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, model.ErrInvalidVerificationInfo),
-				errors.Is(err, model.ErrUserCannotBeVerified):
+				errors.Is(err, model.ErrUserCannotBeVerified),
+				errors.Is(err, model.ErrInvalidVerificationInfo):
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
+			case errors.Is(err, model.ErrUserNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) HandleUser() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userId := ctx.Param("id")
+
+		err := h.user.Handle(ctx, userId)
+		if err != nil {
+			switch {
 			case errors.Is(err, model.ErrUserNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return

@@ -21,6 +21,7 @@ SELECT
     u.id, u.full_name, s.id AS school_id, s.name AS school_name, la.status
 FROM users u
          JOIN class_learners cl ON u.id = cl.learner_id
-         JOIN schools s ON s.id = u.school_id
+         JOIN verification_learners vl ON u.id = vl.learner_id
+         JOIN schools s ON s.id = vl.school_id
          JOIN learner_attendances la ON la.class_learner_id = cl.id
 WHERE la.slot_id = sqlc.arg(slot_id)::uuid;

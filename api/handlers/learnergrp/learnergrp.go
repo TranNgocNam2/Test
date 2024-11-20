@@ -234,3 +234,44 @@ func (h *Handlers) GetAttendanceRecords() gin.HandlerFunc {
 
 	}
 }
+
+func (h *Handlers) UpdateLearner() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req payload.UpdateLearner
+		if err := web.Decode(ctx, &req); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err := validateUpdateLearnerRequest(req); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		updateLearner, err := toCoreUpdateLearner(req)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.learner.Update(ctx, updateLearner)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrSchoolNotFound):
+
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}

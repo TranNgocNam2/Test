@@ -6,6 +6,7 @@ import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
+	"Backend/internal/common/status"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"bytes"
@@ -201,7 +202,7 @@ func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceS
 
 	err = c.queries.SubmitLearnerAttendance(ctx,
 		sqlc.SubmitLearnerAttendanceParams{
-			Status: Attended,
+			Status: int32(status.Attended),
 			ID:     learnerAttendance.ID,
 		})
 	if err != nil {
@@ -232,7 +233,8 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 			FROM users u
 				JOIN class_learners cl ON u.id = cl.learner_id
 				JOIN classes c ON cl.class_id = c.id
-				JOIN schools s ON s.id = u.school_id
+				JOIN verification_learners vl ON u.id = vl.learner_id
+        		JOIN schools s ON s.id = vl.school_id
 					WHERE c.id = :class_id`
 
 	buf := bytes.NewBufferString(q)
@@ -253,18 +255,17 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 	var learners []Learner
 
 	for _, dbLearner := range dbLearners {
+
 		learner := Learner{
 			ID:       dbLearner.ID,
 			FullName: *dbLearner.FullName,
 			Email:    dbLearner.Email,
 			Phone:    *dbLearner.Phone,
-			Gender:   dbLearner.Gender,
 			Photo:    *dbLearner.ProfilePhoto,
 			School: School{
-				ID:   *dbLearner.SchoolID,
+				ID:   dbLearner.SchoolID,
 				Name: dbLearner.SchoolName,
 			},
-			ImageLink: dbLearner.Image,
 		}
 
 		dbAttendances, _ := c.queries.GetAttendanceByClassLearner(ctx, dbLearner.ClassLearnerID)
@@ -296,7 +297,8 @@ func (c *Core) CountLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter 
                          users u
 							JOIN class_learners cl ON u.id = cl.learner_id
  							JOIN classes c ON cl.class_id = c.id
-							JOIN schools s ON s.id = u.school_id
+							JOIN verification_learners vl ON u.id = vl.learner_id
+        					JOIN schools s ON s.id = vl.school_id
 								WHERE c.id = :class_id`
 
 	buf := bytes.NewBufferString(q)
@@ -334,7 +336,8 @@ func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter 
 					u.id, u.full_name AS full_name, s.id AS school_id, s.name AS school_name, la.status
 			FROM users u
     			JOIN class_learners cl ON u.id = cl.learner_id
-    			JOIN schools s ON s.id = u.school_id
+    			JOIN verification_learners vl ON u.id = vl.learner_id
+        		JOIN schools s ON s.id = vl.school_id
     			JOIN learner_attendances la ON la.class_learner_id = cl.id 
 					WHERE la.slot_id = :slot_id`
 
@@ -383,7 +386,8 @@ func (c *Core) CountLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filte
                          COUNT(u.id) AS count
 			FROM users u
     			JOIN class_learners cl ON u.id = cl.learner_id
-    			JOIN schools s ON s.id = u.school_id
+    			JOIN verification_learners vl ON u.id = vl.learner_id
+        		JOIN schools s ON s.id = vl.school_id
     			JOIN learner_attendances la ON la.class_learner_id = cl.id
 					WHERE la.slot_id = :slot_id`
 
@@ -400,4 +404,26 @@ func (c *Core) CountLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filte
 	}
 
 	return count.Count
+}
+
+func (c *Core) Update(ctx *gin.Context, updateLearner UpdateLearner) error {
+	learner, err := middleware.AuthorizeLearner(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+	school, err := c.queries.GetSchoolById(ctx, updateLearner.SchoolId)
+	if err != nil {
+		return model.ErrSchoolNotFound
+	}
+
+	err = c.queries.UpdateLearner(ctx, sqlc.UpdateLearnerParams{
+		ImageLink: updateLearner.ImageLinks,
+		Type:      updateLearner.Type,
+		SchoolID:  school.ID,
+		LearnerID: learner.ID,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

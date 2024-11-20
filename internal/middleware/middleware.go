@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	ErrInvalidUser = errors.New("Người dùng không hợp lệ!")
+	ErrInvalidUser = errors.New("Người dùng không có quyền sử dụng chức năng này!")
 )
 
 func CheckApiKeyAndRequestID(apiKey string) gin.HandlerFunc {
