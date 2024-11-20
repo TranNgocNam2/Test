@@ -178,7 +178,7 @@ VALUES ($1, $2, $3, $4, uuid_generate_v4())
 ON CONFLICT (learner_id)
 DO
 UPDATE SET school_id = $2, type = $3, image_link = $4, status = 0
-WHERE status = 0 OR status = 2
+WHERE verification_learners.status = 0 OR verification_learners.status = 2
 `
 
 type UpdateLearnerParams struct {

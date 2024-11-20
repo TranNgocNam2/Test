@@ -55,4 +55,4 @@ VALUES (sqlc.arg(learner_id), sqlc.arg(school_id), sqlc.arg(type), sqlc.arg(imag
 ON CONFLICT (learner_id)
 DO
 UPDATE SET school_id = sqlc.arg(school_id), type = sqlc.arg(type), image_link = sqlc.arg(image_link), status = 0
-WHERE status = 0 OR status = 2;
+WHERE verification_learners.status = 0 OR verification_learners.status = 2;

@@ -3,7 +3,7 @@ package payload
 type NewUser struct {
 	ID       string `json:"id" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
-	FullName string `json:"fullName" validate:"required"`
+	FullName string `json:" " validate:"required"`
 	Role     *int   `json:"role" validate:"required,gte=0,lte=3"`
 }
 
