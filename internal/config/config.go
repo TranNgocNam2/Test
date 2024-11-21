@@ -11,6 +11,7 @@ type Config struct {
 	Host        string `mapstructure:"APP_HOST"`
 	Port        int    `mapstructure:"APP_PORT"`
 	CorsOrigin  string `mapstructure:"CORS_ORIGIN"`
+	CorsProd    string `mapstructure:"CORS_PRODUCTION"`
 	DatabaseUrl string `mapstructure:"DB_DSN"`
 	ApiKey      string `mapstructure:"API_KEY"`
 }
