@@ -1,11 +1,9 @@
 -- name: InsertSubject :one
 INSERT INTO subjects (id, name, code, description, image_link, status,
-    time_per_session, created_by,
-    created_at)
+    time_per_session, created_by, created_at, learner_type)
 VALUES (sqlc.arg(id)::uuid, sqlc.arg(name), sqlc.arg(code), sqlc.arg(description),
     sqlc.arg(image_link), sqlc.arg(status), sqlc.arg(time_per_session),
-    sqlc.arg(created_by),
-    sqlc.arg(created_at))
+    sqlc.arg(created_by), sqlc.arg(created_at), sqlc.arg(learner_type))
 RETURNING id;
 
 -- name: DeleteSubjectSkills :exec
@@ -37,7 +35,8 @@ SET name = sqlc.arg(name),
     status = sqlc.arg(status),
     image_link = sqlc.arg(image_link),
     updated_by = sqlc.arg(updated_by),
-    updated_at = sqlc.arg(updated_at)
+    updated_at = sqlc.arg(updated_at),
+    learner_type = sqlc.arg(learner_type)
 WHERE id = sqlc.arg(id)::uuid;
 
 -- name: GetSubjectById :one

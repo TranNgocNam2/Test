@@ -177,6 +177,7 @@ type Subject struct {
 	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
 	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
 	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
+	LearnerType    *int16     `db:"learner_type" json:"learnerType"`
 }
 
 type SubjectSkill struct {
