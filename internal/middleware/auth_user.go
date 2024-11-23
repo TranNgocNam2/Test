@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"Backend/business/db/sqlc"
+	"Backend/internal/common/status"
 	"github.com/gin-gonic/gin"
 	"gitlab.com/innovia69420/kit/enum/http/header"
 	"gitlab.com/innovia69420/kit/enum/role"
@@ -13,7 +14,7 @@ func AuthorizeStaff(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
 	}
 
 	staff, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
-	if err != nil || staff.AuthRole == role.LEARNER || staff.AuthRole == role.TEACHER {
+	if err != nil || staff.AuthRole == role.LEARNER || staff.AuthRole == role.TEACHER || status.User(staff.Status) != status.Valid {
 		return "", ErrInvalidUser
 	}
 
@@ -25,7 +26,11 @@ func AuthorizeVerifiedLearner(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.Us
 		return nil, ErrInvalidUser
 	}
 
-	learner, err := queries.GetVerifiedLearnersByLearnerId(ctx, ctx.GetHeader(header.XUserId))
+	learner, err := queries.GetVerifiedLearnersByLearnerId(ctx,
+		sqlc.GetVerifiedLearnersByLearnerIdParams{
+			ID:     ctx.GetHeader(header.XUserId),
+			Status: int32(status.Valid),
+		})
 	if err != nil {
 		return nil, ErrInvalidUser
 	}
@@ -39,7 +44,7 @@ func AuthorizeTeacher(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
 	}
 
 	teacher, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
-	if err != nil || teacher.AuthRole != role.TEACHER {
+	if err != nil || teacher.AuthRole != role.TEACHER || status.User(teacher.Status) != status.Valid {
 		return "", ErrInvalidUser
 	}
 
@@ -51,7 +56,7 @@ func AuthorizeWithoutLearner(ctx *gin.Context, queries *sqlc.Queries) (string, e
 	}
 
 	user, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
-	if err != nil || user.AuthRole == role.LEARNER {
+	if err != nil || user.AuthRole == role.LEARNER || status.User(user.Status) != status.Valid {
 		return "", ErrInvalidUser
 	}
 
@@ -64,7 +69,7 @@ func AuthorizeUser(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, error) 
 	}
 
 	user, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
-	if err != nil {
+	if err != nil || status.User(user.Status) != status.Valid {
 		return nil, ErrInvalidUser
 	}
 
@@ -90,7 +95,7 @@ func AuthorizeLearner(ctx *gin.Context, queries *sqlc.Queries) (*sqlc.User, erro
 	}
 
 	learner, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
-	if err != nil || learner.AuthRole != role.LEARNER {
+	if err != nil || learner.AuthRole != role.LEARNER || status.User(learner.Status) != status.Valid {
 		return nil, ErrInvalidUser
 	}
 

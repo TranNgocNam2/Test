@@ -20,11 +20,24 @@ type Learner struct {
 	FullName    string       `json:"fullName"`
 	Email       string       `json:"email"`
 	Phone       string       `json:"phone"`
-	Gender      *int16       `json:"gender"`
 	Photo       string       `json:"photo"`
 	School      School       `json:"school"`
 	Attendances []Attendance `json:"attendances"`
 	Assignments []Assignment `json:"assignments"`
+}
+
+type VerifyLearnerInfo struct {
+	ID            string `json:"id"`
+	FullName      string `json:"fullName"`
+	Email         string `json:"email"`
+	Verifications []struct {
+		ID        uuid.UUID `json:"id"`
+		Status    int16     `json:"status"`
+		Note      *string   `json:"note"`
+		ImageLink []string  `json:"imageLink"`
+		Type      int16     `json:"type"`
+		School    School    `json:"school"`
+	} `json:"verifications"`
 }
 
 type School struct {

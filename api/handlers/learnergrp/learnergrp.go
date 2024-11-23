@@ -235,9 +235,9 @@ func (h *Handlers) GetAttendanceRecords() gin.HandlerFunc {
 	}
 }
 
-func (h *Handlers) UpdateLearner() gin.HandlerFunc {
+func (h *Handlers) CreateVerificationInformation() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req payload.UpdateLearner
+		var req payload.UpdateVerificationInfo
 		if err := web.Decode(ctx, &req); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
@@ -248,19 +248,22 @@ func (h *Handlers) UpdateLearner() gin.HandlerFunc {
 			return
 		}
 
-		updateLearner, err := toCoreUpdateLearner(req)
+		verificationInfo, err := toCoreUpdateLearner(req)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
-		err = h.learner.Update(ctx, updateLearner)
+		verificationId, err := h.learner.CreateVerificationInfo(ctx, verificationInfo)
 		if err != nil {
 			switch {
 			case
 				errors.Is(err, model.ErrSchoolNotFound):
-
 				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, model.ErrLearnerAlreadyVerified),
+				errors.Is(err, model.ErrVerificationPending):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
 				errors.Is(err, middleware.ErrInvalidUser):
@@ -271,7 +274,59 @@ func (h *Handlers) UpdateLearner() gin.HandlerFunc {
 				return
 			}
 		}
+		data := map[string]uuid.UUID{
+			"id": verificationId,
+		}
+		web.Respond(ctx, data, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) CancelVerification() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		verificationId, err := uuid.Parse(ctx.Param("verificationId"))
+		if err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, model.ErrVerificationIdInvalid)
+			return
+		}
+		err = h.learner.CancelVerification(ctx, verificationId)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrVerificationNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, model.ErrLearnerAlreadyVerified):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser),
+				errors.Is(err, model.ErrUnauthorizedFeatureAccess):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
 
 		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) GetVerificationInfo() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		verificationInfo, err := h.learner.GetVerificationsInformation(ctx)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+		web.Respond(ctx, verificationInfo, http.StatusOK, nil)
 	}
 }

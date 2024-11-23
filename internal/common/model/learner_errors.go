@@ -9,4 +9,6 @@ var (
 	ErrAlreadyJoinedSpecialization = errors.New("Bạn đã tham gia chuyên ngành này rồi!")
 	LearnerNotInClass              = errors.New("Học viên không tham gia lớp học này!")
 	ErrInvalidAttendanceCode       = errors.New("Mã điểm danh không hợp lệ!")
+	ErrLearnerAlreadyVerified      = errors.New("Người dùng đã được xác thực, vui lòng không thay đổi thông tin!")
+	ErrVerificationNotFound        = errors.New("Không tìm thấy thông tin xác thực!")
 )
