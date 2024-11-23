@@ -195,13 +195,16 @@ type Transcript struct {
 }
 
 type User struct {
-	ID           string  `db:"id" json:"id"`
-	FullName     *string `db:"full_name" json:"fullName"`
-	Email        string  `db:"email" json:"email"`
-	Phone        *string `db:"phone" json:"phone"`
-	AuthRole     int16   `db:"auth_role" json:"authRole"`
-	ProfilePhoto *string `db:"profile_photo" json:"profilePhoto"`
-	Status       int32   `db:"status" json:"status"`
+	ID           string     `db:"id" json:"id"`
+	FullName     *string    `db:"full_name" json:"fullName"`
+	Email        string     `db:"email" json:"email"`
+	Phone        *string    `db:"phone" json:"phone"`
+	AuthRole     int16      `db:"auth_role" json:"authRole"`
+	ProfilePhoto *string    `db:"profile_photo" json:"profilePhoto"`
+	Status       int32      `db:"status" json:"status"`
+	IsVerified   bool       `db:"is_verified" json:"isVerified"`
+	SchoolID     *uuid.UUID `db:"school_id" json:"schoolId"`
+	Type         *int16     `db:"type" json:"type"`
 }
 
 type VerificationLearner struct {
@@ -213,4 +216,5 @@ type VerificationLearner struct {
 	VerifiedBy *string    `db:"verified_by" json:"verifiedBy"`
 	Type       int16      `db:"type" json:"type"`
 	VerifiedAt *time.Time `db:"verified_at" json:"verifiedAt"`
+	Note       *string    `db:"note" json:"note"`
 }

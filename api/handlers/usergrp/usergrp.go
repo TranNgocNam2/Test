@@ -4,9 +4,12 @@ import (
 	"Backend/business/core/user"
 	"Backend/internal/common/model"
 	"Backend/internal/middleware"
+	"Backend/internal/order"
+	"Backend/internal/page"
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"net/http"
 )
@@ -93,14 +96,17 @@ func (h *Handlers) UpdateUser() gin.HandlerFunc {
 			return
 		}
 
-		updateUser := toCoreUpdateUser(updateUserRequest)
+		updateUser, err := toCoreUpdateUser(updateUserRequest)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
 
-		err := h.user.Update(ctx, userID, updateUser)
+		err = h.user.Update(ctx, userID, updateUser)
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, model.ErrPhoneAlreadyExists),
-				errors.Is(err, model.ErrEmailAlreadyExists):
+				errors.Is(err, model.ErrPhoneAlreadyExists):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
@@ -139,8 +145,11 @@ func (h *Handlers) GetCurrentUser() gin.HandlerFunc {
 
 func (h *Handlers) VerifyUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		userId := ctx.Param("id")
-
+		verificationId, err := uuid.Parse(ctx.Param("verificationId"))
+		if err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, model.ErrVerificationIdInvalid)
+			return
+		}
 		var verifyUserRequest payload.VerifyLearner
 		if err := web.Decode(ctx, &verifyUserRequest); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
@@ -158,7 +167,7 @@ func (h *Handlers) VerifyUser() gin.HandlerFunc {
 			return
 		}
 
-		err = h.user.Verify(ctx, userId, verifyUser)
+		err = h.user.Verify(ctx, verificationId, verifyUser)
 		if err != nil {
 			switch {
 			case errors.Is(err, model.ErrInvalidVerificationInfo),
@@ -186,7 +195,7 @@ func (h *Handlers) HandleUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userId := ctx.Param("id")
 
-		err := h.user.Handle(ctx, userId)
+		status, err := h.user.Handle(ctx, userId)
 		if err != nil {
 			switch {
 			case errors.Is(err, model.ErrUserNotFound):
@@ -200,7 +209,43 @@ func (h *Handlers) HandleUser() gin.HandlerFunc {
 				return
 			}
 		}
+		data := map[string]string{
+			"status": status,
+		}
+		web.Respond(ctx, data, http.StatusOK, nil)
+	}
+}
 
-		web.Respond(ctx, nil, http.StatusOK, nil)
+func (h *Handlers) GetVerificationUsers() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		pageInfo, err := page.Parse(ctx)
+		if err != nil {
+			pageInfo = page.Page{
+				Number: 1,
+				Size:   10,
+			}
+		}
+
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = user.QueryFilter{
+				FullName:   nil,
+				SchoolName: nil,
+				Status:     nil,
+			}
+		}
+
+		orderBy, err := parseOrder(ctx)
+		if err != nil {
+			orderBy = order.NewBy(filterByName, order.ASC)
+		}
+		verificationUsers, err := h.user.GetVerificationUsers(ctx, filter, orderBy, pageInfo)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusUnauthorized, err)
+			return
+		}
+		total := h.user.CountVerificationUsers(ctx, filter)
+		result := page.NewPageResponse(verificationUsers, total, pageInfo.Number, pageInfo.Size)
+		web.Respond(ctx, result, http.StatusOK, nil)
 	}
 }

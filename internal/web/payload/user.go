@@ -14,5 +14,6 @@ type UpdateUser struct {
 }
 
 type VerifyLearner struct {
-	Status int16 `json:"status" validate:"required,gte=1,lte=2"`
+	Status int16   `json:"status" validate:"required,gte=1,lte=2"`
+	Note   *string `json:"note"`
 }

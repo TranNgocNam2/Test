@@ -37,12 +37,16 @@ func validateNewUserRequest(newUserRequest payload.NewUser) error {
 	return nil
 }
 
-func toCoreUpdateUser(updateUserRequest payload.UpdateUser) user.UpdateUser {
+func toCoreUpdateUser(updateUserRequest payload.UpdateUser) (user.UpdateUser, error) {
+	if !user.IsValidPhoneNumber(updateUserRequest.Phone) {
+		return user.UpdateUser{}, model.ErrInvalidPhoneNumber
+	}
+
 	return user.UpdateUser{
 		FullName: updateUserRequest.FullName,
 		Phone:    updateUserRequest.Phone,
 		Photo:    updateUserRequest.Photo,
-	}
+	}, nil
 }
 
 func validateUpdateUserRequest(updateUserRequest payload.UpdateUser) error {
@@ -52,13 +56,16 @@ func validateUpdateUserRequest(updateUserRequest payload.UpdateUser) error {
 	return nil
 }
 
-func toCoreVerifyUser(verifyUserRequest payload.VerifyLearner) (user.VerifyLearner, error) {
-	if status.Verification(verifyUserRequest.Status) != status.Verified &&
-		status.Verification(verifyUserRequest.Status) != status.Failed {
-		return user.VerifyLearner{}, model.InvalidUserStatus
+func toCoreVerifyUser(req payload.VerifyLearner) (user.VerifyLearner, error) {
+	if status.Verification(req.Status) == status.Rejected &&
+		req.Note == nil {
+		return user.VerifyLearner{}, model.InvalidNoteToVerifiedUser
 	}
 
-	return user.VerifyLearner{Status: verifyUserRequest.Status}, nil
+	return user.VerifyLearner{
+		Status: req.Status,
+		Note:   *req.Note,
+	}, nil
 }
 
 func validateVerifyUserRequest(verifyUserRequest payload.VerifyLearner) error {

@@ -9,6 +9,7 @@ import (
 	"Backend/internal/common/status"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
+	"Backend/internal/slice"
 	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -223,19 +224,19 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 
 	data := map[string]interface{}{
 		"class_id":      classId,
+		"status":        int16(status.Valid),
 		"offset":        (pageNumber - 1) * rowsPerPage,
 		"rows_per_page": rowsPerPage,
 	}
 
 	const q = `SELECT
-						u.id, u.full_name AS full_name, u.email, u.phone, u.gender, u.profile_photo, u.status AS status, 
+						u.id, u.full_name AS full_name, u.email, u.phone, u.profile_photo, u.status AS status, 
 						s.id AS school_id, s.name AS school_name, cl.id AS class_learner_id
 			FROM users u
 				JOIN class_learners cl ON u.id = cl.learner_id
 				JOIN classes c ON cl.class_id = c.id
-				JOIN verification_learners vl ON u.id = vl.learner_id
-        		JOIN schools s ON s.id = vl.school_id
-					WHERE c.id = :class_id`
+        		JOIN schools s ON s.id = u.school_id
+					WHERE c.id = :class_id AND u.is_verified = true AND u.status = :status`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, true)
@@ -263,7 +264,7 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 			Phone:    *dbLearner.Phone,
 			Photo:    *dbLearner.ProfilePhoto,
 			School: School{
-				ID:   dbLearner.SchoolID,
+				ID:   *dbLearner.SchoolID,
 				Name: dbLearner.SchoolName,
 			},
 		}
@@ -289,6 +290,7 @@ func (c *Core) CountLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter 
 
 	data := map[string]interface{}{
 		"class_id": classId,
+		"status":   int16(status.Valid),
 	}
 
 	const q = `SELECT
@@ -297,9 +299,8 @@ func (c *Core) CountLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter 
                          users u
 							JOIN class_learners cl ON u.id = cl.learner_id
  							JOIN classes c ON cl.class_id = c.id
-							JOIN verification_learners vl ON u.id = vl.learner_id
-        					JOIN schools s ON s.id = vl.school_id
-								WHERE c.id = :class_id`
+							JOIN schools s ON s.id = u.school_id
+								WHERE c.id = :class_id AND u.is_verified = true AND u.status = :status`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, true)
@@ -328,6 +329,7 @@ func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter 
 
 	data := map[string]interface{}{
 		"slot_id":       slotId,
+		"status":        int16(status.Valid),
 		"offset":        (pageNumber - 1) * rowsPerPage,
 		"rows_per_page": rowsPerPage,
 	}
@@ -336,10 +338,9 @@ func (c *Core) GetLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filter 
 					u.id, u.full_name AS full_name, s.id AS school_id, s.name AS school_name, la.status
 			FROM users u
     			JOIN class_learners cl ON u.id = cl.learner_id
-    			JOIN verification_learners vl ON u.id = vl.learner_id
-        		JOIN schools s ON s.id = vl.school_id
+    			JOIN schools s ON s.id = u.school_id
     			JOIN learner_attendances la ON la.class_learner_id = cl.id 
-					WHERE la.slot_id = :slot_id`
+					WHERE la.slot_id = :slot_id AND u.is_verified = true AND u.status = :status`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, true)
@@ -380,16 +381,16 @@ func (c *Core) CountLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filte
 
 	data := map[string]interface{}{
 		"slot_id": slotId,
+		"status":  int16(status.Valid),
 	}
 
 	const q = `SELECT
                          COUNT(u.id) AS count
 			FROM users u
     			JOIN class_learners cl ON u.id = cl.learner_id
-    			JOIN verification_learners vl ON u.id = vl.learner_id
-        		JOIN schools s ON s.id = vl.school_id
+    			JOIN schools s ON s.id = u.school_id
     			JOIN learner_attendances la ON la.class_learner_id = cl.id
-					WHERE la.slot_id = :slot_id`
+					WHERE la.slot_id = :slot_id AND u.is_verified = true AND u.status = :status`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, true)
@@ -406,24 +407,112 @@ func (c *Core) CountLearnersAttendance(ctx *gin.Context, slotId uuid.UUID, filte
 	return count.Count
 }
 
-func (c *Core) Update(ctx *gin.Context, updateLearner UpdateLearner) error {
+func (c *Core) CreateVerificationInfo(ctx *gin.Context, updateLearner UpdateLearner) (uuid.UUID, error) {
 	learner, err := middleware.AuthorizeLearner(ctx, c.queries)
 	if err != nil {
-		return err
-	}
-	school, err := c.queries.GetSchoolById(ctx, updateLearner.SchoolId)
-	if err != nil {
-		return model.ErrSchoolNotFound
+		return uuid.Nil, err
 	}
 
-	err = c.queries.UpdateLearner(ctx, sqlc.UpdateLearnerParams{
+	if learner.IsVerified {
+		return uuid.Nil, model.ErrLearnerAlreadyVerified
+	}
+
+	school, err := c.queries.GetSchoolById(ctx, updateLearner.SchoolId)
+	if err != nil {
+		return uuid.Nil, model.ErrSchoolNotFound
+	}
+
+	verification, err := c.queries.GetLearnerVerificationByLearnerId(ctx,
+		sqlc.GetLearnerVerificationByLearnerIdParams{
+			LearnerID: learner.ID,
+			Status:    int16(status.Pending),
+		})
+	if err == nil && status.Verification(verification.Status) == status.Pending {
+		return uuid.Nil, model.ErrVerificationPending
+	}
+
+	verificationId, err := c.queries.CreateVerificationRequest(ctx, sqlc.CreateVerificationRequestParams{
 		ImageLink: updateLearner.ImageLinks,
 		Type:      updateLearner.Type,
 		SchoolID:  school.ID,
 		LearnerID: learner.ID,
+		Status:    int16(status.Pending),
+		ID:        uuid.New(),
+	})
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return verificationId, nil
+}
+
+func (c *Core) CancelVerification(ctx *gin.Context, verificationId uuid.UUID) error {
+	learner, err := middleware.AuthorizeLearner(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+	if learner.IsVerified {
+		return model.ErrLearnerAlreadyVerified
+	}
+
+	verification, err := c.queries.GetLearnerVerificationById(ctx, verificationId)
+	if verification.LearnerID != learner.ID {
+		return model.ErrUnauthorizedFeatureAccess
+	}
+	if err != nil && verification.Status != int16(status.Pending) {
+		return model.ErrVerificationNotFound
+	}
+
+	err = c.queries.VerifyLearner(ctx, sqlc.VerifyLearnerParams{
+		VerifiedBy: nil,
+		Status:     int16(status.Cancelled),
+		Note:       "Học viên đã hủy yêu cầu xác thực!",
+		LearnerID:  learner.ID,
+		ID:         verification.ID,
 	})
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (c *Core) GetVerificationsInformation(ctx *gin.Context) (*VerifyLearnerInfo, error) {
+	learner, err := middleware.AuthorizeLearner(ctx, c.queries)
+	if err != nil {
+		return nil, err
+	}
+
+	dbVerifications, err := c.queries.GetVerificationLearners(ctx, learner.ID)
+	if err != nil || dbVerifications == nil {
+		return nil, nil
+	}
+
+	learnerVerification := VerifyLearnerInfo{
+		ID:            learner.ID,
+		FullName:      *learner.FullName,
+		Email:         learner.Email,
+		Verifications: nil,
+	}
+	for _, dbVerification := range dbVerifications {
+		verification := struct {
+			ID        uuid.UUID `json:"id"`
+			Status    int16     `json:"status"`
+			Note      *string   `json:"note"`
+			ImageLink []string  `json:"imageLink"`
+			Type      int16     `json:"type"`
+			School    School    `json:"school"`
+		}{
+			ID:        dbVerification.ID,
+			Status:    dbVerification.Status,
+			Note:      dbVerification.Note,
+			ImageLink: slice.ParseFromString(dbVerification.ImageLink),
+			Type:      dbVerification.Type,
+			School: School{
+				ID:   dbVerification.SchoolID,
+				Name: dbVerification.SchoolName,
+			},
+		}
+		learnerVerification.Verifications = append(learnerVerification.Verifications, verification)
+	}
+
+	return &learnerVerification, nil
 }
