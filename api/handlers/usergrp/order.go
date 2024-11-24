@@ -1,7 +1,7 @@
 package usergrp
 
 import (
-	"Backend/business/core/learner"
+	"Backend/business/core/user"
 	"Backend/internal/order"
 	"Backend/internal/validate"
 	"fmt"
@@ -15,11 +15,13 @@ var (
 
 func parseOrder(ctx *gin.Context) (order.By, error) {
 	const (
-		orderByName = "name"
+		orderByName      = "name"
+		orderByCreatedAt = "createdAt"
 	)
 
 	var orderByFields = map[string]string{
-		orderByName: learner.OrderByFullName,
+		orderByName:      user.OrderByFullName,
+		orderByCreatedAt: user.OrderByCreatedAt,
 	}
 
 	orderBy, err := order.Parse(ctx, order.NewBy(orderByName, order.ASC))
