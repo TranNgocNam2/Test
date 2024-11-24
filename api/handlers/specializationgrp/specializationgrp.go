@@ -197,7 +197,7 @@ func (h *Handlers) GetSpecializations() gin.HandlerFunc {
 			filter = specialization.QueryFilter{
 				Name:   nil,
 				Code:   nil,
-				Status: specialization.Draft,
+				Status: nil,
 			}
 		}
 

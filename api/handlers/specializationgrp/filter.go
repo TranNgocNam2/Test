@@ -30,11 +30,13 @@ func parseFilter(ctx *gin.Context) (specialization.QueryFilter, error) {
 		filter.WithCode(code)
 	}
 
-	status, err := strconv.Atoi(ctx.DefaultQuery(filterByStatus, "1"))
-	if err != nil {
-		return specialization.QueryFilter{}, validate.NewFieldsError(filterByStatus, ErrStatusInvalid)
+	if status := ctx.Query(filterByStatus); status != "" {
+		statusInt, err := strconv.Atoi(status)
+		if err != nil {
+			return specialization.QueryFilter{}, validate.NewFieldsError(filterByStatus, ErrStatusInvalid)
+		}
+		filter.WithStatus(&statusInt)
 	}
-	filter.WithStatus(int16(status))
 
 	return filter, nil
 }
