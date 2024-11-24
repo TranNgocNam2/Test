@@ -31,6 +31,7 @@ CREATE table subjects(
     updated_by              character varying(50),
     created_at              timestamp with time zone DEFAULT now() NOT NULL,
     updated_at              timestamp with time zone,
+    learner_type            smallint DEFAULT 0,
 
     CONSTRAINT fk_subject_staff_updated_by
         FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE CASCADE,

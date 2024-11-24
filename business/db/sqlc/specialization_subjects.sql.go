@@ -70,7 +70,7 @@ func (q *Queries) GetSubjectIdsBySpecialization(ctx context.Context, specializat
 }
 
 const getSubjectsBySpecialization = `-- name: GetSubjectsBySpecialization :many
-SELECT subjects.id, subjects.code, subjects.name, subjects.time_per_session, subjects.min_pass_grade, subjects.min_attendance, subjects.image_link, subjects.status, subjects.description, subjects.created_by, subjects.updated_by, subjects.created_at, subjects.updated_at, specialization_subjects.index
+SELECT subjects.id, subjects.code, subjects.name, subjects.time_per_session, subjects.min_pass_grade, subjects.min_attendance, subjects.image_link, subjects.status, subjects.description, subjects.created_by, subjects.updated_by, subjects.created_at, subjects.updated_at, subjects.learner_type, specialization_subjects.index
 FROM specialization_subjects
 JOIN subjects ON specialization_subjects.subject_id = subjects.id
 WHERE specialization_subjects.specialization_id = $1::uuid
@@ -91,6 +91,7 @@ type GetSubjectsBySpecializationRow struct {
 	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
 	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
 	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
+	LearnerType    *int16     `db:"learner_type" json:"learnerType"`
 	Index          int16      `db:"index" json:"index"`
 }
 
@@ -117,6 +118,7 @@ func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializatio
 			&i.UpdatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LearnerType,
 			&i.Index,
 		); err != nil {
 			return nil, err

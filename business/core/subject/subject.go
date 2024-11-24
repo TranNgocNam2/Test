@@ -59,6 +59,7 @@ func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, err
 		TimePerSession: int16(subject.TimePerSession),
 		CreatedBy:      staffId,
 		CreatedAt:      time.Now().UTC(),
+		LearnerType:    subject.LearnerType,
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -174,6 +175,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 		ID:             id,
 		UpdatedBy:      &staffId,
 		UpdatedAt:      &now,
+		LearnerType:    s.LearnerType,
 	}
 
 	if err := qtx.UpdateSubject(ctx, subParams); err != nil {
@@ -330,6 +332,7 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s payload.UpdateSubject, id uui
 		ID:             id,
 		UpdatedBy:      &staffId,
 		UpdatedAt:      &now,
+		LearnerType:    s.LearnerType,
 	}
 
 	if err = qtx.UpdateSubject(ctx, subParams); err != nil {
@@ -390,6 +393,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 	}
 	result.Description = *subject.Description
 	result.Image = *subject.ImageLink
+	result.LearnerType = *subject.LearnerType
 	result.Status = int(subject.Status)
 	result.TotalSessions = int(totalSessions)
 
@@ -480,7 +484,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	}
 
 	const q = `SELECT
-						id, name, code, time_per_session, description, updated_at
+						id, name, code, time_per_session, description, updated_at, learner_type
 			FROM subjects`
 
 	buf := bytes.NewBufferString(q)

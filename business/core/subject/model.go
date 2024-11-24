@@ -16,6 +16,7 @@ type Subject struct {
 	TimePerSession int16     `json:"timePerSession"`
 	Skills         []Skill   `json:"skills,omitempty"`
 	TotalSessions  int       `json:"totalSessions"`
+	LearnerType    int16     `json:"learnerType"`
 }
 
 type SubjectDetail struct {
@@ -32,6 +33,7 @@ type SubjectDetail struct {
 	Sessions       []Session    `json:"sessions"`
 	Transcripts    []Transcript `json:"transcripts"`
 	TotalSessions  int          `json:"totalSessions"`
+	LearnerType    int16        `json:"learnerType"`
 }
 
 type Skill struct {
@@ -71,5 +73,6 @@ func toCoreSubject(dbSubject sqlc.Subject) Subject {
 		Description:    dbSubject.Description,
 		Image:          dbSubject.ImageLink,
 		TimePerSession: dbSubject.TimePerSession,
+		LearnerType:    *dbSubject.LearnerType,
 	}
 }

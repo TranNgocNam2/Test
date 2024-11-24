@@ -7,6 +7,7 @@ type NewSubject struct {
 	Image          string   `json:"image" validate:"required"`
 	TimePerSession int      `json:"timePerSession" validate:"required"`
 	Skills         []string `json:"skills" validate:"gt=0,dive,required"`
+	LearnerType    *int16   `json:"learnerType" validate:"required,gte=0,lte=1"`
 }
 
 type UpdateSubject struct {
@@ -18,6 +19,7 @@ type UpdateSubject struct {
 	MinAttendance  float32      `json:"minAttendance" validate:"required"`
 	Description    string       `json:"description"`
 	Status         *int         `json:"status" validate:"gte=0,lte=1,required"`
+	LearnerType    *int16       `json:"learnerType" validate:"required,gte=0,lte=1"`
 	Skills         []string     `json:"skills" validate:"gt=0,dive,required"`
 	Sessions       []Session    `json:"sessions"`
 	Transcripts    []Transcript `json:"transcripts"`

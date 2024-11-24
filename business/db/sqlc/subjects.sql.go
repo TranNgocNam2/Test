@@ -37,7 +37,7 @@ func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) 
 }
 
 const getPublishedSubjectById = `-- name: GetPublishedSubjectById :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects
 WHERE id = $1::uuid AND status = 1
 `
@@ -59,12 +59,13 @@ func (q *Queries) GetPublishedSubjectById(ctx context.Context, id uuid.UUID) (Su
 		&i.UpdatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LearnerType,
 	)
 	return i, err
 }
 
 const getSubjectById = `-- name: GetSubjectById :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects WHERE id = $1::uuid
 `
 
@@ -85,12 +86,13 @@ func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, er
 		&i.UpdatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LearnerType,
 	)
 	return i, err
 }
 
 const getSubjectsByIds = `-- name: GetSubjectsByIds :many
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects
 WHERE id = ANY($1::uuid[]) AND status = 1
 `
@@ -118,6 +120,7 @@ func (q *Queries) GetSubjectsByIds(ctx context.Context, subjectIds []uuid.UUID) 
 			&i.UpdatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LearnerType,
 		); err != nil {
 			return nil, err
 		}
@@ -131,12 +134,10 @@ func (q *Queries) GetSubjectsByIds(ctx context.Context, subjectIds []uuid.UUID) 
 
 const insertSubject = `-- name: InsertSubject :one
 INSERT INTO subjects (id, name, code, description, image_link, status,
-    time_per_session, created_by,
-    created_at)
+    time_per_session, created_by, created_at, learner_type)
 VALUES ($1::uuid, $2, $3, $4,
     $5, $6, $7,
-    $8,
-    $9)
+    $8, $9, $10)
 RETURNING id
 `
 
@@ -150,6 +151,7 @@ type InsertSubjectParams struct {
 	TimePerSession int16     `db:"time_per_session" json:"timePerSession"`
 	CreatedBy      string    `db:"created_by" json:"createdBy"`
 	CreatedAt      time.Time `db:"created_at" json:"createdAt"`
+	LearnerType    *int16    `db:"learner_type" json:"learnerType"`
 }
 
 func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (uuid.UUID, error) {
@@ -163,6 +165,7 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 		arg.TimePerSession,
 		arg.CreatedBy,
 		arg.CreatedAt,
+		arg.LearnerType,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -170,7 +173,7 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 }
 
 const isSubjectCodeExist = `-- name: IsSubjectCodeExist :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects
 WHERE code = $1 AND status = 1
 `
@@ -192,12 +195,13 @@ func (q *Queries) IsSubjectCodeExist(ctx context.Context, code string) (Subject,
 		&i.UpdatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LearnerType,
 	)
 	return i, err
 }
 
 const isSubjectCodePublished = `-- name: IsSubjectCodePublished :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at
+SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects
 WHERE code = $1 AND status = 1 AND id != $2
 `
@@ -224,6 +228,7 @@ func (q *Queries) IsSubjectCodePublished(ctx context.Context, arg IsSubjectCodeP
 		&i.UpdatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LearnerType,
 	)
 	return i, err
 }
@@ -239,8 +244,9 @@ SET name = $1,
     status = $7,
     image_link = $8,
     updated_by = $9,
-    updated_at = $10
-WHERE id = $11::uuid
+    updated_at = $10,
+    learner_type = $11
+WHERE id = $12::uuid
 `
 
 type UpdateSubjectParams struct {
@@ -254,6 +260,7 @@ type UpdateSubjectParams struct {
 	ImageLink      *string    `db:"image_link" json:"imageLink"`
 	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
 	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
+	LearnerType    *int16     `db:"learner_type" json:"learnerType"`
 	ID             uuid.UUID  `db:"id" json:"id"`
 }
 
@@ -269,6 +276,7 @@ func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) er
 		arg.ImageLink,
 		arg.UpdatedBy,
 		arg.UpdatedAt,
+		arg.LearnerType,
 		arg.ID,
 	)
 	return err
