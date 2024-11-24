@@ -1,4 +1,4 @@
-package learner
+package user
 
 import (
 	"Backend/internal/validate"
@@ -9,15 +9,14 @@ import (
 
 type QueryFilter struct {
 	FullName   *string `validate:"omitempty"`
+	Status     *int16  `validate:"omitempty"`
 	SchoolName *string `validate:"omitempty"`
-	Status     *int    `validate:"omitempty"`
 }
 
 func (qf *QueryFilter) Validate() error {
 	if err := validate.Check(qf); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -25,12 +24,12 @@ func (qf *QueryFilter) WithFullName(fullName string) {
 	qf.FullName = &fullName
 }
 
-func (qf *QueryFilter) WithSchoolName(schoolName string) {
-	qf.SchoolName = &schoolName
+func (qf *QueryFilter) WithStatus(status int16) {
+	qf.Status = &status
 }
 
-func (qf *QueryFilter) WithStatus(status int) {
-	qf.Status = &status
+func (qf *QueryFilter) WithSchoolName(schoolName string) {
+	qf.SchoolName = &schoolName
 }
 
 func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buffer, hasWhere bool) {
@@ -48,7 +47,7 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 
 	if filter.Status != nil {
 		data["status"] = fmt.Sprintf("%d", *filter.Status)
-		wc = append(wc, "status = :status")
+		wc = append(wc, "vl.status = :status")
 	}
 
 	if len(wc) > 0 {

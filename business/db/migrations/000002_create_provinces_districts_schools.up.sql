@@ -29,3 +29,8 @@ ALTER table verification_learners
     ADD CONSTRAINT fk_learner_school
         FOREIGN KEY (school_id)
             REFERENCES schools(id) ON DELETE CASCADE;
+
+ALTER table users
+    ADD CONSTRAINT fk_user_school
+        FOREIGN KEY (school_id)
+            REFERENCES schools(id) ON DELETE CASCADE;

@@ -52,7 +52,7 @@ func main() {
 
 	//Config Cors
 	corsConfig := cors.Config{
-		AllowOrigins:     []string{cfg.CorsOrigin},
+		AllowOrigins:     []string{cfg.CorsOrigin, cfg.CorsProd},
 		AllowMethods:     http.AllowMethods,
 		AllowHeaders:     http.AllowHeaders,
 		AllowCredentials: true,

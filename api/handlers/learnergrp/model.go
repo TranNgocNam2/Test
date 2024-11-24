@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func toCoreUpdateLearner(request payload.UpdateLearner) (learner.UpdateLearner, error) {
+func toCoreUpdateLearner(request payload.UpdateVerificationInfo) (learner.UpdateLearner, error) {
 	schoolId, err := uuid.Parse(request.SchoolId)
 	if err != nil {
 		return learner.UpdateLearner{}, model.ErrInvalidSchoolID
@@ -21,7 +21,7 @@ func toCoreUpdateLearner(request payload.UpdateLearner) (learner.UpdateLearner, 
 	}, nil
 }
 
-func validateUpdateLearnerRequest(request payload.UpdateLearner) error {
+func validateUpdateLearnerRequest(request payload.UpdateVerificationInfo) error {
 	if err := validate.Check(request); err != nil {
 		return err
 	}

@@ -10,8 +10,8 @@ type LearnerAttendance struct {
 	AttendanceCode string `json:"attendanceCode" validate:"required,len=6"`
 }
 
-type UpdateLearner struct {
+type UpdateVerificationInfo struct {
 	SchoolId   string   `json:"schoolId" validate:"required"`
-	ImageLinks []string `json:"image_links" validate:"required"`
+	ImageLinks []string `json:"imageLinks" validate:"required"`
 	Type       *int16   `json:"type" validate:"required,gte=0,lte=1"`
 }

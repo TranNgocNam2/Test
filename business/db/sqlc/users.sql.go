@@ -7,20 +7,23 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, email, auth_role, full_name)
-VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING
+INSERT INTO users (id, email, auth_role, full_name, is_verified)
+VALUES ($1, $2, $3, $4,
+        $5) ON CONFLICT DO NOTHING
 `
 
 type CreateUserParams struct {
-	ID       string  `db:"id" json:"id"`
-	Email    string  `db:"email" json:"email"`
-	AuthRole int16   `db:"auth_role" json:"authRole"`
-	FullName *string `db:"full_name" json:"fullName"`
+	ID         string  `db:"id" json:"id"`
+	Email      string  `db:"email" json:"email"`
+	AuthRole   int16   `db:"auth_role" json:"authRole"`
+	FullName   *string `db:"full_name" json:"fullName"`
+	IsVerified bool    `db:"is_verified" json:"isVerified"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -29,17 +32,48 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.Email,
 		arg.AuthRole,
 		arg.FullName,
+		arg.IsVerified,
 	)
 	return err
 }
 
-const getLearnerVerificationByUserId = `-- name: GetLearnerVerificationByUserId :one
-SELECT id, school_id, learner_id, image_link, status, verified_by, type, verified_at FROM verification_learners
-WHERE learner_id = $1
+const createVerificationRequest = `-- name: CreateVerificationRequest :one
+INSERT INTO verification_learners (learner_id, school_id, type, image_link, id, status)
+VALUES ($1, $2, $3,
+        $4, $5, $6) RETURNING id
 `
 
-func (q *Queries) GetLearnerVerificationByUserId(ctx context.Context, learnerID string) (VerificationLearner, error) {
-	row := q.db.QueryRow(ctx, getLearnerVerificationByUserId, learnerID)
+type CreateVerificationRequestParams struct {
+	LearnerID string    `db:"learner_id" json:"learnerId"`
+	SchoolID  uuid.UUID `db:"school_id" json:"schoolId"`
+	Type      int16     `db:"type" json:"type"`
+	ImageLink []string  `db:"image_link" json:"imageLink"`
+	ID        uuid.UUID `db:"id" json:"id"`
+	Status    int16     `db:"status" json:"status"`
+}
+
+func (q *Queries) CreateVerificationRequest(ctx context.Context, arg CreateVerificationRequestParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createVerificationRequest,
+		arg.LearnerID,
+		arg.SchoolID,
+		arg.Type,
+		arg.ImageLink,
+		arg.ID,
+		arg.Status,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const getLearnerVerificationById = `-- name: GetLearnerVerificationById :one
+SELECT id, school_id, learner_id, image_link, status, verified_by, type, verified_at, note, created_at
+FROM verification_learners
+WHERE id = $1
+`
+
+func (q *Queries) GetLearnerVerificationById(ctx context.Context, id uuid.UUID) (VerificationLearner, error) {
+	row := q.db.QueryRow(ctx, getLearnerVerificationById, id)
 	var i VerificationLearner
 	err := row.Scan(
 		&i.ID,
@@ -50,12 +84,44 @@ func (q *Queries) GetLearnerVerificationByUserId(ctx context.Context, learnerID 
 		&i.VerifiedBy,
 		&i.Type,
 		&i.VerifiedAt,
+		&i.Note,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getLearnerVerificationByLearnerId = `-- name: GetLearnerVerificationByLearnerId :one
+SELECT id, school_id, learner_id, image_link, status, verified_by, type, verified_at, note, created_at
+FROM verification_learners
+WHERE learner_id = $1
+  AND status = $2
+`
+
+type GetLearnerVerificationByLearnerIdParams struct {
+	LearnerID string `db:"learner_id" json:"learnerId"`
+	Status    int16  `db:"status" json:"status"`
+}
+
+func (q *Queries) GetLearnerVerificationByLearnerId(ctx context.Context, arg GetLearnerVerificationByLearnerIdParams) (VerificationLearner, error) {
+	row := q.db.QueryRow(ctx, getLearnerVerificationByLearnerId, arg.LearnerID, arg.Status)
+	var i VerificationLearner
+	err := row.Scan(
+		&i.ID,
+		&i.SchoolID,
+		&i.LearnerID,
+		&i.ImageLink,
+		&i.Status,
+		&i.VerifiedBy,
+		&i.Type,
+		&i.VerifiedAt,
+		&i.Note,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getTeacherById = `-- name: GetTeacherById :one
-SELECT id, full_name, email, phone, auth_role, profile_photo, status FROM users
+SELECT id, full_name, email, phone, auth_role, profile_photo, status, is_verified, school_id, type FROM users
 WHERE id = $1 AND auth_role = 2
 `
 
@@ -70,12 +136,15 @@ func (q *Queries) GetTeacherById(ctx context.Context, id string) (User, error) {
 		&i.AuthRole,
 		&i.ProfilePhoto,
 		&i.Status,
+		&i.IsVerified,
+		&i.SchoolID,
+		&i.Type,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, full_name, email, phone, auth_role, profile_photo, status FROM users
+SELECT id, full_name, email, phone, auth_role, profile_photo, status, is_verified, school_id, type FROM users
 WHERE email = $1
 `
 
@@ -90,12 +159,15 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.AuthRole,
 		&i.ProfilePhoto,
 		&i.Status,
+		&i.IsVerified,
+		&i.SchoolID,
+		&i.Type,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, full_name, email, phone, auth_role, profile_photo, status FROM users
+SELECT id, full_name, email, phone, auth_role, profile_photo, status, is_verified, school_id, type FROM users
 WHERE id = $1
 `
 
@@ -110,12 +182,15 @@ func (q *Queries) GetUserById(ctx context.Context, id string) (User, error) {
 		&i.AuthRole,
 		&i.ProfilePhoto,
 		&i.Status,
+		&i.IsVerified,
+		&i.SchoolID,
+		&i.Type,
 	)
 	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, full_name, email, phone, auth_role, profile_photo, status FROM users
+SELECT id, full_name, email, phone, auth_role, profile_photo, status, is_verified, school_id, type FROM users
 WHERE phone = $1
 `
 
@@ -130,18 +205,81 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone *string) (User, erro
 		&i.AuthRole,
 		&i.ProfilePhoto,
 		&i.Status,
+		&i.IsVerified,
+		&i.SchoolID,
+		&i.Type,
 	)
 	return i, err
 }
 
-const getVerifiedLearnersByLearnerId = `-- name: GetVerifiedLearnersByLearnerId :one
-SELECT u.id, u.full_name, u.email, u.phone, u.auth_role, u.profile_photo, u.status FROM
-users u JOIN verification_learners vls ON u.id = vls.learner_id
-WHERE vls.learner_id = $1 AND vls.status = 1
+const getVerificationLearners = `-- name: GetVerificationLearners :many
+SELECT u.id AS user_id, u.full_name, u.email,
+       vl.id, vl.image_link::text AS image_link, vl.type, vl.status, vl.note, vl.created_at,
+       s.id AS school_id, s.name AS school_name
+FROM users u
+JOIN verification_learners vl ON u.id = vl.learner_id
+JOIN schools s ON vl.school_id = s.id
+WHERE vl.learner_id = $1
 `
 
-func (q *Queries) GetVerifiedLearnersByLearnerId(ctx context.Context, learnerID string) (User, error) {
-	row := q.db.QueryRow(ctx, getVerifiedLearnersByLearnerId, learnerID)
+type GetVerificationLearnersRow struct {
+	UserID     string    `db:"user_id" json:"userId"`
+	FullName   *string   `db:"full_name" json:"fullName"`
+	Email      string    `db:"email" json:"email"`
+	ID         uuid.UUID `db:"id" json:"id"`
+	ImageLink  string    `db:"image_link" json:"imageLink"`
+	Type       int16     `db:"type" json:"type"`
+	Status     int16     `db:"status" json:"status"`
+	Note       *string   `db:"note" json:"note"`
+	CreatedAt  time.Time `db:"created_at" json:"createdAt"`
+	SchoolID   uuid.UUID `db:"school_id" json:"schoolId"`
+	SchoolName string    `db:"school_name" json:"schoolName"`
+}
+
+func (q *Queries) GetVerificationLearners(ctx context.Context, learnerID string) ([]GetVerificationLearnersRow, error) {
+	rows, err := q.db.Query(ctx, getVerificationLearners, learnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetVerificationLearnersRow
+	for rows.Next() {
+		var i GetVerificationLearnersRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.FullName,
+			&i.Email,
+			&i.ID,
+			&i.ImageLink,
+			&i.Type,
+			&i.Status,
+			&i.Note,
+			&i.CreatedAt,
+			&i.SchoolID,
+			&i.SchoolName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getVerifiedLearnersByLearnerId = `-- name: GetVerifiedLearnersByLearnerId :one
+SELECT id, full_name, email, phone, auth_role, profile_photo, status, is_verified, school_id, type FROM users
+WHERE id = $1 AND is_verified = true AND status = $2
+`
+
+type GetVerifiedLearnersByLearnerIdParams struct {
+	ID     string `db:"id" json:"id"`
+	Status int32  `db:"status" json:"status"`
+}
+
+func (q *Queries) GetVerifiedLearnersByLearnerId(ctx context.Context, arg GetVerifiedLearnersByLearnerIdParams) (User, error) {
+	row := q.db.QueryRow(ctx, getVerifiedLearnersByLearnerId, arg.ID, arg.Status)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -151,50 +289,26 @@ func (q *Queries) GetVerifiedLearnersByLearnerId(ctx context.Context, learnerID 
 		&i.AuthRole,
 		&i.ProfilePhoto,
 		&i.Status,
+		&i.IsVerified,
+		&i.SchoolID,
+		&i.Type,
 	)
 	return i, err
 }
 
 const handleUserStatus = `-- name: HandleUserStatus :exec
 UPDATE users
-SET status = 0
-WHERE id = $1
-AND status = $2
+SET status = $1
+WHERE id = $2
 `
 
 type HandleUserStatusParams struct {
-	ID     string `db:"id" json:"id"`
 	Status int32  `db:"status" json:"status"`
+	ID     string `db:"id" json:"id"`
 }
 
 func (q *Queries) HandleUserStatus(ctx context.Context, arg HandleUserStatusParams) error {
-	_, err := q.db.Exec(ctx, handleUserStatus, arg.ID, arg.Status)
-	return err
-}
-
-const updateLearner = `-- name: UpdateLearner :exec
-INSERT INTO verification_learners (learner_id, school_id, type, image_link, id)
-VALUES ($1, $2, $3, $4, uuid_generate_v4())
-ON CONFLICT (learner_id)
-DO
-UPDATE SET school_id = $2, type = $3, image_link = $4, status = 0
-WHERE verification_learners.status = 0 OR verification_learners.status = 2
-`
-
-type UpdateLearnerParams struct {
-	LearnerID string    `db:"learner_id" json:"learnerId"`
-	SchoolID  uuid.UUID `db:"school_id" json:"schoolId"`
-	Type      int16     `db:"type" json:"type"`
-	ImageLink []string  `db:"image_link" json:"imageLink"`
-}
-
-func (q *Queries) UpdateLearner(ctx context.Context, arg UpdateLearnerParams) error {
-	_, err := q.db.Exec(ctx, updateLearner,
-		arg.LearnerID,
-		arg.SchoolID,
-		arg.Type,
-		arg.ImageLink,
-	)
+	_, err := q.db.Exec(ctx, handleUserStatus, arg.Status, arg.ID)
 	return err
 }
 
@@ -229,21 +343,56 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	return err
 }
 
+const updateVerification = `-- name: UpdateVerification :exec
+UPDATE users
+SET is_verified = $1,
+    school_id = $2,
+    type = $3
+WHERE id = $4
+`
+
+type UpdateVerificationParams struct {
+	IsVerified bool       `db:"is_verified" json:"isVerified"`
+	SchoolID   *uuid.UUID `db:"school_id" json:"schoolId"`
+	Type       *int16     `db:"type" json:"type"`
+	ID         string     `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateVerification(ctx context.Context, arg UpdateVerificationParams) error {
+	_, err := q.db.Exec(ctx, updateVerification,
+		arg.IsVerified,
+		arg.SchoolID,
+		arg.Type,
+		arg.ID,
+	)
+	return err
+}
+
 const verifyLearner = `-- name: VerifyLearner :exec
 UPDATE verification_learners
 SET verified_by = $1,
     status = $2,
+    note = $3::text,
     verified_at = NOW()
-WHERE learner_id = $3
+WHERE learner_id = $4
+AND id = $5
 `
 
 type VerifyLearnerParams struct {
-	VerifiedBy *string `db:"verified_by" json:"verifiedBy"`
-	Status     int16   `db:"status" json:"status"`
-	LearnerID  string  `db:"learner_id" json:"learnerId"`
+	VerifiedBy *string   `db:"verified_by" json:"verifiedBy"`
+	Status     int16     `db:"status" json:"status"`
+	Note       string    `db:"note" json:"note"`
+	LearnerID  string    `db:"learner_id" json:"learnerId"`
+	ID         uuid.UUID `db:"id" json:"id"`
 }
 
 func (q *Queries) VerifyLearner(ctx context.Context, arg VerifyLearnerParams) error {
-	_, err := q.db.Exec(ctx, verifyLearner, arg.VerifiedBy, arg.Status, arg.LearnerID)
+	_, err := q.db.Exec(ctx, verifyLearner,
+		arg.VerifiedBy,
+		arg.Status,
+		arg.Note,
+		arg.LearnerID,
+		arg.ID,
+	)
 	return err
 }
