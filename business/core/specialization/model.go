@@ -49,6 +49,7 @@ type Specialization struct {
 	Code          string    `json:"code"`
 	Status        int16     `json:"status"`
 	Image         *string   `json:"image"`
+	Description   *string   `json:"description"`
 	TotalSubjects int64     `json:"totalSubjects"`
 }
 
@@ -84,11 +85,12 @@ func toCoreSkill(dbSkill sqlc.Skill) Skill {
 
 func toCoreSpecialization(dbSpec sqlc.Specialization) Specialization {
 	spec := Specialization{
-		ID:     dbSpec.ID,
-		Name:   dbSpec.Name,
-		Code:   dbSpec.Code,
-		Status: dbSpec.Status,
-		Image:  dbSpec.ImageLink,
+		ID:          dbSpec.ID,
+		Name:        dbSpec.Name,
+		Code:        dbSpec.Code,
+		Status:      dbSpec.Status,
+		Image:       dbSpec.ImageLink,
+		Description: dbSpec.Description,
 	}
 
 	return spec

@@ -203,7 +203,7 @@ func (h *Handlers) GetSpecializations() gin.HandlerFunc {
 
 		orderBy, err := parseOrder(ctx)
 		if err != nil {
-			orderBy = order.NewBy(filterByCode, order.ASC)
+			orderBy = order.NewBy(specialization.OrderByName, order.ASC)
 		}
 
 		specializations := h.specialization.Query(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
