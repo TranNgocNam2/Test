@@ -192,13 +192,13 @@ func (h *Handlers) GetSubjects() gin.HandlerFunc {
 			filter = subject.QueryFilter{
 				Name:   nil,
 				Code:   nil,
-				Status: subject.Draft,
+				Status: nil,
 			}
 		}
 
 		orderBy, err := parseOrder(ctx)
 		if err != nil {
-			orderBy = order.NewBy(filterByCode, order.ASC)
+			orderBy = order.NewBy(subject.OrderByName, order.ASC)
 		}
 
 		subjects := h.subject.Query(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
