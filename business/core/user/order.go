@@ -3,13 +3,16 @@ package user
 import "Backend/internal/order"
 
 const (
-	OrderByName = "name"
+	OrderByFullName  = "name"
+	OrderByCreatedAt = "created_at"
 )
 
 var orderByFields = map[string]string{
-	OrderByName: "name"}
+	OrderByCreatedAt: "vl.created_at",
+	OrderByFullName:  "u.full_name",
+}
 
-var DefaultOrderBy = order.NewBy(OrderByName, order.ASC)
+var DefaultOrderBy = order.NewBy(OrderByFullName, order.ASC)
 
 func orderByClause(orderBy order.By) string {
 	by, exists := orderByFields[orderBy.Field]

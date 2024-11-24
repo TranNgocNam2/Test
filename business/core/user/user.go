@@ -230,7 +230,6 @@ func (c *Core) GetVerificationUsers(ctx *gin.Context, filter QueryFilter, orderB
 	applyFilter(filter, data, buf, false)
 	buf.WriteString(orderByClause(orderBy))
 	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
-	fmt.Println(err)
 	c.logger.Info(buf.String())
 
 	var verificationUsers []sqlc.GetVerificationLearnersRow
