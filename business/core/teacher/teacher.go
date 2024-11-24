@@ -68,3 +68,27 @@ func (c *Core) GenerateAttendanceCode(ctx *gin.Context, slotId uuid.UUID) error 
 
 	return nil
 }
+
+func (c *Core) GetTeachersInClass(ctx *gin.Context, classId uuid.UUID) ([]Teacher, error) {
+	_, err := middleware.AuthorizeUser(ctx, c.queries)
+	if err != nil {
+		return nil, err
+	}
+
+	dbClass, err := c.queries.GetClassById(ctx, classId)
+	if err != nil {
+		return nil, model.ErrClassNotFound
+	}
+
+	dbTeachers, err := c.queries.GetTeachersInClass(ctx, dbClass.ID)
+	if err != nil {
+		return nil, model.ErrTeacherNotFound
+	}
+
+	var teachers []Teacher
+	for _, dbTeacher := range dbTeachers {
+		teachers = append(teachers, toCoreTeacher(dbTeacher))
+	}
+
+	return teachers, nil
+}
