@@ -3,6 +3,7 @@ package learner
 import (
 	"Backend/business/db/sqlc"
 	"github.com/google/uuid"
+	"time"
 )
 
 type ClassAccess struct {
@@ -37,6 +38,7 @@ type VerifyLearnerInfo struct {
 		ImageLink []string  `json:"imageLink"`
 		Type      int16     `json:"type"`
 		School    School    `json:"school"`
+		CreatedAt time.Time `json:"createdAt"`
 	} `json:"verifications"`
 }
 

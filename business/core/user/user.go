@@ -221,7 +221,7 @@ func (c *Core) GetVerificationUsers(ctx *gin.Context, filter QueryFilter, orderB
 		"rows_per_page": page.Size,
 	}
 	const q = `SELECT u.id AS user_id, u.full_name, u.email,
-       					vl.id, vl.image_link AS image_link, vl.type, vl.status, vl.note,
+       					vl.id, vl.image_link AS image_link, vl.type, vl.status, vl.note, vl.created_at,
        					s.id AS school_id, s.name AS school_name
 				FROM users u
 					JOIN verification_learners vl ON u.id = vl.learner_id
@@ -252,6 +252,7 @@ func (c *Core) GetVerificationUsers(ctx *gin.Context, filter QueryFilter, orderB
 			Note:      verificationUser.Note,
 			ImageLink: slice.ParseFromString(verificationUser.ImageLink),
 			Type:      verificationUser.Type,
+			CreatedAt: verificationUser.CreatedAt,
 			School: School{
 				ID:   verificationUser.SchoolID,
 				Name: verificationUser.SchoolName,
