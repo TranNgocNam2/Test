@@ -500,6 +500,7 @@ func (c *Core) GetVerificationsInformation(ctx *gin.Context) (*VerifyLearnerInfo
 			ImageLink []string  `json:"imageLink"`
 			Type      int16     `json:"type"`
 			School    School    `json:"school"`
+			CreatedAt time.Time    `json:"createdAt"`
 		}{
 			ID:        dbVerification.ID,
 			Status:    dbVerification.Status,
@@ -510,6 +511,7 @@ func (c *Core) GetVerificationsInformation(ctx *gin.Context) (*VerifyLearnerInfo
 				ID:   dbVerification.SchoolID,
 				Name: dbVerification.SchoolName,
 			},
+			CreatedAt: dbVerification.CreatedAt,
 		}
 		learnerVerification.Verifications = append(learnerVerification.Verifications, verification)
 	}

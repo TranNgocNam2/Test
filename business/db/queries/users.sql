@@ -72,7 +72,7 @@ VALUES (sqlc.arg(learner_id), sqlc.arg(school_id), sqlc.arg(type),
 
 -- name: GetVerificationLearners :many
 SELECT u.id AS user_id, u.full_name, u.email,
-       vl.id, vl.image_link::text AS image_link, vl.type, vl.status, vl.note,
+       vl.id, vl.image_link::text AS image_link, vl.type, vl.status, vl.note, vl.created_at,
        s.id AS school_id, s.name AS school_name
 FROM users u
 JOIN verification_learners vl ON u.id = vl.learner_id

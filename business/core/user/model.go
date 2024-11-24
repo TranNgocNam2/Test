@@ -4,6 +4,7 @@ import (
 	"Backend/business/db/sqlc"
 	"github.com/google/uuid"
 	"net/mail"
+	"time"
 )
 
 type User struct {
@@ -13,13 +14,14 @@ type User struct {
 }
 
 type Verification struct {
-	ID        uuid.UUID `json:"id"`
-	Status    int16     `json:"status"`
-	Note      *string   `json:"note"`
-	ImageLink []string  `json:"imageLink"`
-	Type      int16     `json:"type"`
-	School    School    `json:"school"`
-	User      User      `json:"user"`
+	ID         uuid.UUID  `json:"id"`
+	Status     int16      `json:"status"`
+	Note       *string    `json:"note"`
+	ImageLink  []string   `json:"imageLink"`
+	Type       int16      `json:"type"`
+	School     School     `json:"school"`
+	User       User       `json:"user"`
+	CreatedAt  time.Time  `json:"createdAt"`
 }
 
 type Details struct {

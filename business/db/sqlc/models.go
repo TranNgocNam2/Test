@@ -217,4 +217,5 @@ type VerificationLearner struct {
 	Type       int16      `db:"type" json:"type"`
 	VerifiedAt *time.Time `db:"verified_at" json:"verifiedAt"`
 	Note       *string    `db:"note" json:"note"`
+	CreatedAt  time.Time  `db:"created_at" json:"createdAt"`
 }

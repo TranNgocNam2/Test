@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -66,7 +67,7 @@ func (q *Queries) CreateVerificationRequest(ctx context.Context, arg CreateVerif
 }
 
 const getLearnerVerificationById = `-- name: GetLearnerVerificationById :one
-SELECT id, school_id, learner_id, image_link, status, verified_by, type, verified_at, note
+SELECT id, school_id, learner_id, image_link, status, verified_by, type, verified_at, note, created_at
 FROM verification_learners
 WHERE id = $1
 `
@@ -84,12 +85,13 @@ func (q *Queries) GetLearnerVerificationById(ctx context.Context, id uuid.UUID) 
 		&i.Type,
 		&i.VerifiedAt,
 		&i.Note,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getLearnerVerificationByLearnerId = `-- name: GetLearnerVerificationByLearnerId :one
-SELECT id, school_id, learner_id, image_link, status, verified_by, type, verified_at, note
+SELECT id, school_id, learner_id, image_link, status, verified_by, type, verified_at, note, created_at
 FROM verification_learners
 WHERE learner_id = $1
   AND status = $2
@@ -113,6 +115,7 @@ func (q *Queries) GetLearnerVerificationByLearnerId(ctx context.Context, arg Get
 		&i.Type,
 		&i.VerifiedAt,
 		&i.Note,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -211,7 +214,7 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone *string) (User, erro
 
 const getVerificationLearners = `-- name: GetVerificationLearners :many
 SELECT u.id AS user_id, u.full_name, u.email,
-       vl.id, vl.image_link::text AS image_link, vl.type, vl.status, vl.note,
+       vl.id, vl.image_link::text AS image_link, vl.type, vl.status, vl.note, vl.created_at,
        s.id AS school_id, s.name AS school_name
 FROM users u
 JOIN verification_learners vl ON u.id = vl.learner_id
@@ -228,6 +231,7 @@ type GetVerificationLearnersRow struct {
 	Type       int16     `db:"type" json:"type"`
 	Status     int16     `db:"status" json:"status"`
 	Note       *string   `db:"note" json:"note"`
+	CreatedAt  time.Time `db:"created_at" json:"createdAt"`
 	SchoolID   uuid.UUID `db:"school_id" json:"schoolId"`
 	SchoolName string    `db:"school_name" json:"schoolName"`
 }
@@ -250,6 +254,7 @@ func (q *Queries) GetVerificationLearners(ctx context.Context, learnerID string)
 			&i.Type,
 			&i.Status,
 			&i.Note,
+			&i.CreatedAt,
 			&i.SchoolID,
 			&i.SchoolName,
 		); err != nil {
