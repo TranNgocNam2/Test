@@ -64,11 +64,11 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		return Details{}, model.ErrSpecNotFound
 	}
 
-	if dbSpec.Status == Draft || dbSpec.Status == Deleted {
-		if _, err = middleware.AuthorizeStaff(ctx, c.queries); err != nil {
-			return Details{}, err
-		}
-	}
+	//if dbSpec.Status == Draft || dbSpec.Status == Deleted {
+	//	if _, err = middleware.AuthorizeStaff(ctx, c.queries); err != nil {
+	//		return Details{}, err
+	//	}
+	//}
 
 	spec := toCoreSpecializationDetails(dbSpec)
 
