@@ -85,10 +85,10 @@ type Subject struct {
 }
 
 type Teacher struct {
-	ID       string `json:"id"`
-	FullName string `json:"fullName"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
+	ID       string  `json:"id"`
+	FullName string  `json:"fullName"`
+	Email    string  `json:"email"`
+	Phone    *string `json:"phone"`
 }
 
 type Slot struct {
@@ -139,7 +139,7 @@ func toCoreTeacher(dbTeacher sqlc.User) Teacher {
 		ID:       dbTeacher.ID,
 		FullName: *dbTeacher.FullName,
 		Email:    dbTeacher.Email,
-		Phone:    *dbTeacher.Phone,
+		Phone:    dbTeacher.Phone,
 	}
 }
 
