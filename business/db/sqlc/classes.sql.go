@@ -139,6 +139,45 @@ func (q *Queries) GetClassCompletedByCode(ctx context.Context, code string) (Cla
 	return i, err
 }
 
+const getTeachersInClass = `-- name: GetTeachersInClass :many
+SELECT DISTINCT u.id, u.full_name, u.email, u.phone, u.auth_role, u.profile_photo, u.status, u.is_verified, u.school_id, u.type
+FROM
+    users u JOIN slots s on u.id = s.teacher_id
+WHERE
+    s.class_id = $1::uuid
+`
+
+func (q *Queries) GetTeachersInClass(ctx context.Context, classID uuid.UUID) ([]User, error) {
+	rows, err := q.db.Query(ctx, getTeachersInClass, classID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.Email,
+			&i.Phone,
+			&i.AuthRole,
+			&i.ProfilePhoto,
+			&i.Status,
+			&i.IsVerified,
+			&i.SchoolID,
+			&i.Type,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const softDeleteClass = `-- name: SoftDeleteClass :exec
 UPDATE classes
 SET status = 2
