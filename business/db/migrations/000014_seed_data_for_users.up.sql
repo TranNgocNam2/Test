@@ -16,8 +16,10 @@ VALUES
     -- Data for admin
     ('google-oauth2|103166434261305612280', 'Test Admin 0', 'tnnam257@gmail.com', '0886784257', 3,
         'https://lh3.googleusercontent.com/a/ACg8ocKU8ncR', 0, true),
+    ('79ea47d2_1a4f_4355_89ee_3d74f5a8d58e', 'Test Admin 1', 'admin1@gmail.com', '0886784234', 3,
+        'https://lh3.googleusercontent.com/a/ACg8ocKU8ncR7STjlT', 0, true),
     -- Data for managers
-    ('google-oauth2|103166434261305612281', 'Test Manager 0', 'ngocnamsieuquay11@gmail.com', '0886724257', 1,
+    ('google-oauth2|103166434261305612281', 'Test Manager 0', 'teacher1@gmail.com', '0886724257', 1,
          'https://lh3.googleusercontent.com/a/ACg8ocKU8ncR7STjlT', 0, true),
     -- Data for teachers
     ('google-oauth2|103166434261305612282', 'Test Teacher 0', 'ngocnamsieuquay@gmail.com', '0363832466', 2,

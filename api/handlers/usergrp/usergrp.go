@@ -52,6 +52,9 @@ func (h *Handlers) CreateUser() gin.HandlerFunc {
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
 			default:
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)
 				return
