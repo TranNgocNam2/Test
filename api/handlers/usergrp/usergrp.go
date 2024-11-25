@@ -8,6 +8,7 @@ import (
 	"Backend/internal/page"
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -249,6 +250,50 @@ func (h *Handlers) GetVerificationUsers() gin.HandlerFunc {
 		}
 		total := h.user.CountVerificationUsers(ctx, filter)
 		result := page.NewPageResponse(verificationUsers, total, pageInfo.Number, pageInfo.Size)
+		web.Respond(ctx, result, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) GetUsers() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		pageInfo, err := page.Parse(ctx)
+		if err != nil {
+			pageInfo = page.Page{
+				Number: 1,
+				Size:   10,
+			}
+		}
+
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+		if filter.Role == nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, fmt.Errorf(FilterFieldRequired, filterByRole))
+			return
+		}
+		if filter.SchoolName != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, fmt.Errorf(FiltersNotSupported, filterBySchool))
+			return
+		}
+
+		orderBy, err := parseOrder(ctx)
+		if err != nil {
+			orderBy = order.NewBy(user.OrderByFullName, order.ASC)
+		}
+		if orderBy.Field == user.OrderByCreatedAt {
+			web.Respond(ctx, nil, http.StatusBadRequest, fmt.Errorf(InvalidOrderField, orderBy.Field))
+			return
+		}
+
+		users, err := h.user.GetUsers(ctx, filter, orderBy, pageInfo)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusUnauthorized, err)
+			return
+		}
+		total := h.user.CountUsers(ctx, filter)
+		result := page.NewPageResponse(users, total, pageInfo.Number, pageInfo.Size)
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}
 }
