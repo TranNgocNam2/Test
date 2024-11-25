@@ -7,10 +7,16 @@ import (
 	"strings"
 )
 
+const (
+	UserStatus     = "u.status"
+	VerifiedStatus = "vl.status"
+)
+
 type QueryFilter struct {
 	FullName   *string `validate:"omitempty"`
 	Status     *int16  `validate:"omitempty"`
 	SchoolName *string `validate:"omitempty"`
+	Role       *int    `validate:"omitempty"`
 }
 
 func (qf *QueryFilter) Validate() error {
@@ -32,7 +38,11 @@ func (qf *QueryFilter) WithSchoolName(schoolName string) {
 	qf.SchoolName = &schoolName
 }
 
-func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buffer, hasWhere bool) {
+func (qf *QueryFilter) WithRole(role int) {
+	qf.Role = &role
+}
+
+func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buffer, hasWhere bool, statusType string) {
 	var wc []string
 
 	if filter.FullName != nil {
@@ -46,8 +56,19 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 	}
 
 	if filter.Status != nil {
-		data["status"] = fmt.Sprintf("%d", *filter.Status)
-		wc = append(wc, "vl.status = :status")
+		if statusType == UserStatus {
+			data["status"] = fmt.Sprintf("%d", *filter.Status)
+			wc = append(wc, "u.status = :status")
+		}
+		if statusType == VerifiedStatus {
+			data["status"] = fmt.Sprintf("%d", *filter.Status)
+			wc = append(wc, "vl.status = :status")
+		}
+	}
+
+	if filter.Role != nil {
+		data["role"] = fmt.Sprintf("%d", *filter.Role)
+		wc = append(wc, "u.auth_role = :role")
 	}
 
 	if len(wc) > 0 {

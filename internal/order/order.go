@@ -45,6 +45,7 @@ func Parse(c *gin.Context, defaultOrder By) (By, error) {
 	orderBy := c.Query("orderBy")
 
 	sortBy := c.DefaultQuery("sortBy", "ASC")
+	strings.ToUpper(sortBy)
 
 	var by By
 

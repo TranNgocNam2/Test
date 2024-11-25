@@ -13,7 +13,8 @@ func UserRoutes(router *gin.Engine, app *app.Application) {
 	users := router.Group("/users")
 	{
 		users.POST("", handlers.CreateUser())
-		users.GET("", handlers.GetCurrentUser())
+		users.GET("/current", handlers.GetCurrentUser())
+		users.GET("", handlers.GetUsers())
 		users.GET("/verifications", handlers.GetVerificationUsers())
 		users.GET("/:id", handlers.GetUserById())
 		users.PUT("/:id", handlers.UpdateUser())

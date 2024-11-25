@@ -3,7 +3,7 @@ CREATE table users (
     full_name           character varying(50),
     email               character varying(50) UNIQUE NOT NULL,
     phone               character varying(10) UNIQUE,
-    auth_role           smallint  NOT NULL DEFAULT 0 CHECK (auth_role in (0, 1, 2, 3)),
+    auth_role           smallint NOT NULL DEFAULT 0 CHECK (auth_role in (0, 1, 2, 3)),
     profile_photo       text,
     status              int DEFAULT 0 NOT NULL,
     is_verified         boolean DEFAULT false NOT NULL,

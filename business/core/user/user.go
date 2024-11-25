@@ -11,7 +11,6 @@ import (
 	"Backend/internal/page"
 	"Backend/internal/slice"
 	"bytes"
-	"fmt"
 	"github.com/google/uuid"
 	"gitlab.com/innovia69420/kit/enum/role"
 
@@ -208,6 +207,86 @@ func (c *Core) Handle(ctx *gin.Context, id string) (string, error) {
 	return status.GetUserStatus(user.Status), nil
 }
 
+func (c *Core) GetUsers(ctx *gin.Context, filter QueryFilter, orderBy order.By, page page.Page) ([]User, error) {
+	if *filter.Role == role.TEACHER || *filter.Role == role.LEARNER {
+		_, err := middleware.AuthorizeStaff(ctx, c.queries)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if *filter.Role == role.MANAGER {
+		_, err := middleware.AuthorizeAdmin(ctx, c.queries)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err := filter.Validate(); err != nil {
+		return nil, nil
+	}
+	data := map[string]interface{}{
+		"offset":        (page.Number - 1) * page.Size,
+		"rows_per_page": page.Size,
+	}
+	const q = `SELECT u.id, u.full_name, u.email, u.auth_role, u.status, u.profile_photo, u.phone, u.status
+				FROM users u`
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf, false, UserStatus)
+	buf.WriteString(orderByClause(orderBy))
+	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
+	c.logger.Info(buf.String())
+	var dbUsers []sqlc.User
+	err := pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbUsers)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, nil
+	}
+	if dbUsers == nil {
+		return nil, nil
+	}
+
+	var users []User
+	for _, dbUser := range dbUsers {
+		user := User{
+			ID:       dbUser.ID,
+			FullName: *dbUser.FullName,
+			Email:    dbUser.Email,
+			Role:     &dbUser.AuthRole,
+			Status:   &dbUser.Status,
+			Phone:    dbUser.Phone,
+			Photo:    dbUser.ProfilePhoto,
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+func (c *Core) CountUsers(ctx *gin.Context, filter QueryFilter) int {
+	if err := filter.Validate(); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	data := map[string]interface{}{}
+
+	const q = `SELECT
+						 COUNT(u.id) AS count
+				FROM users u`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf, false, UserStatus)
+
+	var count struct {
+		Count int `db:"count"`
+	}
+
+	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	return count.Count
+}
+
 func (c *Core) GetVerificationUsers(ctx *gin.Context, filter QueryFilter, orderBy order.By, page page.Page) ([]Verification, error) {
 	_, err := middleware.AuthorizeAdmin(ctx, c.queries)
 	if err != nil {
@@ -220,21 +299,20 @@ func (c *Core) GetVerificationUsers(ctx *gin.Context, filter QueryFilter, orderB
 		"offset":        (page.Number - 1) * page.Size,
 		"rows_per_page": page.Size,
 	}
-	const q = `SELECT u.id AS user_id, u.full_name, u.email,
-       					vl.id, vl.image_link AS image_link, vl.type, vl.status, vl.note, vl.created_at,
+	const q = `SELECT u.id AS user_id, u.full_name, u.email, u.status,
+       					vl.id, vl.image_link AS image_link, vl.type, vl.note, vl.created_at, vl.status,
        					s.id AS school_id, s.name AS school_name
 				FROM users u
 					JOIN verification_learners vl ON u.id = vl.learner_id
 					JOIN schools s ON vl.school_id = s.id`
 	buf := bytes.NewBufferString(q)
-	applyFilter(filter, data, buf, false)
+	applyFilter(filter, data, buf, false, VerifiedStatus)
 	buf.WriteString(orderByClause(orderBy))
 	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
 	c.logger.Info(buf.String())
 
 	var verificationUsers []sqlc.GetVerificationLearnersRow
 	err = pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &verificationUsers)
-	fmt.Println(err)
 	if err != nil {
 		c.logger.Error(err.Error())
 		return nil, nil
@@ -282,7 +360,7 @@ func (c *Core) CountVerificationUsers(ctx *gin.Context, filter QueryFilter) int 
 					JOIN schools s ON vl.school_id = s.id`
 
 	buf := bytes.NewBufferString(q)
-	applyFilter(filter, data, buf, false)
+	applyFilter(filter, data, buf, false, VerifiedStatus)
 
 	var count struct {
 		Count int `db:"count"`
