@@ -245,6 +245,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 			param := sqlc.InsertMaterialParams{
 				ID:        materialId,
 				SessionID: sessionId,
+				Type:      material.Type,
 				Index:     int32(material.Index),
 				IsShared:  material.IsShared,
 				Name:      &material.Name,

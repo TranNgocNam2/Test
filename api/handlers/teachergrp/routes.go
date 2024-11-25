@@ -12,5 +12,6 @@ func TeacherRoutes(router *gin.Engine, app *app.Application) {
 	teachers := router.Group("/teachers")
 	{
 		teachers.PUT("/slots/:slotId", handlers.GenerateAttendanceCode())
+		teachers.GET("/classes/:classId", handlers.GetTeachersInClass())
 	}
 }

@@ -47,3 +47,10 @@ SET link = sqlc.arg(link),
     updated_at = now(),
     updated_by = sqlc.arg(updated_by)
 WHERE id = sqlc.arg(id)::uuid;
+
+-- name: GetTeachersInClass :many
+SELECT DISTINCT u.*
+FROM
+    users u JOIN slots s on u.id = s.teacher_id
+WHERE
+    s.class_id = sqlc.arg(class_id)::uuid;

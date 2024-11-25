@@ -52,3 +52,29 @@ func (h *Handlers) GenerateAttendanceCode() gin.HandlerFunc {
 		web.Respond(ctx, nil, http.StatusOK, nil)
 	}
 }
+
+func (h *Handlers) GetTeachersInClass() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		classId, err := uuid.Parse(ctx.Param("classId"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+		teachers, err := h.teacher.GetTeachersInClass(ctx, classId)
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.ErrTeacherNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+		web.Respond(ctx, teachers, http.StatusOK, nil)
+	}
+}

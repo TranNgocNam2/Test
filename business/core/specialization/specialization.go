@@ -64,11 +64,11 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		return Details{}, model.ErrSpecNotFound
 	}
 
-	if dbSpec.Status == Draft || dbSpec.Status == Deleted {
-		if _, err = middleware.AuthorizeStaff(ctx, c.queries); err != nil {
-			return Details{}, err
-		}
-	}
+	//if dbSpec.Status == Draft || dbSpec.Status == Deleted {
+	//	if _, err = middleware.AuthorizeStaff(ctx, c.queries); err != nil {
+	//		return Details{}, err
+	//	}
+	//}
 
 	spec := toCoreSpecializationDetails(dbSpec)
 
@@ -197,7 +197,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	}
 
 	const q = `SELECT
-						id, name, code, time_amount, image_link, description
+						id, name, code, time_amount, image_link, description, status
 			FROM specializations`
 
 	buf := bytes.NewBufferString(q)

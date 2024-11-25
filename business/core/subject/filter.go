@@ -10,7 +10,7 @@ import (
 type QueryFilter struct {
 	Name   *string `validate:"omitempty"`
 	Code   *string `validate:"omitempty"`
-	Status int16   `validate:"omitempty"`
+	Status *int    `validate:"omitempty"`
 }
 
 func (qf *QueryFilter) Validate() error {
@@ -29,7 +29,7 @@ func (qf *QueryFilter) WithCode(code string) {
 	qf.Code = &code
 }
 
-func (qf *QueryFilter) WithStatus(status int16) {
+func (qf *QueryFilter) WithStatus(status *int) {
 	qf.Status = status
 }
 
@@ -46,8 +46,10 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 		wc = append(wc, "code = :code")
 	}
 
-	data["status"] = fmt.Sprintf("%d", filter.Status)
-	wc = append(wc, "status = :status")
+	if filter.Status != nil {
+		data["status"] = fmt.Sprintf("%d", *filter.Status)
+		wc = append(wc, "status = :status")
+	}
 
 	if len(wc) > 0 {
 		buf.WriteString(" WHERE ")
