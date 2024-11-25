@@ -719,35 +719,36 @@ func generateSlots(newClass NewClass, sessions []sqlc.Session, duration int16, e
 				Index:     session.Index,
 			}
 			slots = append(slots, slot)
+		} else {
+			weekDay := newClass.Slots.WeekDays[i%len(newClass.Slots.WeekDays)]
+			weeksToAdd := i / len(newClass.Slots.WeekDays)
+
+			slotDate := weekday.Next(currentDate.AddDate(0, 0, weeksToAdd), weekDay)
+			currentDate = &slotDate
+
+			slotStartTime := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(),
+				newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.UTC)
+			slotEndTime := slotStartTime.Add(time.Hour * time.Duration(duration))
+
+			startTime := &slotStartTime
+			endTime := &slotEndTime
+
+			if slotStartTime.After(endDate) || slotEndTime.After(endDate) {
+				startTime = nil
+				endTime = nil
+			}
+
+			slot := sqlc.CreateSlotsParams{
+				ID:        uuid.New(),
+				SessionID: session.ID,
+				ClassID:   newClass.ID,
+				StartTime: startTime,
+				EndTime:   endTime,
+				Index:     session.Index,
+			}
+
+			slots = append(slots, slot)
 		}
-		weekDay := newClass.Slots.WeekDays[i%len(newClass.Slots.WeekDays)]
-		weeksToAdd := i / len(newClass.Slots.WeekDays)
-
-		slotDate := weekday.Next(currentDate.AddDate(0, 0, weeksToAdd), weekDay)
-		currentDate = &slotDate
-
-		slotStartTime := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(),
-			newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.UTC)
-		slotEndTime := slotStartTime.Add(time.Hour * time.Duration(duration))
-
-		startTime := &slotStartTime
-		endTime := &slotEndTime
-
-		if slotStartTime.After(endDate) || slotEndTime.After(endDate) {
-			startTime = nil
-			endTime = nil
-		}
-
-		slot := sqlc.CreateSlotsParams{
-			ID:        uuid.New(),
-			SessionID: session.ID,
-			ClassID:   newClass.ID,
-			StartTime: startTime,
-			EndTime:   endTime,
-			Index:     session.Index,
-		}
-
-		slots = append(slots, slot)
 	}
 
 	return slots
