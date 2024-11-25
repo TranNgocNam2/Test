@@ -8,20 +8,24 @@ import (
 )
 
 type User struct {
-	ID       string `json:"id"`
-	FullName string `json:"fullName"`
-	Email    string `json:"email"`
+	ID       string  `json:"id"`
+	FullName string  `json:"fullName"`
+	Email    string  `json:"email"`
+	Phone    *string `json:"phone,omitempty"`
+	Photo    *string `json:"photo,omitempty"`
+	Role     *int16  `json:"role,omitempty"`
+	Status   *int32  `json:"status,omitempty"`
 }
 
 type Verification struct {
-	ID         uuid.UUID  `json:"id"`
-	Status     int16      `json:"status"`
-	Note       *string    `json:"note"`
-	ImageLink  []string   `json:"imageLink"`
-	Type       int16      `json:"type"`
-	School     School     `json:"school"`
-	User       User       `json:"user"`
-	CreatedAt  time.Time  `json:"createdAt"`
+	ID        uuid.UUID `json:"id"`
+	Status    int16     `json:"status"`
+	Note      *string   `json:"note"`
+	ImageLink []string  `json:"imageLink"`
+	Type      int16     `json:"type"`
+	School    School    `json:"school"`
+	User      User      `json:"user"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Details struct {
