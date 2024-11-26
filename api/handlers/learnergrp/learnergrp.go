@@ -44,20 +44,16 @@ func (h *Handlers) AddLearnerToClass() gin.HandlerFunc {
 			switch {
 			case
 				errors.Is(err, model.ErrClassNotFound):
-
 				web.Respond(ctx, nil, http.StatusNotFound, err)
-				return
-			case
-				errors.Is(err, model.ErrClassStarted),
-				errors.Is(err, model.ErrWrongPassword):
-				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			case
 				errors.Is(err, middleware.ErrInvalidUser):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
-			default:
+			case errors.Is(err, model.ErrFailedToAddLearnerToClass):
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+			default:
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
 			}
 		}

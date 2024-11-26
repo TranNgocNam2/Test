@@ -16,4 +16,5 @@ var (
 	ErrInvalidTranscript       = errors.New("Phải có ít nhất 1 cột điểm!")
 	ErrInvalidTranscriptWeight = errors.New("Tổng các cột điểm phải chiếm đủ 100%!")
 	ErrSubjectIDsInvalid       = errors.New("Mã môn học không hợp lệ!")
+	ErrCannotUpdateSubject     = errors.New("Không thể cập nhật môn học!")
 )

@@ -18,8 +18,8 @@ SELECT EXISTS (
     FROM slots
     WHERE teacher_id = $1
       AND id <> $2
-      AND start_time < $3
-      AND end_time > $4
+      AND NOT (end_time <= $3
+                   OR start_time >= $4)
 ) AS overlap
 `
 

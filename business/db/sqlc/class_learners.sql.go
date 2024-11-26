@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +26,32 @@ type AddLearnerToClassParams struct {
 func (q *Queries) AddLearnerToClass(ctx context.Context, arg AddLearnerToClassParams) error {
 	_, err := q.db.Exec(ctx, addLearnerToClass, arg.ID, arg.ClassID, arg.LearnerID)
 	return err
+}
+
+const checkLearnerTimeOverlap = `-- name: CheckLearnerTimeOverlap :one
+SELECT EXISTS (
+    SELECT 1
+    FROM
+        users u
+            JOIN class_learners cl ON cl.learner_id = u.id
+            JOIN slots s ON s.class_id = cl.class_id
+    WHERE cl.learner_id = $1
+      AND s.start_time < $2
+      AND s.end_time > $3
+)
+`
+
+type CheckLearnerTimeOverlapParams struct {
+	LearnerID string     `db:"learner_id" json:"learnerId"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+}
+
+func (q *Queries) CheckLearnerTimeOverlap(ctx context.Context, arg CheckLearnerTimeOverlapParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkLearnerTimeOverlap, arg.LearnerID, arg.EndTime, arg.StartTime)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const countLearnersByClassId = `-- name: CountLearnersByClassId :one

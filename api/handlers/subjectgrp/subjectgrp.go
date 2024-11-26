@@ -104,14 +104,8 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 					web.Respond(ctx, nil, http.StatusNotFound, err)
 					return
 
-				case
-					errors.Is(err, model.ErrCodeAlreadyExist),
-					errors.Is(err, model.ErrInvalidMaterials),
-					errors.Is(err, model.ErrInvalidTranscript),
-					errors.Is(err, model.ErrInvalidTranscriptWeight),
-					errors.Is(err, model.ErrInvalidSessions):
-
-					web.Respond(ctx, nil, http.StatusBadRequest, err)
+				case errors.Is(err, model.ErrCannotUpdateSubject):
+					web.Respond(ctx, nil, http.StatusInternalServerError, err)
 					return
 				case
 					errors.Is(err, middleware.ErrInvalidUser):
@@ -119,7 +113,7 @@ func (h *Handlers) UpdateSubject() gin.HandlerFunc {
 					web.Respond(ctx, nil, http.StatusUnauthorized, err)
 					return
 				default:
-					web.Respond(ctx, nil, http.StatusInternalServerError, err)
+					web.Respond(ctx, nil, http.StatusBadRequest, err)
 					return
 				}
 			}

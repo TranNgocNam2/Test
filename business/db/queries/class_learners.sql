@@ -22,3 +22,15 @@ FROM users u
         JOIN verification_learners vl ON u.id = vl.learner_id
         JOIN schools s ON s.id = vl.school_id
 WHERE c.id = sqlc.arg(class_id)::uuid;
+
+-- name: CheckLearnerTimeOverlap :one
+SELECT EXISTS (
+    SELECT 1
+    FROM
+        users u
+            JOIN class_learners cl ON cl.learner_id = u.id
+            JOIN slots s ON s.class_id = cl.class_id
+    WHERE cl.learner_id = sqlc.arg(learner_id)
+      AND s.start_time < sqlc.arg(end_time)
+      AND s.end_time > sqlc.arg(start_time)
+);
