@@ -11,4 +11,7 @@ var (
 	ErrInvalidAttendanceCode       = errors.New("Mã điểm danh không hợp lệ!")
 	ErrLearnerAlreadyVerified      = errors.New("Người dùng đã được xác thực, vui lòng không thay đổi thông tin!")
 	ErrVerificationNotFound        = errors.New("Không tìm thấy thông tin xác thực!")
+	ErrFailedToAddLearnerToClass   = errors.New("Không thể thêm học sinh vào lớp học!")
+	ErrLearnerAlreadyInClass       = errors.New("Học sinh đã ở trong lớp học!")
+	ErrScheduleConflict            = "Học sinh bị trùng lịch học trong khoảng thời gian %v đến khoảng thời gian %v!"
 )

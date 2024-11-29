@@ -11,6 +11,7 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/slice"
 	"bytes"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -46,6 +47,16 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 	if err != nil {
 		return model.ErrClassNotFound
 	}
+
+	_, err = c.queries.GetLearnerByClassId(ctx,
+		sqlc.GetLearnerByClassIdParams{
+			ClassID:   dbClass.ID,
+			LearnerID: learner.ID,
+		})
+	if err == nil {
+		return model.ErrLearnerAlreadyInClass
+	}
+
 	if dbClass.StartDate.Before(time.Now().UTC()) {
 		return model.ErrClassStarted
 	}
@@ -58,7 +69,8 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
 	}
 	defer tx.Rollback(ctx)
 
@@ -72,16 +84,29 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 
 	err = qtx.AddLearnerToClass(ctx, classLearner)
 	if err != nil {
+		c.logger.Error(err.Error())
 		return err
 	}
 
 	for _, dbSlot := range dbSlots {
+		scheduleConflict, _ := c.queries.CheckLearnerTimeOverlap(ctx,
+			sqlc.CheckLearnerTimeOverlapParams{
+				LearnerID: learner.ID,
+				EndTime:   dbSlot.EndTime,
+				StartTime: dbSlot.StartTime,
+			})
+		if scheduleConflict {
+			return fmt.Errorf(model.ErrScheduleConflict, dbSlot.StartTime.Format("15:04 02/01/2006"),
+				dbSlot.EndTime.Format("15:04 02/01/2006"))
+		}
+
 		err = qtx.GenerateLearnerAttendance(ctx, sqlc.GenerateLearnerAttendanceParams{
 			ClassLearnerID: classLearner.ID,
 			SlotID:         dbSlot.ID,
 		})
 		if err != nil {
-			return err
+			c.logger.Error(err.Error())
+			return model.ErrFailedToAddLearnerToClass
 		}
 	}
 	tx.Commit(ctx)
@@ -500,7 +525,7 @@ func (c *Core) GetVerificationsInformation(ctx *gin.Context) (*VerifyLearnerInfo
 			ImageLink []string  `json:"imageLink"`
 			Type      int16     `json:"type"`
 			School    School    `json:"school"`
-			CreatedAt time.Time    `json:"createdAt"`
+			CreatedAt time.Time `json:"createdAt"`
 		}{
 			ID:        dbVerification.ID,
 			Status:    dbVerification.Status,
