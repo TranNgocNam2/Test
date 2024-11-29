@@ -432,11 +432,12 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		startTime := *dbSlot.StartTime
 		endTime := *dbSlot.EndTime
 		slot := Slot{
-			ID:        dbSlot.ID,
-			StartTime: startTime.Format(time.DateTime),
-			EndTime:   endTime.Format(time.DateTime),
-			Index:     dbSlot.Index,
-			Session:   session,
+			ID:         dbSlot.ID,
+			StartTime:  startTime.Format(time.DateTime),
+			EndTime:    endTime.Format(time.DateTime),
+			Index:      dbSlot.Index,
+			Session:    session,
+			RecordLink: dbSlot.RecordLink,
 		}
 
 		if dbSlot.TeacherID != nil {

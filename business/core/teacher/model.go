@@ -10,6 +10,10 @@ type Teacher struct {
 	Photo    *string `json:"photo"`
 }
 
+type UpdateRecord struct {
+	Link string
+}
+
 func toCoreTeacher(dbTeacher sqlc.User) Teacher {
 	return Teacher{
 		ID:       dbTeacher.ID,

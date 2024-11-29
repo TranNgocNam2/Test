@@ -6,7 +6,6 @@ import (
 	"Backend/internal/code"
 	"Backend/internal/common/model"
 	"Backend/internal/middleware"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -32,41 +31,44 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
-func (c *Core) GenerateAttendanceCode(ctx *gin.Context, slotId uuid.UUID) error {
+func (c *Core) GenerateAttendanceCode(ctx *gin.Context, slotId uuid.UUID) (string, error) {
 	teacherId, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	slot, err := c.queries.GetSlotById(ctx, slotId)
 	if err != nil {
-		return model.ErrSlotNotFound
+		return "", model.ErrSlotNotFound
 	}
 
 	if strings.Compare(*slot.TeacherID, teacherId) != 0 {
-		return model.ErrTeacherIsNotInSlot
+		return "", model.ErrTeacherIsNotInSlot
 	}
 
 	if slot.StartTime.UTC().After(time.Now().UTC()) {
-		return model.ErrSlotNotStarted
+		return "", model.ErrSlotNotStarted
 	}
 
 	if slot.EndTime.UTC().Before(time.Now().UTC()) {
-		return model.ErrSlotEnded
+		return "", model.ErrSlotEnded
+	}
+	if slot.AttendanceCode != nil {
+		return *slot.AttendanceCode, nil
 	}
 
 	attendanceCode := code.GenerateAttendance(6)
-	fmt.Println(attendanceCode)
 
 	err = c.queries.UpdateAttendanceCode(ctx, sqlc.UpdateAttendanceCodeParams{
 		AttendanceCode: &attendanceCode,
 		ID:             slot.ID,
 	})
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return "", err
 	}
 
-	return nil
+	return attendanceCode, nil
 }
 
 func (c *Core) GetTeachersInClass(ctx *gin.Context, classId uuid.UUID) ([]Teacher, error) {
@@ -91,4 +93,31 @@ func (c *Core) GetTeachersInClass(ctx *gin.Context, classId uuid.UUID) ([]Teache
 	}
 
 	return teachers, nil
+}
+
+func (c *Core) UpdateRecordLink(ctx *gin.Context, slotID uuid.UUID, recordLink UpdateRecord) error {
+	teacherID, err := middleware.AuthorizeTeacher(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+
+	slot, err := c.queries.GetSlotById(ctx, slotID)
+	if err != nil {
+		return model.ErrSlotNotFound
+	}
+
+	if strings.Compare(*slot.TeacherID, teacherID) != 0 {
+		return model.ErrTeacherIsNotInSlot
+	}
+
+	err = c.queries.UpdateRecordLink(ctx, sqlc.UpdateRecordLinkParams{
+		RecordLink: &recordLink.Link,
+		ID:         slotID,
+	})
+	if err != nil {
+		c.logger.Error(err.Error())
+		return err
+	}
+
+	return nil
 }
