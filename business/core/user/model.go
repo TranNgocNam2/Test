@@ -38,7 +38,7 @@ type Details struct {
 	Photo      *string `json:"photo"`
 	School     *School `json:"school,omitempty"`
 	Type       *int16  `json:"type,omitempty"`
-	Status     int16   `json:"status,omitempty"`
+	Status     int16   `json:"status"`
 	IsVerified bool    `json:"isVerified"`
 }
 

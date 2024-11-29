@@ -433,8 +433,8 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		endTime := *dbSlot.EndTime
 		slot := Slot{
 			ID:        dbSlot.ID,
-			StartTime: startTime.Format(time.DateTime),
-			EndTime:   endTime.Format(time.DateTime),
+			StartTime: startTime,
+			EndTime:   endTime,
 			Index:     dbSlot.Index,
 			Session:   session,
 		}
@@ -462,7 +462,7 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 		return model.ErrClassNotFound
 	}
 
-	currentTime, _ := time.Parse(time.DateTime, time.Now().Format(time.DateTime))
+	currentTime := time.Now().UTC()
 
 	dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
 	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
@@ -702,7 +702,7 @@ func hasOverlappingSlots(updateSlots []UpdateSlot) bool {
 	return false
 }
 
-func generateSlots(newClass NewClass, sessions []sqlc.Session, duration int16, endDate time.Time) []sqlc.CreateSlotsParams {
+func generateSlots(newClass NewClass, sessions []sqlc.Session, duration float32, endDate time.Time) []sqlc.CreateSlotsParams {
 	var slots []sqlc.CreateSlotsParams
 
 	currentDate := newClass.Slots.StartDate
@@ -728,7 +728,7 @@ func generateSlots(newClass NewClass, sessions []sqlc.Session, duration int16, e
 
 			slotStartTime := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(),
 				newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.UTC)
-			slotEndTime := slotStartTime.Add(time.Hour * time.Duration(duration))
+			slotEndTime := slotStartTime.Add(time.Duration(duration * float32(time.Hour)))
 
 			startTime := &slotStartTime
 			endTime := &slotEndTime

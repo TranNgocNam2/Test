@@ -45,7 +45,6 @@ func (c *Core) Create(ctx *gin.Context, newSpec NewSpecialization) (uuid.UUID, e
 		ID:          newSpec.ID,
 		Name:        newSpec.Name,
 		Code:        newSpec.Code,
-		TimeAmount:  newSpec.TimeAmount,
 		ImageLink:   newSpec.Image,
 		Description: newSpec.Description,
 		CreatedBy:   staffID,
@@ -142,23 +141,21 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateSpec UpdateSpecializ
 		}
 		dbUpdateSpecialization = sqlc.UpdateSpecializationParams{
 			ID:          id,
-			TimeAmount:  &updateSpec.TimeAmount,
 			ImageLink:   &updateSpec.Image,
 			Description: &updateSpec.Description,
 			UpdatedBy:   &staffID,
 			Name:        dbSpec.Name,
 			Code:        dbSpec.Code,
-			Status:      1,
+			Status:      Published,
 		}
 	}
 
 	if dbSpec.Status == Draft {
 		dbUpdateSpecialization = sqlc.UpdateSpecializationParams{
-			ID:          id,
-			Name:        updateSpec.Name,
-			Code:        updateSpec.Code,
-			Status:      updateSpec.Status,
-			TimeAmount:  &updateSpec.TimeAmount,
+			ID:     id,
+			Name:   updateSpec.Name,
+			Code:   updateSpec.Code,
+			Status: updateSpec.Status,
 			ImageLink:   &updateSpec.Image,
 			Description: &updateSpec.Description,
 			UpdatedBy:   &staffID,
@@ -173,11 +170,14 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateSpec UpdateSpecializ
 
 	qtx := c.queries.WithTx(tx)
 
-	if err = qtx.UpdateSpecialization(ctx, dbUpdateSpecialization); err != nil {
+	timeAmount, err := c.processSpecSubjects(ctx, qtx, dbSpec.ID, updateSpec.Subjects, staffID)
+	if err != nil {
 		return err
 	}
 
-	if err = processSpecSubjects(ctx, qtx, dbSpec.ID, updateSpec.Subjects, staffID); err != nil {
+	dbUpdateSpecialization.TimeAmount = timeAmount
+
+	if err = qtx.UpdateSpecialization(ctx, dbUpdateSpecialization); err != nil {
 		return err
 	}
 
@@ -305,16 +305,19 @@ func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
 	return count.Count
 }
 
-func processSpecSubjects(ctx *gin.Context, qtx *sqlc.Queries, specializationId uuid.UUID, specSubjects []SpecSubject, staffID string) error {
+func (c *Core) processSpecSubjects(ctx *gin.Context, qtx *sqlc.Queries, specializationId uuid.UUID, specSubjects []SpecSubject, staffID string) (*float32, error) {
 	err := qtx.DeleteSpecializationSubjects(ctx, specializationId)
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return nil, err
 	}
-
+	var timeAmount float32
 	for _, specSubject := range specSubjects {
-		if _, err := qtx.GetSubjectById(ctx, specSubject.ID); err != nil {
-			return model.ErrSubjectNotFound
+		dbSubject, err := qtx.GetSubjectById(ctx, specSubject.ID)
+		if err != nil {
+			return nil, model.ErrSubjectNotFound
 		}
+		timeAmount += dbSubject.TimePerSession * float32(dbSubject.TotalSessions)
 
 		dbSpecSubject := sqlc.CreateSpecializationSubjectParams{
 			SpecializationID: specializationId,
@@ -324,9 +327,10 @@ func processSpecSubjects(ctx *gin.Context, qtx *sqlc.Queries, specializationId u
 		}
 		err = qtx.CreateSpecializationSubject(ctx, dbSpecSubject)
 		if err != nil {
-			return err
+			c.logger.Error(err.Error())
+			return nil, err
 		}
 	}
 
-	return nil
+	return &timeAmount, nil
 }

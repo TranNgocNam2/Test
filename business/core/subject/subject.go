@@ -50,16 +50,17 @@ func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, err
 
 	subjectId := uuid.New()
 	subjectArgs := sqlc.InsertSubjectParams{
-		ID:             subjectId,
-		Name:           subject.Name,
-		Code:           subject.Code,
-		Description:    &subject.Description,
-		ImageLink:      &subject.Image,
-		Status:         Draft,
-		TimePerSession: int16(subject.TimePerSession),
-		CreatedBy:      staffId,
-		CreatedAt:      time.Now().UTC(),
-		LearnerType:    subject.LearnerType,
+		ID:              subjectId,
+		Name:            subject.Name,
+		Code:            subject.Code,
+		Description:     &subject.Description,
+		ImageLink:       &subject.Image,
+		Status:          Draft,
+		SessionsPerWeek: int16(subject.SessionsPerWeek),
+		TimePerSession:  subject.TimePerSession,
+		CreatedBy:       staffId,
+		CreatedAt:       time.Now().UTC(),
+		LearnerType:     subject.LearnerType,
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -114,7 +115,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 	if err != nil {
 		return model.ErrSubjectNotFound
 	}
-
+	totalSessions := len(s.Sessions)
 	if *s.Status == Published {
 		if len(s.Sessions) == 0 {
 			return model.ErrInvalidSessions
@@ -164,18 +165,20 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 	now := time.Now().UTC()
 
 	subParams := sqlc.UpdateSubjectParams{
-		Name:           s.Name,
-		Code:           s.Code,
-		Description:    &s.Description,
-		TimePerSession: int16(s.TimePerSession),
-		MinPassGrade:   &s.MinPassGrade,
-		MinAttendance:  &s.MinAttendance,
-		Status:         int16(*s.Status),
-		ImageLink:      &s.Image,
-		ID:             id,
-		UpdatedBy:      &staffId,
-		UpdatedAt:      &now,
-		LearnerType:    s.LearnerType,
+		Name:            s.Name,
+		Code:            s.Code,
+		TimePerSession:  s.TimePerSession,
+		SessionsPerWeek: int16(s.SessionsPerWeek),
+		TotalSessions:   int16(totalSessions),
+		MinPassGrade:    &s.MinPassGrade,
+		MinAttendance:   &s.MinAttendance,
+		Description:     &s.Description,
+		Status:          int16(*s.Status),
+		ImageLink:       &s.Image,
+		UpdatedBy:       &staffId,
+		UpdatedAt:       &now,
+		LearnerType:     s.LearnerType,
+		ID:              id,
 	}
 
 	if err := qtx.UpdateSubject(ctx, subParams); err != nil {
@@ -313,6 +316,7 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s payload.UpdateSubject, id uui
 		return model.ErrInvalidSkillId
 	}
 
+	totalSessions := len(s.Sessions)
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -322,18 +326,20 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s payload.UpdateSubject, id uui
 	qtx := c.queries.WithTx(tx)
 	now := time.Now().UTC()
 	subParams := sqlc.UpdateSubjectParams{
-		Name:           s.Name,
-		Code:           s.Code,
-		Description:    &s.Description,
-		TimePerSession: int16(s.TimePerSession),
-		MinPassGrade:   &s.MinPassGrade,
-		MinAttendance:  &s.MinAttendance,
-		Status:         int16(*s.Status),
-		ImageLink:      &s.Image,
-		ID:             id,
-		UpdatedBy:      &staffId,
-		UpdatedAt:      &now,
-		LearnerType:    s.LearnerType,
+		Name:            s.Name,
+		Code:            s.Code,
+		TimePerSession:  s.TimePerSession,
+		SessionsPerWeek: int16(s.SessionsPerWeek),
+		TotalSessions:   int16(totalSessions),
+		MinPassGrade:    &s.MinPassGrade,
+		MinAttendance:   &s.MinAttendance,
+		Description:     &s.Description,
+		Status:          int16(*s.Status),
+		ImageLink:       &s.Image,
+		UpdatedBy:       &staffId,
+		UpdatedAt:       &now,
+		LearnerType:     s.LearnerType,
+		ID:              id,
 	}
 
 	if err = qtx.UpdateSubject(ctx, subParams); err != nil {
@@ -385,19 +391,19 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*SubjectDetail, error) {
 	result.ID = subject.ID
 	result.Name = subject.Name
 	result.Code = subject.Code
-	result.TimePerSession = int(subject.TimePerSession)
+	result.TimePerSession = subject.TimePerSession
 	if subject.MinAttendance != nil {
-		result.MinAttendance = float32(*subject.MinAttendance)
+		result.MinAttendance = *subject.MinAttendance
 	}
 	if subject.MinPassGrade != nil {
-		result.MinPassGrade = float32(*subject.MinPassGrade)
+		result.MinPassGrade = *subject.MinPassGrade
 	}
 	result.Description = *subject.Description
 	result.Image = *subject.ImageLink
 	result.LearnerType = *subject.LearnerType
 	result.Status = int(subject.Status)
 	result.TotalSessions = int(totalSessions)
-
+	result.SessionsPerWeek = int(subject.SessionsPerWeek)
 	dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, id)
 	if err != nil {
 		return nil, err
@@ -485,7 +491,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 	}
 
 	const q = `SELECT
-						id, name, code, image_link, time_per_session, description, updated_at, learner_type, status
+						id, name, code, image_link, time_per_session, sessions_per_week, description, updated_at, learner_type, status
 			FROM subjects`
 
 	buf := bytes.NewBufferString(q)

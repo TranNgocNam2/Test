@@ -37,7 +37,7 @@ func (q *Queries) DeleteSubjectSkills(ctx context.Context, subjectID uuid.UUID) 
 }
 
 const getPublishedSubjectById = `-- name: GetPublishedSubjectById :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
+SELECT id, code, name, time_per_session, sessions_per_week, total_sessions, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects
 WHERE id = $1::uuid AND status = 1
 `
@@ -50,6 +50,8 @@ func (q *Queries) GetPublishedSubjectById(ctx context.Context, id uuid.UUID) (Su
 		&i.Code,
 		&i.Name,
 		&i.TimePerSession,
+		&i.SessionsPerWeek,
+		&i.TotalSessions,
 		&i.MinPassGrade,
 		&i.MinAttendance,
 		&i.ImageLink,
@@ -65,7 +67,7 @@ func (q *Queries) GetPublishedSubjectById(ctx context.Context, id uuid.UUID) (Su
 }
 
 const getSubjectById = `-- name: GetSubjectById :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
+SELECT id, code, name, time_per_session, sessions_per_week, total_sessions, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects WHERE id = $1::uuid
 `
 
@@ -77,6 +79,8 @@ func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, er
 		&i.Code,
 		&i.Name,
 		&i.TimePerSession,
+		&i.SessionsPerWeek,
+		&i.TotalSessions,
 		&i.MinPassGrade,
 		&i.MinAttendance,
 		&i.ImageLink,
@@ -92,7 +96,7 @@ func (q *Queries) GetSubjectById(ctx context.Context, id uuid.UUID) (Subject, er
 }
 
 const getSubjectsByIds = `-- name: GetSubjectsByIds :many
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
+SELECT id, code, name, time_per_session, sessions_per_week, total_sessions, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects
 WHERE id = ANY($1::uuid[]) AND status = 1
 `
@@ -111,6 +115,8 @@ func (q *Queries) GetSubjectsByIds(ctx context.Context, subjectIds []uuid.UUID) 
 			&i.Code,
 			&i.Name,
 			&i.TimePerSession,
+			&i.SessionsPerWeek,
+			&i.TotalSessions,
 			&i.MinPassGrade,
 			&i.MinAttendance,
 			&i.ImageLink,
@@ -133,25 +139,27 @@ func (q *Queries) GetSubjectsByIds(ctx context.Context, subjectIds []uuid.UUID) 
 }
 
 const insertSubject = `-- name: InsertSubject :one
-INSERT INTO subjects (id, name, code, description, image_link, status,
+INSERT INTO subjects (id, name, code, description, image_link, status, sessions_per_week,
     time_per_session, created_by, created_at, learner_type)
 VALUES ($1::uuid, $2, $3, $4,
-    $5, $6, $7,
-    $8, $9, $10)
+        $5, $6, $7,
+        $8, $9, $10,
+        $11)
 RETURNING id
 `
 
 type InsertSubjectParams struct {
-	ID             uuid.UUID `db:"id" json:"id"`
-	Name           string    `db:"name" json:"name"`
-	Code           string    `db:"code" json:"code"`
-	Description    *string   `db:"description" json:"description"`
-	ImageLink      *string   `db:"image_link" json:"imageLink"`
-	Status         int16     `db:"status" json:"status"`
-	TimePerSession int16     `db:"time_per_session" json:"timePerSession"`
-	CreatedBy      string    `db:"created_by" json:"createdBy"`
-	CreatedAt      time.Time `db:"created_at" json:"createdAt"`
-	LearnerType    *int16    `db:"learner_type" json:"learnerType"`
+	ID              uuid.UUID `db:"id" json:"id"`
+	Name            string    `db:"name" json:"name"`
+	Code            string    `db:"code" json:"code"`
+	Description     *string   `db:"description" json:"description"`
+	ImageLink       *string   `db:"image_link" json:"imageLink"`
+	Status          int16     `db:"status" json:"status"`
+	SessionsPerWeek int16     `db:"sessions_per_week" json:"sessionsPerWeek"`
+	TimePerSession  float32   `db:"time_per_session" json:"timePerSession"`
+	CreatedBy       string    `db:"created_by" json:"createdBy"`
+	CreatedAt       time.Time `db:"created_at" json:"createdAt"`
+	LearnerType     *int16    `db:"learner_type" json:"learnerType"`
 }
 
 func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (uuid.UUID, error) {
@@ -162,6 +170,7 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 		arg.Description,
 		arg.ImageLink,
 		arg.Status,
+		arg.SessionsPerWeek,
 		arg.TimePerSession,
 		arg.CreatedBy,
 		arg.CreatedAt,
@@ -173,7 +182,7 @@ func (q *Queries) InsertSubject(ctx context.Context, arg InsertSubjectParams) (u
 }
 
 const isSubjectCodeExist = `-- name: IsSubjectCodeExist :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
+SELECT id, code, name, time_per_session, sessions_per_week, total_sessions, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects
 WHERE code = $1 AND status = 1
 `
@@ -186,6 +195,8 @@ func (q *Queries) IsSubjectCodeExist(ctx context.Context, code string) (Subject,
 		&i.Code,
 		&i.Name,
 		&i.TimePerSession,
+		&i.SessionsPerWeek,
+		&i.TotalSessions,
 		&i.MinPassGrade,
 		&i.MinAttendance,
 		&i.ImageLink,
@@ -201,7 +212,7 @@ func (q *Queries) IsSubjectCodeExist(ctx context.Context, code string) (Subject,
 }
 
 const isSubjectCodePublished = `-- name: IsSubjectCodePublished :one
-SELECT id, code, name, time_per_session, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
+SELECT id, code, name, time_per_session, sessions_per_week, total_sessions, min_pass_grade, min_attendance, image_link, status, description, created_by, updated_by, created_at, updated_at, learner_type
 FROM subjects
 WHERE code = $1 AND status = 1 AND id != $2
 `
@@ -219,6 +230,8 @@ func (q *Queries) IsSubjectCodePublished(ctx context.Context, arg IsSubjectCodeP
 		&i.Code,
 		&i.Name,
 		&i.TimePerSession,
+		&i.SessionsPerWeek,
+		&i.TotalSessions,
 		&i.MinPassGrade,
 		&i.MinAttendance,
 		&i.ImageLink,
@@ -238,30 +251,34 @@ UPDATE subjects
 SET name = $1,
     code = $2,
     time_per_session = $3,
-    min_pass_grade = $4,
-    min_attendance = $5,
-    description = $6,
-    status = $7,
-    image_link = $8,
-    updated_by = $9,
-    updated_at = $10,
-    learner_type = $11
-WHERE id = $12::uuid
+    sessions_per_week = $4,
+    total_sessions = $5,
+    min_pass_grade = $6,
+    min_attendance = $7,
+    description = $8,
+    status = $9,
+    image_link = $10,
+    updated_by = $11,
+    updated_at = $12,
+    learner_type = $13
+WHERE id = $14::uuid
 `
 
 type UpdateSubjectParams struct {
-	Name           string     `db:"name" json:"name"`
-	Code           string     `db:"code" json:"code"`
-	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
-	MinPassGrade   *float32   `db:"min_pass_grade" json:"minPassGrade"`
-	MinAttendance  *float32   `db:"min_attendance" json:"minAttendance"`
-	Description    *string    `db:"description" json:"description"`
-	Status         int16      `db:"status" json:"status"`
-	ImageLink      *string    `db:"image_link" json:"imageLink"`
-	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
-	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
-	LearnerType    *int16     `db:"learner_type" json:"learnerType"`
-	ID             uuid.UUID  `db:"id" json:"id"`
+	Name            string     `db:"name" json:"name"`
+	Code            string     `db:"code" json:"code"`
+	TimePerSession  float32    `db:"time_per_session" json:"timePerSession"`
+	SessionsPerWeek int16      `db:"sessions_per_week" json:"sessionsPerWeek"`
+	TotalSessions   int16      `db:"total_sessions" json:"totalSessions"`
+	MinPassGrade    *float32   `db:"min_pass_grade" json:"minPassGrade"`
+	MinAttendance   *float32   `db:"min_attendance" json:"minAttendance"`
+	Description     *string    `db:"description" json:"description"`
+	Status          int16      `db:"status" json:"status"`
+	ImageLink       *string    `db:"image_link" json:"imageLink"`
+	UpdatedBy       *string    `db:"updated_by" json:"updatedBy"`
+	UpdatedAt       *time.Time `db:"updated_at" json:"updatedAt"`
+	LearnerType     *int16     `db:"learner_type" json:"learnerType"`
+	ID              uuid.UUID  `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) error {
@@ -269,6 +286,8 @@ func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) er
 		arg.Name,
 		arg.Code,
 		arg.TimePerSession,
+		arg.SessionsPerWeek,
+		arg.TotalSessions,
 		arg.MinPassGrade,
 		arg.MinAttendance,
 		arg.Description,
