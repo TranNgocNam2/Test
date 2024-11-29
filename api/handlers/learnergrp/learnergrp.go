@@ -153,13 +153,7 @@ func (h *Handlers) GetLearnerClasses() gin.HandlerFunc {
 			return
 		}
 
-		pageInfo, err := page.Parse(ctx)
-		if err != nil {
-			pageInfo = page.Page{
-				Number: 1,
-				Size:   10,
-			}
-		}
+		pageInfo := page.Parse(ctx)
 
 		filter, err := parseFilter(ctx)
 		if err != nil {
@@ -195,13 +189,7 @@ func (h *Handlers) GetAttendanceRecords() gin.HandlerFunc {
 			return
 		}
 
-		pageInfo, err := page.Parse(ctx)
-		if err != nil {
-			pageInfo = page.Page{
-				Number: 1,
-				Size:   10,
-			}
-		}
+		pageInfo := page.Parse(ctx)
 
 		filter, err := parseFilter(ctx)
 		if err != nil {
