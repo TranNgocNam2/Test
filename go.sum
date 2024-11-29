@@ -132,6 +132,12 @@ gitlab.com/innovia69420/kit v0.0.0-20241021155305-f4fda7ba559a h1:yRQqj7mC8OdPGe
 gitlab.com/innovia69420/kit v0.0.0-20241021155305-f4fda7ba559a/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
 gitlab.com/innovia69420/kit v0.0.0-20241028141916-09d4b34d7c20 h1:FIWvvQkJLKH11KeSgs/zAJxxltAeUMJJPLKthK02jqg=
 gitlab.com/innovia69420/kit v0.0.0-20241028141916-09d4b34d7c20/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
+gitlab.com/innovia69420/kit v0.0.0-20241129134932-b0fa534a0523 h1:+qIzmeR5l77t2j+0GEuJLYlbWAY/yUCfaIegQEk0sq4=
+gitlab.com/innovia69420/kit v0.0.0-20241129134932-b0fa534a0523/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
+gitlab.com/innovia69420/kit v0.0.0-20241129135632-dbe83efa042d h1:ZyoTqM/nh02nbGnAxPiCBw+AT/cT7YRqAXV20WS3PvI=
+gitlab.com/innovia69420/kit v0.0.0-20241129135632-dbe83efa042d/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
+gitlab.com/innovia69420/kit v0.0.0-20241129135756-cbff2f96a629 h1:PcnRBohhcfKXKj/a05K3HLHXFhHwuzEtWiMXKHESx/E=
+gitlab.com/innovia69420/kit v0.0.0-20241129135756-cbff2f96a629/go.mod h1:Ov6PyRvOhZzOxALU56Yo/KA8JB7jo68EK+u1bM8Eock=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
 go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=

@@ -179,13 +179,7 @@ func (h *Handlers) GetSubjectById() gin.HandlerFunc {
 
 func (h *Handlers) GetSubjects() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		pageInfo, err := page.Parse(ctx)
-		if err != nil {
-			pageInfo = page.Page{
-				Number: 1,
-				Size:   10,
-			}
-		}
+		pageInfo := page.Parse(ctx)
 
 		filter, err := parseFilter(ctx)
 		if err != nil {

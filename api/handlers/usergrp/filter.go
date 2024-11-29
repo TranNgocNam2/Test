@@ -17,7 +17,6 @@ const (
 
 var (
 	InvalidUserStatus   = errors.New("Trạng thái người dùng không hợp lệ!")
-	InvalidUserRole     = errors.New("Vai trò người dùng không hợp lệ!")
 	FiltersNotSupported = "Thuộc tính %v không được hỗ trợ!"
 	FilterFieldRequired = "Thuộc tính %v là bắt buộc!"
 	InvalidFilterData   = "Dữ liệu trong thuộc tính %v không hợp lệ!"
@@ -50,9 +49,6 @@ func parseFilter(ctx *gin.Context) (user.QueryFilter, error) {
 		roleInt, err := strconv.Atoi(roleStr)
 		if err != nil {
 			return filter, fmt.Errorf(InvalidFilterData, filterByRole)
-		}
-		if roleInt < 0 || roleInt > 2 {
-			return filter, InvalidUserRole
 		}
 		filter.WithRole(roleInt)
 	}

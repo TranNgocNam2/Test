@@ -6,15 +6,14 @@ import (
 	"Backend/internal/common/status"
 	"Backend/internal/validate"
 	"Backend/internal/web/payload"
-	"gitlab.com/innovia69420/kit/enum/role"
 	"net/mail"
 )
 
 func toCoreNewUser(newUserRequest payload.NewUser) (user.NewUser, error) {
 	authRole := *newUserRequest.Role
-	if authRole == role.ADMIN {
-		return user.NewUser{}, model.ErrUserCannotBeCreated
-	}
+	//if authRole == role.ADMIN {
+	//	return user.NewUser{}, model.ErrUserCannotBeCreated
+	//}
 
 	emailAddr, err := mail.ParseAddress(newUserRequest.Email)
 	if err != nil {
