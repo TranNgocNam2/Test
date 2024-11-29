@@ -63,6 +63,7 @@ func main() {
 	//Set up log
 	log := logger.Get(WorkingDirectory)
 	router.Use(logger.RequestLogger(log))
+	router.Use(logger.RequestHeaderLogger(log))
 
 	dbPool, err := pgxpool.New(context.Background(), cfg.DatabaseUrl)
 	if err != nil {

@@ -222,13 +222,7 @@ func (h *Handlers) HandleUser() gin.HandlerFunc {
 
 func (h *Handlers) GetVerificationUsers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		pageInfo, err := page.Parse(ctx)
-		if err != nil {
-			pageInfo = page.Page{
-				Number: 1,
-				Size:   10,
-			}
-		}
+		pageInfo := page.Parse(ctx)
 
 		filter, err := parseFilter(ctx)
 		if err != nil {
@@ -256,13 +250,7 @@ func (h *Handlers) GetVerificationUsers() gin.HandlerFunc {
 
 func (h *Handlers) GetUsers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		pageInfo, err := page.Parse(ctx)
-		if err != nil {
-			pageInfo = page.Page{
-				Number: 1,
-				Size:   10,
-			}
-		}
+		pageInfo := page.Parse(ctx)
 
 		filter, err := parseFilter(ctx)
 		if err != nil {
