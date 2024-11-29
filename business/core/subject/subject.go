@@ -156,7 +156,8 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrCannotUpdateSubject
 	}
 	defer tx.Rollback(ctx)
 
@@ -182,7 +183,8 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 	}
 
 	if err := qtx.UpdateSubject(ctx, subParams); err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrCannotUpdateSubject
 	}
 
 	if dbSkills, err := qtx.GetSkillsByIds(ctx, skills); err != nil || len(dbSkills) == 0 {
@@ -190,7 +192,8 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 	}
 
 	if err := qtx.DeleteSubjectSkills(ctx, id); err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrCannotUpdateSubject
 	}
 
 	var subSkillsParams []sqlc.InsertSubjectSkillParams
@@ -205,7 +208,8 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 	}
 
 	if _, err = qtx.InsertSubjectSkill(ctx, subSkillsParams); err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrCannotUpdateSubject
 	}
 
 	for _, session := range s.Sessions {
@@ -221,11 +225,13 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 		}
 
 		if err := qtx.UpsertSession(ctx, sessionParams); err != nil {
-			return err
+			c.logger.Error(err.Error())
+			return model.ErrCannotUpdateSubject
 		}
 
 		if err := qtx.DeleteSessionMaterials(ctx, sessionId); err != nil {
-			return err
+			c.logger.Error(err.Error())
+			return model.ErrCannotUpdateSubject
 		}
 
 		var materialParams []sqlc.InsertMaterialParams
@@ -259,12 +265,14 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 		}
 
 		if _, err := qtx.InsertMaterial(ctx, materialParams); err != nil {
-			return err
+			c.logger.Error(err.Error())
+			return model.ErrCannotUpdateSubject
 		}
 	}
 
 	if err := qtx.DeleteSubjectTranscripts(ctx, id); err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrCannotUpdateSubject
 	}
 
 	var transcriptParams []sqlc.InsertTranscriptsParams
@@ -287,11 +295,13 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 	}
 
 	if _, err := qtx.InsertTranscripts(ctx, transcriptParams); err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrCannotUpdateSubject
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrCannotUpdateSubject
 	}
 
 	return nil
