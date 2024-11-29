@@ -12,16 +12,15 @@ import (
 )
 
 const createSpecialization = `-- name: CreateSpecialization :exec
-INSERT INTO specializations (id, name, code, time_amount, image_link, description, created_by)
-VALUES ($1, $2, $3, $4,
-        $5, $6, $7)
+INSERT INTO specializations (id, name, code, image_link, description, created_by)
+VALUES ($1, $2, $3,
+        $4, $5, $6)
 `
 
 type CreateSpecializationParams struct {
 	ID          uuid.UUID `db:"id" json:"id"`
 	Name        string    `db:"name" json:"name"`
 	Code        string    `db:"code" json:"code"`
-	TimeAmount  *float64  `db:"time_amount" json:"timeAmount"`
 	ImageLink   *string   `db:"image_link" json:"imageLink"`
 	Description *string   `db:"description" json:"description"`
 	CreatedBy   string    `db:"created_by" json:"createdBy"`
@@ -32,7 +31,6 @@ func (q *Queries) CreateSpecialization(ctx context.Context, arg CreateSpecializa
 		arg.ID,
 		arg.Name,
 		arg.Code,
-		arg.TimeAmount,
 		arg.ImageLink,
 		arg.Description,
 		arg.CreatedBy,
@@ -128,7 +126,7 @@ type UpdateSpecializationParams struct {
 	Name        string    `db:"name" json:"name"`
 	Code        string    `db:"code" json:"code"`
 	Status      int16     `db:"status" json:"status"`
-	TimeAmount  *float64  `db:"time_amount" json:"timeAmount"`
+	TimeAmount  *float32  `db:"time_amount" json:"timeAmount"`
 	ImageLink   *string   `db:"image_link" json:"imageLink"`
 	Description *string   `db:"description" json:"description"`
 	UpdatedBy   *string   `db:"updated_by" json:"updatedBy"`

@@ -14,7 +14,6 @@ func toCoreNewSpecialization(newSpecialization payload.NewSpecialization) specia
 		Name:        newSpecialization.Name,
 		Code:        newSpecialization.Code,
 		Description: &newSpecialization.Description,
-		TimeAmount:  &newSpecialization.TimeAmount,
 		Image:       &newSpecialization.Image,
 	}
 }
@@ -47,7 +46,6 @@ func toCoreUpdatedSpecialization(updateSpecialization payload.UpdateSpecializati
 		Code:        updateSpecialization.Code,
 		Status:      *updateSpecialization.Status,
 		Description: updateSpecialization.Description,
-		TimeAmount:  updateSpecialization.TimeAmount,
 		Image:       updateSpecialization.Image,
 		Subjects:    specSubjects,
 	}

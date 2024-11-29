@@ -8,33 +8,35 @@ import (
 )
 
 type Subject struct {
-	ID             uuid.UUID `json:"id"`
-	Name           string    `json:"name"`
-	Code           string    `json:"code"`
-	Description    *string   `json:"description,omitempty"`
-	Image          *string   `json:"image,omitempty"`
-	TimePerSession int16     `json:"timePerSession"`
-	Skills         []Skill   `json:"skills,omitempty"`
-	TotalSessions  int       `json:"totalSessions"`
-	LearnerType    int16     `json:"learnerType"`
-	Status         int16     `json:"status"`
+	ID              uuid.UUID `json:"id"`
+	Name            string    `json:"name"`
+	Code            string    `json:"code"`
+	Description     *string   `json:"description,omitempty"`
+	Image           *string   `json:"image,omitempty"`
+	TimePerSession  float32   `json:"timePerSession"`
+	SessionsPerWeek int16     `json:"sessionsPerWeek"`
+	Skills          []Skill   `json:"skills,omitempty"`
+	TotalSessions   int       `json:"totalSessions"`
+	LearnerType     int16     `json:"learnerType"`
+	Status          int16     `json:"status"`
 }
 
 type SubjectDetail struct {
-	ID             uuid.UUID    `json:"id"`
-	Name           string       `json:"name"`
-	Code           string       `json:"code"`
-	TimePerSession int          `json:"timePerSession"`
-	MinPassGrade   float32      `json:"minPassGrade"`
-	MinAttendance  float32      `json:"minAttendance"`
-	Description    string       `json:"description"`
-	Image          string       `json:"image"`
-	Status         int          `json:"status"`
-	Skills         []Skill      `json:"skills"`
-	Sessions       []Session    `json:"sessions"`
-	Transcripts    []Transcript `json:"transcripts"`
-	TotalSessions  int          `json:"totalSessions"`
-	LearnerType    int16        `json:"learnerType"`
+	ID              uuid.UUID    `json:"id"`
+	Name            string       `json:"name"`
+	Code            string       `json:"code"`
+	TimePerSession  float32      `json:"timePerSession"`
+	SessionsPerWeek int          `json:"sessionsPerWeek"`
+	MinPassGrade    float32      `json:"minPassGrade"`
+	MinAttendance   float32      `json:"minAttendance"`
+	Description     string       `json:"description"`
+	Image           string       `json:"image"`
+	Status          int          `json:"status"`
+	Skills          []Skill      `json:"skills"`
+	Sessions        []Session    `json:"sessions"`
+	Transcripts     []Transcript `json:"transcripts"`
+	TotalSessions   int          `json:"totalSessions"`
+	LearnerType     int16        `json:"learnerType"`
 }
 
 type Skill struct {
@@ -68,13 +70,14 @@ type Transcript struct {
 
 func toCoreSubject(dbSubject sqlc.Subject) Subject {
 	return Subject{
-		ID:             dbSubject.ID,
-		Name:           dbSubject.Name,
-		Code:           dbSubject.Code,
-		Description:    dbSubject.Description,
-		Image:          dbSubject.ImageLink,
-		TimePerSession: dbSubject.TimePerSession,
-		LearnerType:    *dbSubject.LearnerType,
-		Status:         dbSubject.Status,
+		ID:              dbSubject.ID,
+		Name:            dbSubject.Name,
+		Code:            dbSubject.Code,
+		Description:     dbSubject.Description,
+		Image:           dbSubject.ImageLink,
+		TimePerSession:  dbSubject.TimePerSession,
+		SessionsPerWeek: dbSubject.SessionsPerWeek,
+		LearnerType:     *dbSubject.LearnerType,
+		Status:          dbSubject.Status,
 	}
 }

@@ -40,17 +40,18 @@ type UpdateMeeting struct {
 }
 
 type Details struct {
-	ID        uuid.UUID  `json:"id"`
-	Name      string     `json:"name"`
-	Code      string     `json:"code"`
-	Link      string     `json:"link"`
-	Password  *string    `json:"password,omitempty"`
-	StartDate *time.Time `json:"startDate"`
-	EndDate   *time.Time `json:"endDate"`
-	Program   Program    `json:"program"`
-	Subject   Subject    `json:"subject"`
-	Slots     []Slot     `json:"slots"`
-	Skills    []Skill    `json:"skills"`
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	Code          string     `json:"code"`
+	Link          string     `json:"link"`
+	Password      *string    `json:"password,omitempty"`
+	StartDate     *time.Time `json:"startDate"`
+	EndDate       *time.Time `json:"endDate"`
+	Program       Program    `json:"program"`
+	Subject       Subject    `json:"subject"`
+	Slots         []Slot     `json:"slots"`
+	Skills        []Skill    `json:"skills"`
+	TotalLearners int64      `json:"totalLearners,omitempty"`
 }
 
 type Class struct {
@@ -93,8 +94,8 @@ type Teacher struct {
 
 type Slot struct {
 	ID        uuid.UUID `json:"id"`
-	StartTime string    `json:"startTime"`
-	EndTime   string    `json:"endTime"`
+	StartTime time.Time `json:"startTime"`
+	EndTime   time.Time `json:"endTime"`
 	Index     int32     `json:"index"`
 	Session   Session   `json:"session"`
 	Teacher   Teacher   `json:"teacher"`
