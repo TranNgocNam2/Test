@@ -1,9 +1,10 @@
 -- name: InsertSubject :one
-INSERT INTO subjects (id, name, code, description, image_link, status,
+INSERT INTO subjects (id, name, code, description, image_link, status, sessions_per_week,
     time_per_session, created_by, created_at, learner_type)
 VALUES (sqlc.arg(id)::uuid, sqlc.arg(name), sqlc.arg(code), sqlc.arg(description),
-    sqlc.arg(image_link), sqlc.arg(status), sqlc.arg(time_per_session),
-    sqlc.arg(created_by), sqlc.arg(created_at), sqlc.arg(learner_type))
+        sqlc.arg(image_link), sqlc.arg(status), sqlc.arg(sessions_per_week),
+        sqlc.arg(time_per_session), sqlc.arg(created_by), sqlc.arg(created_at),
+        sqlc.arg(learner_type))
 RETURNING id;
 
 -- name: DeleteSubjectSkills :exec
@@ -29,6 +30,8 @@ UPDATE subjects
 SET name = sqlc.arg(name),
     code = sqlc.arg(code),
     time_per_session = sqlc.arg(time_per_session),
+    sessions_per_week = sqlc.arg(sessions_per_week),
+    total_sessions = sqlc.arg(total_sessions),
     min_pass_grade = sqlc.arg(min_pass_grade),
     min_attendance = sqlc.arg(min_attendance),
     description = sqlc.arg(description),

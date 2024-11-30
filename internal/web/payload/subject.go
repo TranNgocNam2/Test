@@ -1,28 +1,30 @@
 package payload
 
 type NewSubject struct {
-	Name           string   `json:"name" validate:"required"`
-	Code           string   `json:"code" validate:"required"`
-	Description    string   `json:"description"`
-	Image          string   `json:"image" validate:"required"`
-	TimePerSession int      `json:"timePerSession" validate:"required"`
-	Skills         []string `json:"skills" validate:"gt=0,dive,required"`
-	LearnerType    *int16   `json:"learnerType" validate:"required,gte=0,lte=1"`
+	Name            string   `json:"name" validate:"required"`
+	Code            string   `json:"code" validate:"required"`
+	Description     string   `json:"description"`
+	Image           string   `json:"image" validate:"required"`
+	TimePerSession  float32  `json:"timePerSession" validate:"required"`
+	SessionsPerWeek int      `json:"sessionsPerWeek" validate:"required"`
+	Skills          []string `json:"skills" validate:"gt=0,dive,required"`
+	LearnerType     *int16   `json:"learnerType" validate:"required,gte=0,lte=1"`
 }
 
 type UpdateSubject struct {
-	Name           string       `json:"name" validate:"required"`
-	Code           string       `json:"code" validate:"required"`
-	Image          string       `json:"image" validate:"required"`
-	TimePerSession int          `json:"timePerSession" validate:"required"`
-	MinPassGrade   float32      `json:"minPassGrade" validate:"required"`
-	MinAttendance  float32      `json:"minAttendance" validate:"required"`
-	Description    string       `json:"description"`
-	Status         *int         `json:"status" validate:"gte=0,lte=1,required"`
-	LearnerType    *int16       `json:"learnerType" validate:"required,gte=0,lte=1"`
-	Skills         []string     `json:"skills" validate:"gt=0,dive,required"`
-	Sessions       []Session    `json:"sessions"`
-	Transcripts    []Transcript `json:"transcripts"`
+	Name            string       `json:"name" validate:"required"`
+	Code            string       `json:"code" validate:"required"`
+	Image           string       `json:"image" validate:"required"`
+	TimePerSession  float32      `json:"timePerSession" validate:"required"`
+	SessionsPerWeek int          `json:"sessionsPerWeek" validate:"required"`
+	MinPassGrade    float32      `json:"minPassGrade" validate:"required"`
+	MinAttendance   float32      `json:"minAttendance" validate:"required"`
+	Description     string       `json:"description"`
+	Status          *int         `json:"status" validate:"gte=0,lte=1,required"`
+	LearnerType     *int16       `json:"learnerType" validate:"required,gte=0,lte=1"`
+	Skills          []string     `json:"skills" validate:"gt=0,dive,required"`
+	Sessions        []Session    `json:"sessions"`
+	Transcripts     []Transcript `json:"transcripts"`
 }
 
 type Transcript struct {

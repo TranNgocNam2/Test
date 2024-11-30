@@ -33,7 +33,6 @@ type UpdateSpecialization struct {
 	Code        string
 	Status      int16
 	Description string
-	TimeAmount  float64
 	Image       string
 	Subjects    []SpecSubject
 }
@@ -102,7 +101,6 @@ func toCoreSpecializationDetails(dbSpec sqlc.Specialization) Details {
 		Code:        dbSpec.Code,
 		Status:      dbSpec.Status,
 		Description: dbSpec.Description,
-		TimeAmount:  dbSpec.TimeAmount,
 		Image:       dbSpec.ImageLink,
 		CreatedAt:   dbSpec.CreatedAt,
 	}

@@ -70,7 +70,7 @@ func (q *Queries) GetSubjectIdsBySpecialization(ctx context.Context, specializat
 }
 
 const getSubjectsBySpecialization = `-- name: GetSubjectsBySpecialization :many
-SELECT subjects.id, subjects.code, subjects.name, subjects.time_per_session, subjects.min_pass_grade, subjects.min_attendance, subjects.image_link, subjects.status, subjects.description, subjects.created_by, subjects.updated_by, subjects.created_at, subjects.updated_at, subjects.learner_type, specialization_subjects.index
+SELECT subjects.id, subjects.code, subjects.name, subjects.time_per_session, subjects.sessions_per_week, subjects.total_sessions, subjects.min_pass_grade, subjects.min_attendance, subjects.image_link, subjects.status, subjects.description, subjects.created_by, subjects.updated_by, subjects.created_at, subjects.updated_at, subjects.learner_type, specialization_subjects.index
 FROM specialization_subjects
 JOIN subjects ON specialization_subjects.subject_id = subjects.id
 WHERE specialization_subjects.specialization_id = $1::uuid
@@ -78,21 +78,23 @@ AND subjects.status = 1 ORDER BY specialization_subjects.index
 `
 
 type GetSubjectsBySpecializationRow struct {
-	ID             uuid.UUID  `db:"id" json:"id"`
-	Code           string     `db:"code" json:"code"`
-	Name           string     `db:"name" json:"name"`
-	TimePerSession int16      `db:"time_per_session" json:"timePerSession"`
-	MinPassGrade   *float32   `db:"min_pass_grade" json:"minPassGrade"`
-	MinAttendance  *float32   `db:"min_attendance" json:"minAttendance"`
-	ImageLink      *string    `db:"image_link" json:"imageLink"`
-	Status         int16      `db:"status" json:"status"`
-	Description    *string    `db:"description" json:"description"`
-	CreatedBy      string     `db:"created_by" json:"createdBy"`
-	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
-	CreatedAt      time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
-	LearnerType    *int16     `db:"learner_type" json:"learnerType"`
-	Index          int16      `db:"index" json:"index"`
+	ID              uuid.UUID  `db:"id" json:"id"`
+	Code            string     `db:"code" json:"code"`
+	Name            string     `db:"name" json:"name"`
+	TimePerSession  float32    `db:"time_per_session" json:"timePerSession"`
+	SessionsPerWeek int16      `db:"sessions_per_week" json:"sessionsPerWeek"`
+	TotalSessions   int16      `db:"total_sessions" json:"totalSessions"`
+	MinPassGrade    *float32   `db:"min_pass_grade" json:"minPassGrade"`
+	MinAttendance   *float32   `db:"min_attendance" json:"minAttendance"`
+	ImageLink       *string    `db:"image_link" json:"imageLink"`
+	Status          int16      `db:"status" json:"status"`
+	Description     *string    `db:"description" json:"description"`
+	CreatedBy       string     `db:"created_by" json:"createdBy"`
+	UpdatedBy       *string    `db:"updated_by" json:"updatedBy"`
+	CreatedAt       time.Time  `db:"created_at" json:"createdAt"`
+	UpdatedAt       *time.Time `db:"updated_at" json:"updatedAt"`
+	LearnerType     *int16     `db:"learner_type" json:"learnerType"`
+	Index           int16      `db:"index" json:"index"`
 }
 
 func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializationID uuid.UUID) ([]GetSubjectsBySpecializationRow, error) {
@@ -109,6 +111,8 @@ func (q *Queries) GetSubjectsBySpecialization(ctx context.Context, specializatio
 			&i.Code,
 			&i.Name,
 			&i.TimePerSession,
+			&i.SessionsPerWeek,
+			&i.TotalSessions,
 			&i.MinPassGrade,
 			&i.MinAttendance,
 			&i.ImageLink,
