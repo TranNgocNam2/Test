@@ -139,6 +139,7 @@ type Slot struct {
 	Index          int32      `db:"index" json:"index"`
 	TeacherID      *string    `db:"teacher_id" json:"teacherId"`
 	AttendanceCode *string    `db:"attendance_code" json:"attendanceCode"`
+	RecordLink     *string    `db:"record_link" json:"recordLink"`
 }
 
 type Specialization struct {

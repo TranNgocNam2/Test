@@ -11,7 +11,7 @@ type NewClass struct {
 		StartTime string `json:"startTime"`
 		StartDate string `json:"startDate"`
 	} `json:"slots"`
-	Password string `json:"password" validate:"required"`
+	Password string `json:"password" validate:"required,min=6,max=10"`
 }
 
 type UpdateClass struct {

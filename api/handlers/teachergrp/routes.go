@@ -13,5 +13,6 @@ func TeacherRoutes(router *gin.Engine, app *app.Application) {
 	{
 		teachers.PUT("/slots/:slotId", handlers.GenerateAttendanceCode())
 		teachers.GET("/classes/:classId", handlers.GetTeachersInClass())
+		teachers.PUT("/classes/:classId/record", handlers.UpdateRecord())
 	}
 }

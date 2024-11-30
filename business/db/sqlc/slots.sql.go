@@ -87,7 +87,7 @@ type CreateSlotsParams struct {
 }
 
 const getSlotByClassIdAndIndex = `-- name: GetSlotByClassIdAndIndex :one
-SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots
+SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code, record_link FROM slots
     WHERE class_id = $1
          AND index = $2
 `
@@ -109,12 +109,13 @@ func (q *Queries) GetSlotByClassIdAndIndex(ctx context.Context, arg GetSlotByCla
 		&i.Index,
 		&i.TeacherID,
 		&i.AttendanceCode,
+		&i.RecordLink,
 	)
 	return i, err
 }
 
 const getSlotById = `-- name: GetSlotById :one
-SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots WHERE id = $1
+SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code, record_link FROM slots WHERE id = $1
 `
 
 func (q *Queries) GetSlotById(ctx context.Context, id uuid.UUID) (Slot, error) {
@@ -129,12 +130,13 @@ func (q *Queries) GetSlotById(ctx context.Context, id uuid.UUID) (Slot, error) {
 		&i.Index,
 		&i.TeacherID,
 		&i.AttendanceCode,
+		&i.RecordLink,
 	)
 	return i, err
 }
 
 const getSlotByIdAndIndex = `-- name: GetSlotByIdAndIndex :one
-SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots WHERE id = $1 AND index = $2
+SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code, record_link FROM slots WHERE id = $1 AND index = $2
 `
 
 type GetSlotByIdAndIndexParams struct {
@@ -154,12 +156,13 @@ func (q *Queries) GetSlotByIdAndIndex(ctx context.Context, arg GetSlotByIdAndInd
 		&i.Index,
 		&i.TeacherID,
 		&i.AttendanceCode,
+		&i.RecordLink,
 	)
 	return i, err
 }
 
 const getSlotsByClassId = `-- name: GetSlotsByClassId :many
-SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code FROM slots WHERE class_id = $1 ORDER BY index
+SELECT id, session_id, class_id, start_time, end_time, index, teacher_id, attendance_code, record_link FROM slots WHERE class_id = $1 ORDER BY index
 `
 
 func (q *Queries) GetSlotsByClassId(ctx context.Context, classID uuid.UUID) ([]Slot, error) {
@@ -180,6 +183,7 @@ func (q *Queries) GetSlotsByClassId(ctx context.Context, classID uuid.UUID) ([]S
 			&i.Index,
 			&i.TeacherID,
 			&i.AttendanceCode,
+			&i.RecordLink,
 		); err != nil {
 			return nil, err
 		}
@@ -204,6 +208,22 @@ type UpdateAttendanceCodeParams struct {
 
 func (q *Queries) UpdateAttendanceCode(ctx context.Context, arg UpdateAttendanceCodeParams) error {
 	_, err := q.db.Exec(ctx, updateAttendanceCode, arg.AttendanceCode, arg.ID)
+	return err
+}
+
+const updateRecordLink = `-- name: UpdateRecordLink :exec
+UPDATE slots
+SET record_link = $1
+WHERE id = $2
+`
+
+type UpdateRecordLinkParams struct {
+	RecordLink *string   `db:"record_link" json:"recordLink"`
+	ID         uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateRecordLink(ctx context.Context, arg UpdateRecordLinkParams) error {
+	_, err := q.db.Exec(ctx, updateRecordLink, arg.RecordLink, arg.ID)
 	return err
 }
 

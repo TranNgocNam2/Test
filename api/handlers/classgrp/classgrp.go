@@ -59,7 +59,8 @@ func (h *Handlers) CreateClass() gin.HandlerFunc {
 			case
 				errors.Is(err, model.ErrInvalidClassStartTime),
 				errors.Is(err, model.ErrInvalidWeekDay),
-				errors.Is(err, model.ErrClassCodeAlreadyExist):
+				errors.Is(err, model.ErrClassCodeAlreadyExist),
+				errors.Is(err, model.ErrInvalidSessionCount):
 
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return
