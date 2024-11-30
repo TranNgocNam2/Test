@@ -149,7 +149,7 @@ func (c *Core) GetCurrent(ctx *gin.Context) (Details, error) {
 	}
 	user := toCoreUser(*dbUser)
 
-	if dbUser.AuthRole == role.LEARNER && dbUser.IsVerified {
+	if dbUser.AuthRole == role.LEARNER && dbUser.IsVerified && dbUser.SchoolID != nil {
 		dbSchool, _ := c.queries.GetSchoolById(ctx, *dbUser.SchoolID)
 		user.School = &School{
 			ID:   dbSchool.ID,
@@ -255,7 +255,7 @@ func (c *Core) GetUsers(ctx *gin.Context, filter QueryFilter, orderBy order.By, 
 			Phone:    dbUser.Phone,
 			Photo:    dbUser.ProfilePhoto,
 		}
-		if *filter.Role == role.LEARNER && dbUser.SchoolID != nil {
+		if *filter.Role == role.LEARNER && dbUser.IsVerified && dbUser.SchoolID != nil {
 			dbSchool, _ := c.queries.GetSchoolById(ctx, *dbUser.SchoolID)
 			user.School = &School{
 				ID:   dbSchool.ID,
