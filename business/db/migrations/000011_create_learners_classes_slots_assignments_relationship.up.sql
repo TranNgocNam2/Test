@@ -30,6 +30,7 @@ CREATE table learner_assignments(
     class_learner_id    uuid NOT NULL,
     assignment_id       uuid NOT NULL,
     grade               real NOT NULL,
+    data                json,
     grading_status      smallint DEFAULT 0 CHECK (grading_status in (0, 1)) NOT NULL,
     submission_status   smallint DEFAULT 0 CHECK (submission_status in (0, 1)) NOT NULL,
 

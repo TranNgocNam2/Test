@@ -12,13 +12,13 @@ import (
 )
 
 type Assignment struct {
-	ID           uuid.UUID  `db:"id" json:"id"`
-	TranscriptID uuid.UUID  `db:"transcript_id" json:"transcriptId"`
-	TeacherID    string     `db:"teacher_id" json:"teacherId"`
-	ClassID      uuid.UUID  `db:"class_id" json:"classId"`
-	CreatedAt    time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt    *time.Time `db:"updated_at" json:"updatedAt"`
-	UpdatedBy    *string    `db:"updated_by" json:"updatedBy"`
+	ID         uuid.UUID       `db:"id" json:"id"`
+	ClassID    uuid.UUID       `db:"class_id" json:"classId"`
+	Question   json.RawMessage `db:"question" json:"question"`
+	Deadline   *time.Time      `db:"deadline" json:"deadline"`
+	Status     int16           `db:"status" json:"status"`
+	CanOverdue *bool           `db:"can_overdue" json:"canOverdue"`
+	Type       int16           `db:"type" json:"type"`
 }
 
 type Certificate struct {
@@ -63,10 +63,13 @@ type District struct {
 }
 
 type LearnerAssignment struct {
-	ID             uuid.UUID `db:"id" json:"id"`
-	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
-	AssignmentID   uuid.UUID `db:"assignment_id" json:"assignmentId"`
-	Grade          float32   `db:"grade" json:"grade"`
+	ID               uuid.UUID `db:"id" json:"id"`
+	ClassLearnerID   uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	AssignmentID     uuid.UUID `db:"assignment_id" json:"assignmentId"`
+	Grade            float32   `db:"grade" json:"grade"`
+	Data             []byte    `db:"data" json:"data"`
+	GradingStatus    int16     `db:"grading_status" json:"gradingStatus"`
+	SubmissionStatus int16     `db:"submission_status" json:"submissionStatus"`
 }
 
 type LearnerAttendance struct {

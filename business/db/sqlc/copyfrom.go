@@ -46,6 +46,43 @@ func (q *Queries) CreateSlots(ctx context.Context, arg []CreateSlotsParams) (int
 	return q.db.CopyFrom(ctx, []string{"slots"}, []string{"id", "session_id", "class_id", "start_time", "end_time", "index"}, &iteratorForCreateSlots{rows: arg})
 }
 
+// iteratorForInsertLearnerAssignment implements pgx.CopyFromSource.
+type iteratorForInsertLearnerAssignment struct {
+	rows                 []InsertLearnerAssignmentParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertLearnerAssignment) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertLearnerAssignment) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ID,
+		r.rows[0].ClassLearnerID,
+		r.rows[0].AssignmentID,
+		r.rows[0].Grade,
+		r.rows[0].GradingStatus,
+		r.rows[0].SubmissionStatus,
+	}, nil
+}
+
+func (r iteratorForInsertLearnerAssignment) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertLearnerAssignment(ctx context.Context, arg []InsertLearnerAssignmentParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"learner_assignments"}, []string{"id", "class_learner_id", "assignment_id", "grade", "grading_status", "submission_status"}, &iteratorForInsertLearnerAssignment{rows: arg})
+}
+
 // iteratorForInsertMaterial implements pgx.CopyFromSource.
 type iteratorForInsertMaterial struct {
 	rows                 []InsertMaterialParams
