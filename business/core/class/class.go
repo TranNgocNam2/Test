@@ -60,6 +60,10 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 		return uuid.Nil, model.ErrSessionNotFound
 	}
 
+	if len(newClass.Slots.WeekDays) != int(dbSubject.SessionsPerWeek){
+		return uuid.Nil, model.ErrInvalidSessionCount
+	}
+
 	slots := generateSlots(newClass, sessions, dbSubject.TimePerSession, dbProgram.EndDate)
 
 	// Check if the last slot's end time is after the programs end time
@@ -392,14 +396,21 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		return Details{}, model.ErrClassNotFound
 	}
 
+	totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return Details{}, err
+	}
+
 	class := Details{
-		ID:        dbClass.ID,
-		Name:      dbClass.Name,
-		Code:      dbClass.Code,
-		Link:      *dbClass.Link,
-		StartDate: dbClass.StartDate,
-		EndDate:   dbClass.EndDate,
-		Password:  &dbClass.Password,
+		ID:            dbClass.ID,
+		Name:          dbClass.Name,
+		Code:          dbClass.Code,
+		Link:          *dbClass.Link,
+		StartDate:     dbClass.StartDate,
+		EndDate:       dbClass.EndDate,
+		Password:      &dbClass.Password,
+		TotalLearners: totalLearners,
 	}
 
 	if user.AuthRole == role.LEARNER {
