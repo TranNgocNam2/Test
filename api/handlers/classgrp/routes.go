@@ -21,5 +21,8 @@ func ClassRoutes(router *gin.Engine, app *app.Application) {
 		classes.POST("/slots/teachers", handlers.CheckTeacherAvailable())
 		classes.GET("/teachers", handlers.GetClassesByTeacher())
 		classes.PUT("/:id/meeting", handlers.UpdateMeetingLink())
+		classes.POST("/:id/assignments", handlers.UpdateClass())
+		classes.PUT("/:id/assignments/:assignmentId", handlers.UpdateClass())
+		classes.GET("/:id/assignments/:assignmentId", handlers.UpdateClass())
 	}
 }
