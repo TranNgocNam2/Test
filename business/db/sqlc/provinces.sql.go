@@ -33,3 +33,15 @@ func (q *Queries) GetAllProvince(ctx context.Context) ([]Province, error) {
 	}
 	return items, nil
 }
+
+const getProvinceById = `-- name: GetProvinceById :one
+SELECT id, name FROM provinces
+         WHERE provinces.id = $1::integer
+`
+
+func (q *Queries) GetProvinceById(ctx context.Context, id int32) (Province, error) {
+	row := q.db.QueryRow(ctx, getProvinceById, id)
+	var i Province
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}

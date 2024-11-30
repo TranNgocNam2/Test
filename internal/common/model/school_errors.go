@@ -7,4 +7,6 @@ var (
 	ErrInvalidSchoolID   = errors.New("Mã trường học không hợp lệ!")
 	ErrInvalidDistrictID = errors.New("Mã quận/huyện không hợp lệ!")
 	ErrInvalidProvinceID = errors.New("Mã tỉnh/thành phố không hợp lệ!")
+	ErrDistrictNotFound     = errors.New("Không tìm thấy quận/huyện!")
+	ErrProvinceNotFound     = errors.New("Không tìm thấy tỉnh/thành phố!")
 )
