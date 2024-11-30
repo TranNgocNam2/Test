@@ -87,6 +87,32 @@ func (q *Queries) DeleteClass(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getClassByCode = `-- name: GetClassByCode :one
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at, updated_at, updated_by FROM classes WHERE code = $1
+`
+
+func (q *Queries) GetClassByCode(ctx context.Context, code string) (Class, error) {
+	row := q.db.QueryRow(ctx, getClassByCode, code)
+	var i Class
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.SubjectID,
+		&i.ProgramID,
+		&i.Password,
+		&i.Name,
+		&i.Link,
+		&i.StartDate,
+		&i.EndDate,
+		&i.Status,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
 const getClassById = `-- name: GetClassById :one
 SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at, updated_at, updated_by FROM classes WHERE id = $1::uuid
 `
