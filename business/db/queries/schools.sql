@@ -20,3 +20,14 @@ WHERE id = sqlc.arg(id)::uuid;
 SELECT * FROM schools
 WHERE district_id = sqlc.arg(district_id)::integer
 AND is_deleted = false;
+
+-- name: GetAllSchools :many
+SELECT s.*, d.id AS district_id, d.name AS district_name, p.id AS province_id, p.name AS province_name
+FROM schools s JOIN districts d ON s.district_id = d.id
+               JOIN provinces p ON p.id = d.province_id;
+
+-- name: GetAllSchoolInformationById :one
+SELECT s.*, d.id AS district_id, d.name AS district_name, p.id AS province_id, p.name AS province_name
+FROM schools s JOIN districts d ON s.district_id = d.id
+               JOIN provinces p ON p.id = d.province_id
+WHERE s.id = sqlc.arg(id)::uuid;
