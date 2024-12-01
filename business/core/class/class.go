@@ -42,22 +42,30 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	_, err = c.queries.GetClassByCode(ctx, newClass.Code)
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	_, err = qtx.GetClassByCode(ctx, newClass.Code)
 	if err == nil {
 		return uuid.Nil, model.ErrClassCodeAlreadyExist
 	}
 
-	dbProgram, err := c.queries.GetProgramById(ctx, newClass.ProgramId)
+	dbProgram, err := qtx.GetProgramById(ctx, newClass.ProgramId)
 	if err != nil {
 		return uuid.Nil, model.ErrProgramNotFound
 	}
 
-	dbSubject, err := c.queries.GetPublishedSubjectById(ctx, newClass.SubjectId)
+	dbSubject, err := qtx.GetPublishedSubjectById(ctx, newClass.SubjectId)
 	if err != nil {
 		return uuid.Nil, model.ErrSubjectNotFound
 	}
 
-	sessions, err := c.queries.GetSessionsBySubjectId(ctx, newClass.SubjectId)
+	sessions, err := qtx.GetSessionsBySubjectId(ctx, newClass.SubjectId)
 	if err != nil {
 		return uuid.Nil, model.ErrSessionNotFound
 	}
@@ -103,13 +111,6 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 		Type:      newClass.Type,
 	}
 
-	tx, err := c.pool.Begin(ctx)
-	if err != nil {
-		return uuid.Nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	qtx := c.queries.WithTx(tx)
 	if err = qtx.CreateClass(ctx, dbClass); err != nil {
 		return uuid.Nil, err
 	}
@@ -581,27 +582,6 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 		return err
 	}
 
-	dbClass, err := c.queries.GetClassById(ctx, id)
-	if err != nil {
-		return model.ErrClassNotFound
-	}
-
-	currentTime := time.Now().UTC()
-
-	dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
-	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
-		return err
-	}
-
-	slotCount, _ := c.queries.CountSlotsByClassId(ctx, dbClass.ID)
-	if int(slotCount) != len(updateSlots) {
-		return model.ErrInvalidSlotCount
-	}
-
-	if hasOverlappingSlots(updateSlots) {
-		return model.ErrInvalidSlotTime
-	}
-
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -610,8 +590,29 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 
 	qtx := c.queries.WithTx(tx)
 
+	dbClass, err := qtx.GetClassById(ctx, id)
+	if err != nil {
+		return model.ErrClassNotFound
+	}
+
+	currentTime := time.Now().UTC()
+
+	dbProgram, _ := qtx.GetProgramById(ctx, dbClass.ProgramID)
+	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
+		return err
+	}
+
+	slotCount, _ := qtx.CountSlotsByClassId(ctx, dbClass.ID)
+	if int(slotCount) != len(updateSlots) {
+		return model.ErrInvalidSlotCount
+	}
+
+	if hasOverlappingSlots(updateSlots) {
+		return model.ErrInvalidSlotTime
+	}
+
 	for _, updateSlot := range updateSlots {
-		dbSlot, err := c.queries.GetSlotByIdAndIndex(ctx,
+		dbSlot, err := qtx.GetSlotByIdAndIndex(ctx,
 			sqlc.GetSlotByIdAndIndexParams{
 				ID:    updateSlot.ID,
 				Index: updateSlot.Index,
