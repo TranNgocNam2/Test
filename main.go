@@ -2,11 +2,8 @@ package main
 
 import (
 	"Backend/api/handlers/classgrp"
-<<<<<<< HEAD
 	"Backend/api/handlers/classgrp/assignmentgrp"
-=======
 	"Backend/api/handlers/classgrp/slotgrp"
->>>>>>> origin
 	"Backend/api/handlers/learnergrp"
 	"Backend/api/handlers/programgrp"
 	"Backend/api/handlers/schoolgrp"
