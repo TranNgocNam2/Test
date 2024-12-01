@@ -6,7 +6,6 @@ import (
 	"Backend/internal/validate"
 	"Backend/internal/web/payload"
 	"Backend/internal/weekday"
-	"fmt"
 	"github.com/google/uuid"
 	"net/mail"
 	"time"
@@ -148,7 +147,6 @@ func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlot) ([]class.UpdateSlot,
 func toCoreCheckTeacherTime(checkTeacherTime payload.CheckTeacherTime) (class.CheckTeacherTime, error) {
 	startTime, err := time.Parse(time.RFC3339, checkTeacherTime.StartTime)
 	if err != nil {
-		fmt.Println(err)
 		return class.CheckTeacherTime{}, model.ErrInvalidTime
 	}
 
