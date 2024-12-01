@@ -28,4 +28,5 @@ var (
 	ErrClassIsEnded          = errors.New("Lớp học đã kết thúc!")
 	ErrInvalidSessionCount   = errors.New("Số lượng buổi học không hợp lệ!")
 	ErrCannotImportLearners  = errors.New("Không thể thêm danh sách học viên vào lớp học!")
+	ErrLearnerNotInClass     = errors.New("Học viên không tham gia lớp học này!")
 )

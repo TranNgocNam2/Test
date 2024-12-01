@@ -43,13 +43,22 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 		return err
 	}
 
-	dbClass, err := c.queries.GetClassCompletedByCode(ctx, classAccess.Code)
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	dbClass, err := qtx.GetClassCompletedByCode(ctx, classAccess.Code)
 	if err != nil {
 		return model.ErrClassNotFound
 	}
 
-	_, err = c.queries.GetLearnerByClassId(ctx,
-		sqlc.GetLearnerByClassIdParams{
+	_, err = c.queries.GetClassLearnerByClassAndLearner(ctx,
+		sqlc.GetClassLearnerByClassAndLearnerParams{
 			ClassID:   dbClass.ID,
 			LearnerID: learner.ID,
 		})
@@ -65,29 +74,8 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 		return model.ErrWrongPassword
 	}
 
-	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
-
-	tx, err := c.pool.Begin(ctx)
-	if err != nil {
-		c.logger.Error(err.Error())
-		return model.ErrFailedToAddLearnerToClass
-	}
-	defer tx.Rollback(ctx)
-
-	qtx := c.queries.WithTx(tx)
-
-	classLearner := sqlc.AddLearnerToClassParams{
-		ID:        uuid.New(),
-		ClassID:   dbClass.ID,
-		LearnerID: learner.ID,
-	}
-
-	err = qtx.AddLearnerToClass(ctx, classLearner)
-	if err != nil {
-		c.logger.Error(err.Error())
-		return err
-	}
-
+	dbSlots, _ := qtx.GetSlotsByClassId(ctx, dbClass.ID)
+	var slotIds []uuid.UUID
 	for _, dbSlot := range dbSlots {
 		scheduleConflict, _ := c.queries.CheckLearnerTimeOverlap(ctx,
 			sqlc.CheckLearnerTimeOverlapParams{
@@ -99,16 +87,29 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 			return fmt.Errorf(model.ErrScheduleConflict, dbSlot.StartTime.Format("15:04 02/01/2006"),
 				dbSlot.EndTime.Format("15:04 02/01/2006"))
 		}
-
-		err = qtx.GenerateLearnerAttendance(ctx, sqlc.GenerateLearnerAttendanceParams{
-			ClassLearnerID: classLearner.ID,
-			SlotID:         dbSlot.ID,
-		})
-		if err != nil {
-			c.logger.Error(err.Error())
-			return model.ErrFailedToAddLearnerToClass
-		}
+		slotIds = append(slotIds, dbSlot.ID)
 	}
+
+	classLearner := sqlc.AddLearnerToClassParams{
+		ID:        uuid.New(),
+		ClassID:   dbClass.ID,
+		LearnerID: learner.ID,
+	}
+	err = qtx.AddLearnerToClass(ctx, classLearner)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
+	}
+
+	err = qtx.GenerateLearnerAttendance(ctx, sqlc.GenerateLearnerAttendanceParams{
+		ClassLearnerID: classLearner.ID,
+		SlotIds:        slotIds,
+	})
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
+	}
+
 	tx.Commit(ctx)
 	return nil
 }
@@ -187,8 +188,8 @@ func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceS
 		return model.ErrClassNotFound
 	}
 
-	classLearner, err := c.queries.GetLearnerByClassId(ctx,
-		sqlc.GetLearnerByClassIdParams{
+	classLearner, err := c.queries.GetClassLearnerByClassAndLearner(ctx,
+		sqlc.GetClassLearnerByClassAndLearnerParams{
 			ClassID:   class.ID,
 			LearnerID: learner.ID,
 		})

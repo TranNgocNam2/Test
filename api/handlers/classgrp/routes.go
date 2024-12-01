@@ -13,6 +13,8 @@ func ClassRoutes(router *gin.Engine, app *app.Application) {
 	{
 		classes.POST("", handlers.CreateClass())
 		classes.POST("/:id/learners/import", handlers.ImportLearners())
+		classes.POST("/:id/learners", handlers.AddLearner())
+		classes.DELETE("/:id/learners", handlers.RemoveLearner())
 		classes.GET("/:id", handlers.GetClassById())
 		classes.PUT("/:id", handlers.UpdateClass())
 		classes.GET("", handlers.GetClassesByManager())

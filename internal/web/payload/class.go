@@ -47,3 +47,11 @@ type CheckTeacherTime struct {
 type ImportLearners struct {
 	Emails []string `json:"emails" validate:"required,unique"`
 }
+
+type AddLearner struct {
+	LearnerId string `json:"learnerId" validate:"required"`
+}
+
+type RemoveLearner struct {
+	LearnerId string `json:"learnerId" validate:"required"`
+}

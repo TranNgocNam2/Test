@@ -59,31 +59,6 @@ func (q *Queries) AddLearnersToClass(ctx context.Context, arg AddLearnersToClass
 	return items, nil
 }
 
-const checkLearnerInClass = `-- name: CheckLearnerInClass :one
-SELECT STRING_AGG(email, ', ') AS emails
-FROM (
-         SELECT u.email
-         FROM users u
-                  JOIN class_learners cl ON cl.learner_id = u.id
-                  JOIN classes c ON cl.class_id = c.id
-         WHERE cl.learner_id = ANY($1::text[])
-         AND c.id = $2::uuid
-         GROUP BY cl.learner_id, u.email
-     ) as ucse
-`
-
-type CheckLearnerInClassParams struct {
-	LearnerIds []string  `db:"learner_ids" json:"learnerIds"`
-	ClassID    uuid.UUID `db:"class_id" json:"classId"`
-}
-
-func (q *Queries) CheckLearnerInClass(ctx context.Context, arg CheckLearnerInClassParams) ([]byte, error) {
-	row := q.db.QueryRow(ctx, checkLearnerInClass, arg.LearnerIds, arg.ClassID)
-	var emails []byte
-	err := row.Scan(&emails)
-	return emails, err
-}
-
 const checkLearnerTimeOverlap = `-- name: CheckLearnerTimeOverlap :one
 SELECT EXISTS (
     SELECT 1
@@ -110,6 +85,31 @@ func (q *Queries) CheckLearnerTimeOverlap(ctx context.Context, arg CheckLearnerT
 	return exists, err
 }
 
+const checkLearnersInClass = `-- name: CheckLearnersInClass :one
+SELECT STRING_AGG(email, ', ') AS emails
+FROM (
+         SELECT u.email
+         FROM users u
+                  JOIN class_learners cl ON cl.learner_id = u.id
+                  JOIN classes c ON cl.class_id = c.id
+         WHERE cl.learner_id = ANY($1::text[])
+         AND c.id = $2::uuid
+         GROUP BY cl.learner_id, u.email
+     ) as ucse
+`
+
+type CheckLearnersInClassParams struct {
+	LearnerIds []string  `db:"learner_ids" json:"learnerIds"`
+	ClassID    uuid.UUID `db:"class_id" json:"classId"`
+}
+
+func (q *Queries) CheckLearnersInClass(ctx context.Context, arg CheckLearnersInClassParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, checkLearnersInClass, arg.LearnerIds, arg.ClassID)
+	var emails []byte
+	err := row.Scan(&emails)
+	return emails, err
+}
+
 const countLearnersByClassId = `-- name: CountLearnersByClassId :one
 SELECT COUNT(*) FROM class_learners WHERE class_id = $1::uuid
 `
@@ -119,6 +119,24 @@ func (q *Queries) CountLearnersByClassId(ctx context.Context, classID uuid.UUID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const getClassLearnerByClassAndLearner = `-- name: GetClassLearnerByClassAndLearner :one
+SELECT id, learner_id, class_id FROM class_learners
+         WHERE class_id = $1::uuid
+           AND learner_id = $2
+`
+
+type GetClassLearnerByClassAndLearnerParams struct {
+	ClassID   uuid.UUID `db:"class_id" json:"classId"`
+	LearnerID string    `db:"learner_id" json:"learnerId"`
+}
+
+func (q *Queries) GetClassLearnerByClassAndLearner(ctx context.Context, arg GetClassLearnerByClassAndLearnerParams) (ClassLearner, error) {
+	row := q.db.QueryRow(ctx, getClassLearnerByClassAndLearner, arg.ClassID, arg.LearnerID)
+	var i ClassLearner
+	err := row.Scan(&i.ID, &i.LearnerID, &i.ClassID)
+	return i, err
 }
 
 const getClassesByLearnerId = `-- name: GetClassesByLearnerId :many
@@ -160,24 +178,6 @@ func (q *Queries) GetClassesByLearnerId(ctx context.Context, learnerID string) (
 		return nil, err
 	}
 	return items, nil
-}
-
-const getLearnerByClassId = `-- name: GetLearnerByClassId :one
-SELECT id, learner_id, class_id FROM class_learners
-         WHERE class_id = $1::uuid
-           AND learner_id = $2
-`
-
-type GetLearnerByClassIdParams struct {
-	ClassID   uuid.UUID `db:"class_id" json:"classId"`
-	LearnerID string    `db:"learner_id" json:"learnerId"`
-}
-
-func (q *Queries) GetLearnerByClassId(ctx context.Context, arg GetLearnerByClassIdParams) (ClassLearner, error) {
-	row := q.db.QueryRow(ctx, getLearnerByClassId, arg.ClassID, arg.LearnerID)
-	var i ClassLearner
-	err := row.Scan(&i.ID, &i.LearnerID, &i.ClassID)
-	return i, err
 }
 
 const getLearnersByClassId = `-- name: GetLearnersByClassId :many
@@ -260,4 +260,20 @@ func (q *Queries) GetLearnersTimeOverlap(ctx context.Context, arg GetLearnersTim
 	var emails []byte
 	err := row.Scan(&emails)
 	return emails, err
+}
+
+const removeLearnerFromClass = `-- name: RemoveLearnerFromClass :exec
+DELETE FROM class_learners
+WHERE class_id = $1::uuid
+  AND learner_id = $2
+`
+
+type RemoveLearnerFromClassParams struct {
+	ClassID   uuid.UUID `db:"class_id" json:"classId"`
+	LearnerID string    `db:"learner_id" json:"learnerId"`
+}
+
+func (q *Queries) RemoveLearnerFromClass(ctx context.Context, arg RemoveLearnerFromClassParams) error {
+	_, err := q.db.Exec(ctx, removeLearnerFromClass, arg.ClassID, arg.LearnerID)
+	return err
 }

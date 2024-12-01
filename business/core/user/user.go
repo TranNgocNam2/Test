@@ -227,7 +227,7 @@ func (c *Core) GetUsers(ctx *gin.Context, filter QueryFilter, orderBy order.By, 
 		"offset":        (page.Number - 1) * page.Size,
 		"rows_per_page": page.Size,
 	}
-	const q = `SELECT u.id, u.full_name, u.email, u.auth_role, u.status, u.profile_photo, u.phone, u.status, u.school_id
+	const q = `SELECT u.id, u.full_name, u.email, u.auth_role, u.status, u.profile_photo, u.is_verified, u.phone, u.status, u.school_id
 				FROM users u`
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, false, UserStatus)
