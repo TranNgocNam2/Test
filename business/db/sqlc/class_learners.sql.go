@@ -59,6 +59,34 @@ func (q *Queries) AddLearnersToClass(ctx context.Context, arg AddLearnersToClass
 	return items, nil
 }
 
+const checkAllLearnersInClassTime = `-- name: CheckAllLearnersInClassTime :one
+SELECT STRING_AGG(email, ', ') AS emails
+FROM (
+         SELECT u.email
+         FROM users u
+                  JOIN class_learners cl ON cl.learner_id = u.id
+                  JOIN slots s ON s.class_id = cl.class_id
+                  JOIN classes c ON cl.class_id = c.id
+         WHERE c.id = $1::uuid
+           AND s.start_time < $2
+           AND s.end_time > $3
+         GROUP BY cl.learner_id, u.email
+     ) as ucse
+`
+
+type CheckAllLearnersInClassTimeParams struct {
+	ClassID   uuid.UUID  `db:"class_id" json:"classId"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+}
+
+func (q *Queries) CheckAllLearnersInClassTime(ctx context.Context, arg CheckAllLearnersInClassTimeParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, checkAllLearnersInClassTime, arg.ClassID, arg.EndTime, arg.StartTime)
+	var emails []byte
+	err := row.Scan(&emails)
+	return emails, err
+}
+
 const checkLearnerTimeOverlap = `-- name: CheckLearnerTimeOverlap :one
 SELECT EXISTS (
     SELECT 1

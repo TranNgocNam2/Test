@@ -348,24 +348,24 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 			return
 		}
 
-		var updateSlot payload.UpdateSlot
-		if err = web.Decode(ctx, &updateSlot); err != nil {
+		var req payload.UpdateSlots
+		if err = web.Decode(ctx, &req); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
-		if err = validateUpdateSlotRequest(updateSlot); err != nil {
+		if err = validateUpdateSlotRequest(req); err != nil {
 			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
-		updateSlots, err := toCoreUpdateSlot(updateSlot)
+		updateSlots, err := toCoreUpdateSlot(req)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
-		err = h.class.UpdateSlot(ctx, id, updateSlots, *updateSlot.Status)
+		err = h.class.UpdateSlots(ctx, id, updateSlots, *req.Status)
 		if err != nil {
 			switch {
 			case
