@@ -39,27 +39,31 @@ func NewCore(app *app.Application) *Core {
 func (c *Core) CreateAssignment(ctx *gin.Context, classId uuid.UUID, asm payload.Assignment) (string, error) {
 	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
-		return "", err
+
+		c.logger.Error(err.Error())
+		return "", middleware.ErrInvalidUser
 	}
 
 	class, err := c.queries.GetClassById(ctx, classId)
 	if err != nil {
+		c.logger.Error(err.Error())
 		return "", model.ErrClassNotFound
 	}
 
 	dbProgram, _ := c.queries.GetProgramById(ctx, class.ProgramID)
 
-	deadline, err := time.Parse(time.DateOnly, asm.Deadline)
+	deadline, err := time.Parse(time.DateTime, asm.Deadline)
 	if err != nil {
-		return "", err
+		c.logger.Error(err.Error())
+		return "", model.ErrTimeFormat
 	}
 
 	if deadline.Before(dbProgram.StartDate) {
-		return "", model.ErrInvalidSlotStartTime
+		return "", model.ErrInvalidDeadlineTime
 	}
 
 	if deadline.After(dbProgram.EndDate) {
-		return "", model.ErrInvalidSlotEndTime
+		return "", model.ErrInvalidDeadlineTime
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -111,7 +115,9 @@ func (c *Core) CreateAssignment(ctx *gin.Context, classId uuid.UUID, asm payload
 	if _, err = qtx.InsertLearnerAssignment(ctx, params); err != nil {
 		return "", err
 	}
-	tx.Commit(ctx)
+	if err = tx.Commit(ctx); err != nil {
+		return "", err
+	}
 
 	return asmId.String(), nil
 }
@@ -119,14 +125,8 @@ func (c *Core) CreateAssignment(ctx *gin.Context, classId uuid.UUID, asm payload
 func (c *Core) UpdateAssignment(ctx *gin.Context, classId uuid.UUID, asmId uuid.UUID, data payload.Assignment) error {
 	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
-		return err
-	}
-
-	if res, err := c.queries.CheckAssignmentInClass(ctx, sqlc.CheckAssignmentInClassParams{
-		ClassID: classId,
-		ID:      asmId,
-	}); err != nil || !res {
-		return err
+		c.logger.Error(err.Error())
+		return middleware.ErrInvalidUser
 	}
 
 	class, err := c.queries.GetClassById(ctx, classId)
@@ -134,19 +134,27 @@ func (c *Core) UpdateAssignment(ctx *gin.Context, classId uuid.UUID, asmId uuid.
 		return model.ErrClassNotFound
 	}
 
+	if res, err := c.queries.CheckAssignmentInClass(ctx, sqlc.CheckAssignmentInClassParams{
+		ClassID: classId,
+		ID:      asmId,
+	}); err != nil || !res {
+		c.logger.Error(err.Error())
+		return model.InvalidClassAssignment
+	}
+
 	dbProgram, _ := c.queries.GetProgramById(ctx, class.ProgramID)
 
 	deadline, err := time.Parse(time.DateOnly, data.Deadline)
 	if err != nil {
-		return err
+		return model.ErrTimeFormat
 	}
 
 	if deadline.Before(dbProgram.StartDate) {
-		return model.ErrInvalidSlotStartTime
+		return model.ErrInvalidDeadlineTime
 	}
 
 	if deadline.After(dbProgram.EndDate) {
-		return model.ErrInvalidSlotEndTime
+		return model.ErrInvalidDeadlineTime
 	}
 
 	question, err := json.Marshal(data.Question)
@@ -171,16 +179,18 @@ func (c *Core) UpdateAssignment(ctx *gin.Context, classId uuid.UUID, asmId uuid.
 func (c *Core) DeleteAssignment(ctx *gin.Context, asmId uuid.UUID) error {
 	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return middleware.ErrInvalidUser
 	}
 
 	asm, err := c.queries.GetAssignmentById(ctx, asmId)
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrAssignmentNotFound
 	}
 
 	if asm.Status != VISIBLE {
-		return fmt.Errorf("no no no")
+		return model.ErrAssignmentDeletion
 	}
 
 	if err := c.queries.DeleteAssignment(ctx, asmId); err != nil {
@@ -193,7 +203,8 @@ func (c *Core) DeleteAssignment(ctx *gin.Context, asmId uuid.UUID) error {
 func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*Assignment, error) {
 	asm, err := c.queries.GetAssignmentById(ctx, id)
 	if err != nil {
-		return nil, err
+		c.logger.Error(err.Error())
+		return nil, model.ErrAssignmentNotFound
 	}
 
 	result := Assignment{
@@ -256,12 +267,18 @@ func (c *Core) Query(ctx *gin.Context, classId uuid.UUID, orderBy order.By, page
 func (c *Core) GradeAssignment(ctx *gin.Context, learnerId uuid.UUID, asmId uuid.UUID, data payload.AssignmentGrade) error {
 	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return middleware.ErrInvalidUser
 	}
 
 	asm, err := c.queries.GetAssignmentById(ctx, asmId)
 	if err != nil {
-		return err
+		c.logger.Error(err.Error())
+		return model.ErrAssignmentNotFound
+	}
+
+	if asm.Status == VISIBLE {
+		return model.ErrCannotGradeVisibleAssignment
 	}
 
 	classLearner, err := c.queries.GetLearnerByClassId(ctx, sqlc.GetLearnerByClassIdParams{
@@ -270,6 +287,146 @@ func (c *Core) GradeAssignment(ctx *gin.Context, learnerId uuid.UUID, asmId uuid
 	})
 
 	if err != nil {
+		c.logger.Error(err.Error())
+		return model.LearnerNotInClass
+	}
+
+	learnerAsm, err := c.queries.GetLearnerAssignment(ctx, sqlc.GetLearnerAssignmentParams{
+		ClassLearnerID: classLearner.ID,
+		AssignmentID:   asm.ID,
+	})
+
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrLearnerAssignmentNotFound
+	}
+
+	if learnerAsm.SubmissionStatus == NOT_SUBMITTED {
+		return model.ErrGradingNotStartedAssignment
+	}
+
+	if err := c.queries.UpdateLearnerGrade(ctx, sqlc.UpdateLearnerGradeParams{
+		ClassLearnerID: classLearner.ID,
+		AssignmentID:   asm.ID,
+		Grade:          data.Grade,
+		GradingStatus:  GRADED,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Core) GetLearnerAssignment(ctx *gin.Context, asmId uuid.UUID) (*LearnerAssignment, error) {
+	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, middleware.ErrInvalidUser
+	}
+
+	asm, err := c.queries.GetAssignmentById(ctx, asmId)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, model.ErrAssignmentNotFound
+	}
+
+	assignment := Assignment{
+		Id:         asm.ID,
+		ClassId:    asm.ClassID,
+		Question:   asm.Question,
+		Deadline:   *asm.Deadline,
+		Status:     int(asm.Status),
+		Type:       int(asm.Type),
+		CanOverdue: *asm.CanOverdue,
+	}
+
+	classLearner, err := c.queries.GetLearnerByClassId(ctx, sqlc.GetLearnerByClassIdParams{
+		ClassID:   asm.ClassID,
+		LearnerID: learner.ID,
+	})
+
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, model.LearnerNotInClass
+	}
+
+	learnerAsm, err := c.queries.GetLearnerAssignment(ctx, sqlc.GetLearnerAssignmentParams{
+		ClassLearnerID: classLearner.ID,
+		AssignmentID:   asm.ID,
+	})
+
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, model.ErrLearnerAssignmentNotFound
+	}
+
+	learnerAssignment := LearnerAssignment{
+		LearnerId:        learner.ID,
+		Grade:            learnerAsm.Grade,
+		SubmissionStatus: int(learnerAsm.SubmissionStatus),
+		GradingStatus:    int(learnerAsm.GradingStatus),
+		Data:             learnerAsm.Data,
+		Assignment:       assignment,
+	}
+
+	return &learnerAssignment, nil
+}
+
+func (c *Core) SubmitAssignment(ctx *gin.Context, asmId uuid.UUID, req payload.LearnerSubmission) error {
+	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return middleware.ErrInvalidUser
+	}
+
+	asm, err := c.queries.GetAssignmentById(ctx, asmId)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrAssignmentNotFound
+	}
+
+	if asm.Status == VISIBLE || asm.Status == CLOSED {
+		return model.ErrInvalidAssignmentSubmision
+	}
+
+	classLearner, err := c.queries.GetLearnerByClassId(ctx, sqlc.GetLearnerByClassIdParams{
+		ClassID:   asm.ClassID,
+		LearnerID: learner.ID,
+	})
+
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.LearnerNotInClass
+	}
+
+	_, err = c.queries.GetLearnerAssignment(ctx, sqlc.GetLearnerAssignmentParams{
+		ClassLearnerID: classLearner.ID,
+		AssignmentID:   asm.ID,
+	})
+
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrLearnerAssignmentNotFound
+	}
+
+	data, err := json.Marshal(req.Data)
+	if err != nil {
+		return model.ErrDataConversion
+	}
+
+	submissionTime := time.Now().UTC()
+
+	submissionStatus := SUBMITTED
+	if submissionTime.After(*asm.Deadline) {
+		submissionStatus = LATE
+	}
+
+	if err := c.queries.UpdateLearnerAssignment(ctx, sqlc.UpdateLearnerAssignmentParams{
+		SubmissionStatus: int16(submissionStatus),
+		Data:             json.RawMessage(data),
+		AssignmentID:     asm.ID,
+		ClassLearnerID:   classLearner.ID,
+	}); err != nil {
 		return err
 	}
 

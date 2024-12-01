@@ -16,3 +16,12 @@ type Assignment struct {
 	Type       int             `json:"type"`
 	CanOverdue bool            `json:"canOverdue"`
 }
+
+type LearnerAssignment struct {
+	LearnerId        string          `json:"learnerId"`
+	Grade            float32         `json:"grade"`
+	Data             json.RawMessage `json:"data"`
+	SubmissionStatus int             `json:"submissionStatus"`
+	GradingStatus    int             `json:"gradingStatus"`
+	Assignment       Assignment      `json:"assignment"`
+}

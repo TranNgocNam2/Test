@@ -32,8 +32,16 @@ DELETE FROM assignments WHERE id = sqlc.arg(id)::uuid;
 -- name: UpdateLearnerGrade :exec
 UPDATE learner_assignments
 SET grading_status = sqlc.arg(grading_status),
-    submission_status = sqlc.arg(submission_status),
     grade = sqlc.arg(grade)
 WHERE class_learner_id = sqlc.arg(class_learner_id)::uuid
 AND assignment_id = sqlc.arg(assignment_id)::uuid;
 
+-- name: GetLearnerAssignment :one
+SELECT * from learner_assignments Where class_learner_id = sqlc.arg(class_learner_id) AND assignment_id = sqlc.arg(assignment_id);
+
+-- name: UpdateLearnerAssignment :exec
+UPDATE learner_assignments
+SET data = sqlc.arg(data),
+    submission_status = sqlc.arg(submission_status)
+WHERE class_learner_id = sqlc.arg(class_learner_id)::uuid
+AND assignment_id = sqlc.arg(assignment_id)::uuid;

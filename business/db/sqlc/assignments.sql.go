@@ -60,6 +60,30 @@ func (q *Queries) GetAssignmentById(ctx context.Context, id uuid.UUID) (Assignme
 	return i, err
 }
 
+const getLearnerAssignment = `-- name: GetLearnerAssignment :one
+SELECT id, class_learner_id, assignment_id, grade, data, grading_status, submission_status from learner_assignments Where class_learner_id = $1 AND assignment_id = $2
+`
+
+type GetLearnerAssignmentParams struct {
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	AssignmentID   uuid.UUID `db:"assignment_id" json:"assignmentId"`
+}
+
+func (q *Queries) GetLearnerAssignment(ctx context.Context, arg GetLearnerAssignmentParams) (LearnerAssignment, error) {
+	row := q.db.QueryRow(ctx, getLearnerAssignment, arg.ClassLearnerID, arg.AssignmentID)
+	var i LearnerAssignment
+	err := row.Scan(
+		&i.ID,
+		&i.ClassLearnerID,
+		&i.AssignmentID,
+		&i.Grade,
+		&i.Data,
+		&i.GradingStatus,
+		&i.SubmissionStatus,
+	)
+	return i, err
+}
+
 const insertAssignment = `-- name: InsertAssignment :one
 INSERT INTO assignments (id, classId, question, deadline, status, type, can_overdue)
 VALUES ($1::uuid, $2::uuid, $3, $4,
@@ -132,27 +156,49 @@ func (q *Queries) UpdateAssignment(ctx context.Context, arg UpdateAssignmentPara
 	return err
 }
 
+const updateLearnerAssignment = `-- name: UpdateLearnerAssignment :exec
+UPDATE learner_assignments
+SET data = $1,
+    submission_status = $2
+WHERE class_learner_id = $3::uuid
+AND assignment_id = $4::uuid
+`
+
+type UpdateLearnerAssignmentParams struct {
+	Data             []byte    `db:"data" json:"data"`
+	SubmissionStatus int16     `db:"submission_status" json:"submissionStatus"`
+	ClassLearnerID   uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	AssignmentID     uuid.UUID `db:"assignment_id" json:"assignmentId"`
+}
+
+func (q *Queries) UpdateLearnerAssignment(ctx context.Context, arg UpdateLearnerAssignmentParams) error {
+	_, err := q.db.Exec(ctx, updateLearnerAssignment,
+		arg.Data,
+		arg.SubmissionStatus,
+		arg.ClassLearnerID,
+		arg.AssignmentID,
+	)
+	return err
+}
+
 const updateLearnerGrade = `-- name: UpdateLearnerGrade :exec
 UPDATE learner_assignments
 SET grading_status = $1,
-    submission_status = $2,
-    grade = $3
-WHERE class_learner_id = $4::uuid
-AND assignment_id = $5::uuid
+    grade = $2
+WHERE class_learner_id = $3::uuid
+AND assignment_id = $4::uuid
 `
 
 type UpdateLearnerGradeParams struct {
-	GradingStatus    int16     `db:"grading_status" json:"gradingStatus"`
-	SubmissionStatus int16     `db:"submission_status" json:"submissionStatus"`
-	Grade            float32   `db:"grade" json:"grade"`
-	ClassLearnerID   uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
-	AssignmentID     uuid.UUID `db:"assignment_id" json:"assignmentId"`
+	GradingStatus  int16     `db:"grading_status" json:"gradingStatus"`
+	Grade          float32   `db:"grade" json:"grade"`
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	AssignmentID   uuid.UUID `db:"assignment_id" json:"assignmentId"`
 }
 
 func (q *Queries) UpdateLearnerGrade(ctx context.Context, arg UpdateLearnerGradeParams) error {
 	_, err := q.db.Exec(ctx, updateLearnerGrade,
 		arg.GradingStatus,
-		arg.SubmissionStatus,
 		arg.Grade,
 		arg.ClassLearnerID,
 		arg.AssignmentID,

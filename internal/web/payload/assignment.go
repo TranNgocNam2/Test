@@ -11,3 +11,7 @@ type Assignment struct {
 type AssignmentGrade struct {
 	Grade float32 `json:"grade" validate:"required"`
 }
+
+type LearnerSubmission struct {
+	Data interface{} `json:"data"`
+}
