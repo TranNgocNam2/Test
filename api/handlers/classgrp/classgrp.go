@@ -418,7 +418,8 @@ func (h *Handlers) CheckTeacherAvailable() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case
-				errors.Is(err, model.ErrClassNotFound):
+				errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.ErrTeacherNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			default:
