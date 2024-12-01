@@ -1,6 +1,7 @@
 package class
 
 import (
+	"Backend/internal/common/status"
 	"Backend/internal/validate"
 	"bytes"
 	"fmt"
@@ -46,7 +47,8 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 		wc = append(wc, "code = :code")
 	}
 
-	if filter.Status != nil && (*filter.Status >= INCOMPLETE || *filter.Status <= CANCELLED) {
+	if filter.Status != nil && (status.Class(*filter.Status) >= status.ClassIncomplete ||
+		status.Class(*filter.Status) <= status.ClassCancelled) {
 		data["status"] = fmt.Sprintf("%d", filter.Status)
 		wc = append(wc, "status = :status")
 	}

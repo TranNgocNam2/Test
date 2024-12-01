@@ -5,12 +5,14 @@ import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
+	"Backend/internal/common/status"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/weekday"
 	"bytes"
 	"time"
 
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -41,24 +43,36 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	_, err = c.queries.GetClassCompletedByCode(ctx, newClass.Code)
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	_, err = qtx.GetClassByCode(ctx, newClass.Code)
 	if err == nil {
 		return uuid.Nil, model.ErrClassCodeAlreadyExist
 	}
 
-	dbProgram, err := c.queries.GetProgramById(ctx, newClass.ProgramId)
+	dbProgram, err := qtx.GetProgramById(ctx, newClass.ProgramId)
 	if err != nil {
 		return uuid.Nil, model.ErrProgramNotFound
 	}
 
-	dbSubject, err := c.queries.GetPublishedSubjectById(ctx, newClass.SubjectId)
+	dbSubject, err := qtx.GetPublishedSubjectById(ctx, newClass.SubjectId)
 	if err != nil {
 		return uuid.Nil, model.ErrSubjectNotFound
 	}
 
-	sessions, err := c.queries.GetSessionsBySubjectId(ctx, newClass.SubjectId)
+	sessions, err := qtx.GetSessionsBySubjectId(ctx, newClass.SubjectId)
 	if err != nil {
 		return uuid.Nil, model.ErrSessionNotFound
+	}
+
+	if len(newClass.Slots.WeekDays) != int(dbSubject.SessionsPerWeek) {
+		return uuid.Nil, model.ErrInvalidSessionCount
 	}
 
 	slots := generateSlots(newClass, sessions, dbSubject.TimePerSession, dbProgram.EndDate)
@@ -95,15 +109,9 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 		EndDate:   endDateClass,
 		Password:  newClass.Password,
 		CreatedBy: staffId,
+		Type:      newClass.Type,
 	}
 
-	tx, err := c.pool.Begin(ctx)
-	if err != nil {
-		return uuid.Nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	qtx := c.queries.WithTx(tx)
 	if err = qtx.CreateClass(ctx, dbClass); err != nil {
 		return uuid.Nil, err
 	}
@@ -113,6 +121,110 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 	}
 	tx.Commit(ctx)
 	return dbClass.ID, nil
+}
+
+func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLearners) error {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrCannotImportLearners
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	_, err = middleware.AuthorizeStaff(ctx, qtx)
+	if err != nil {
+		return err
+	}
+
+	class, err := qtx.GetClassByIdAndStatus(ctx, sqlc.GetClassByIdAndStatusParams{
+		ID:     id,
+		Status: int16(status.ClassCompleted),
+	})
+	if err != nil {
+		return model.ErrClassNotFound
+	}
+	// Check if the class is already started
+	if class.StartDate.Before(time.Now().UTC()) {
+		return model.ErrClassStarted
+	}
+
+	userIds, err := qtx.GetUsersByEmails(ctx,
+		sqlc.GetUsersByEmailsParams{
+			Emails:     learners.Emails,
+			Status:     int32(status.Valid),
+			IsVerified: true,
+			AuthRole:   role.LEARNER,
+		})
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.CannotGetAllLearners
+	}
+	if len(userIds) != len(learners.Emails) {
+		emails, _ := qtx.GetEmailsExcept(ctx, sqlc.GetEmailsExceptParams{
+			Emails:     learners.Emails,
+			Status:     int32(status.Valid),
+			IsVerified: true,
+			AuthRole:   role.LEARNER,
+		})
+		return fmt.Errorf(model.ErrLearnerNotFound, emails)
+	}
+
+	// Check if the learners are already in the class
+	learnersInClass, err := qtx.CheckLearnerInClass(ctx, sqlc.CheckLearnerInClassParams{
+		ClassID:    class.ID,
+		LearnerIds: userIds,
+	})
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrCannotImportLearners
+	}
+	if learnersInClass != nil {
+		return fmt.Errorf(model.ErrImportedLearnerAlreadyInClass, learnersInClass)
+	}
+
+	slots, err := qtx.GetSlotsByClassId(ctx, class.ID)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrCannotImportLearners
+	}
+	var slotIds []uuid.UUID
+	for _, slot := range slots {
+		emails, err := qtx.GetLearnersTimeOverlap(ctx, sqlc.GetLearnersTimeOverlapParams{
+			Emails:    learners.Emails,
+			EndTime:   slot.EndTime,
+			StartTime: slot.StartTime,
+		})
+		if err != nil {
+			c.logger.Error(err.Error())
+			return model.ErrCannotImportLearners
+		}
+		if emails != nil {
+			return fmt.Errorf(model.ErrLearnerTimeOverlap, emails, slot.StartTime.Format("15:04 02/01/2006"),
+				slot.EndTime.Format("15:04 02/01/2006"))
+		}
+		slotIds = append(slotIds, slot.ID)
+	}
+
+	classLearners, err := qtx.AddLearnersToClass(ctx, sqlc.AddLearnersToClassParams{
+		ClassID:    class.ID,
+		LearnerIds: userIds,
+	})
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrCannotImportLearners
+	}
+	err = qtx.GenerateLearnersAttendance(ctx, sqlc.GenerateLearnersAttendanceParams{
+		ClassLearnerIds: classLearners,
+		SlotIds:         slotIds,
+	})
+	if err != nil {
+		return model.ErrCannotImportLearners
+	}
+
+	tx.Commit(ctx)
+	return nil
 }
 
 func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Class, error) {
@@ -131,7 +243,7 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 	}
 
 	const q = `SELECT
-						id, name, code, subject_id, program_id, link, start_date, end_date, status
+						id, name, code, subject_id, program_id, link, start_date, end_date, status, type
 			FROM classes`
 
 	buf := bytes.NewBufferString(q)
@@ -162,6 +274,7 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 			StartDate: dbClass.StartDate,
 			EndDate:   dbClass.EndDate,
 			Status:    &dbClass.Status,
+			Type:      dbClass.Type,
 		}
 
 		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
@@ -202,13 +315,13 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, filter QueryFilter, orderBy orde
 
 	data := map[string]interface{}{
 		"teacher_id":    teacherId,
-		"status":        COMPLETED,
+		"status":        status.ClassCompleted,
 		"offset":        (pageNumber - 1) * rowsPerPage,
 		"rows_per_page": rowsPerPage,
 	}
 
 	const q = `SELECT
-					c.id, c.name, c.code, c.subject_id, c.program_id, c.link, c.start_date, c.end_date
+					c.id, c.name, c.code, c.subject_id, c.program_id, c.link, c.start_date, c.end_date, c.type, c.status
 			FROM classes c
 				JOIN slots s ON s.class_id = c.id
 					WHERE s.teacher_id = :teacher_id AND c.status = :status`
@@ -240,7 +353,8 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, filter QueryFilter, orderBy orde
 			Code:      dbClass.Code,
 			StartDate: dbClass.StartDate,
 			EndDate:   dbClass.EndDate,
-			Status:    nil,
+			Status:    &dbClass.Status,
+			Type:      dbClass.Type,
 		}
 
 		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
@@ -275,7 +389,7 @@ func (c *Core) CountByTeacher(ctx *gin.Context, filter QueryFilter) int {
 
 	data := map[string]interface{}{
 		"teacher_id": teacherId,
-		"status":     COMPLETED,
+		"status":     status.ClassCompleted,
 	}
 	if err := filter.Validate(); err != nil {
 		c.logger.Error(err.Error())
@@ -326,7 +440,8 @@ func (c *Core) QueryByLearner(ctx *gin.Context) ([]Class, error) {
 			Code:      dbClass.Code,
 			StartDate: dbClass.StartDate,
 			EndDate:   dbClass.EndDate,
-			Status:    nil,
+			Status:    &dbClass.Status,
+			Type:      dbClass.Type,
 		}
 
 		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
@@ -393,14 +508,23 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		return Details{}, model.ErrClassNotFound
 	}
 
+	totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return Details{}, err
+	}
+
 	class := Details{
-		ID:        dbClass.ID,
-		Name:      dbClass.Name,
-		Code:      dbClass.Code,
-		Link:      *dbClass.Link,
-		StartDate: dbClass.StartDate,
-		EndDate:   dbClass.EndDate,
-		Password:  &dbClass.Password,
+		ID:            dbClass.ID,
+		Name:          dbClass.Name,
+		Code:          dbClass.Code,
+		Link:          *dbClass.Link,
+		Password:      &dbClass.Password,
+		StartDate:     dbClass.StartDate,
+		Status:        dbClass.Status,
+		Type:          dbClass.Type,
+		EndDate:       dbClass.EndDate,
+		TotalLearners: totalLearners,
 	}
 
 	if user.AuthRole == role.LEARNER {
@@ -433,11 +557,12 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		startTime := *dbSlot.StartTime
 		endTime := *dbSlot.EndTime
 		slot := Slot{
-			ID:        dbSlot.ID,
-			StartTime: startTime,
-			EndTime:   endTime,
-			Index:     dbSlot.Index,
-			Session:   session,
+			ID:         dbSlot.ID,
+			StartTime:  startTime,
+			EndTime:    endTime,
+			Index:      dbSlot.Index,
+			Session:    session,
+			RecordLink: dbSlot.RecordLink,
 		}
 
 		if dbSlot.TeacherID != nil {
@@ -452,31 +577,10 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	return class, nil
 }
 
-func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, status int) error {
+func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, classStatus int) error {
 	_, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
-	}
-
-	dbClass, err := c.queries.GetClassById(ctx, id)
-	if err != nil {
-		return model.ErrClassNotFound
-	}
-
-	currentTime := time.Now().UTC()
-
-	dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
-	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
-		return err
-	}
-
-	slotCount, _ := c.queries.CountSlotsByClassId(ctx, dbClass.ID)
-	if int(slotCount) != len(updateSlots) {
-		return model.ErrInvalidSlotCount
-	}
-
-	if hasOverlappingSlots(updateSlots) {
-		return model.ErrInvalidSlotTime
 	}
 
 	tx, err := c.pool.Begin(ctx)
@@ -487,8 +591,29 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 
 	qtx := c.queries.WithTx(tx)
 
+	dbClass, err := qtx.GetClassById(ctx, id)
+	if err != nil {
+		return model.ErrClassNotFound
+	}
+
+	currentTime := time.Now().UTC()
+
+	dbProgram, _ := qtx.GetProgramById(ctx, dbClass.ProgramID)
+	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
+		return err
+	}
+
+	slotCount, _ := qtx.CountSlotsByClassId(ctx, dbClass.ID)
+	if int(slotCount) != len(updateSlots) {
+		return model.ErrInvalidSlotCount
+	}
+
+	if hasOverlappingSlots(updateSlots) {
+		return model.ErrInvalidSlotTime
+	}
+
 	for _, updateSlot := range updateSlots {
-		dbSlot, err := c.queries.GetSlotByIdAndIndex(ctx,
+		dbSlot, err := qtx.GetSlotByIdAndIndex(ctx,
 			sqlc.GetSlotByIdAndIndexParams{
 				ID:    updateSlot.ID,
 				Index: updateSlot.Index,
@@ -526,15 +651,15 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSl
 		}
 	}
 
-	if dbClass.Status == COMPLETED {
-		status = COMPLETED
+	if status.Class(dbClass.Status) == status.ClassCompleted {
+		classStatus = int(dbClass.Status)
 	}
 
 	updateClass := sqlc.UpdateClassStatusAndDateParams{
 		ID:        dbClass.ID,
 		StartDate: dbClass.StartDate,
 		EndDate:   dbClass.EndDate,
-		Status:    int16(status),
+		Status:    int16(classStatus),
 	}
 
 	err = qtx.UpdateClassStatusAndDate(ctx, updateClass)
@@ -582,7 +707,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 		return model.ErrClassNotFound
 	}
 	if updateClass.Code != dbClass.Code {
-		_, err = c.queries.GetClassCompletedByCode(ctx, updateClass.Code)
+		_, err = c.queries.GetClassByCode(ctx, updateClass.Code)
 		if err == nil {
 			return model.ErrClassCodeAlreadyExist
 		}
@@ -591,6 +716,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updateClass UpdateClass) e
 	dbUpdateClass := sqlc.UpdateClassParams{
 		Name: updateClass.Name,
 		Code: updateClass.Code,
+		Type: updateClass.Type,
 		ID:   dbClass.ID,
 	}
 
@@ -616,7 +742,7 @@ func (c *Core) UpdateMeetingLink(ctx *gin.Context, id uuid.UUID, updateMeeting U
 		return model.ErrClassNotFound
 	}
 
-	if class.Status != COMPLETED {
+	if status.Class(class.Status) != status.ClassCompleted {
 		return model.ErrClassNotCompleted
 	}
 

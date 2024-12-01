@@ -43,16 +43,17 @@ func (q *Queries) CountClassesByProgramId(ctx context.Context, programID uuid.UU
 }
 
 const createClass = `-- name: CreateClass :exec
-INSERT INTO classes (id, code, password, name, subject_id, program_id, link, start_date, end_date, created_by)
-VALUES ($1::uuid, $2, $3,
-        $4, $5::uuid, $6::uuid,
-        $7, $8, $9, $10)
+INSERT INTO classes (id, code, password, type, name, subject_id, program_id, link, start_date, end_date, created_by)
+VALUES ($1::uuid, $2, $3, $4,
+        $5, $6::uuid, $7::uuid,
+        $8, $9, $10, $11)
 `
 
 type CreateClassParams struct {
 	ID        uuid.UUID  `db:"id" json:"id"`
 	Code      string     `db:"code" json:"code"`
 	Password  string     `db:"password" json:"password"`
+	Type      int16      `db:"type" json:"type"`
 	Name      string     `db:"name" json:"name"`
 	SubjectID uuid.UUID  `db:"subject_id" json:"subjectId"`
 	ProgramID uuid.UUID  `db:"program_id" json:"programId"`
@@ -67,6 +68,7 @@ func (q *Queries) CreateClass(ctx context.Context, arg CreateClassParams) error 
 		arg.ID,
 		arg.Code,
 		arg.Password,
+		arg.Type,
 		arg.Name,
 		arg.SubjectID,
 		arg.ProgramID,
@@ -87,8 +89,35 @@ func (q *Queries) DeleteClass(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getClassByCode = `-- name: GetClassByCode :one
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, type, created_by, created_at, updated_at, updated_by FROM classes WHERE code = $1
+`
+
+func (q *Queries) GetClassByCode(ctx context.Context, code string) (Class, error) {
+	row := q.db.QueryRow(ctx, getClassByCode, code)
+	var i Class
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.SubjectID,
+		&i.ProgramID,
+		&i.Password,
+		&i.Name,
+		&i.Link,
+		&i.StartDate,
+		&i.EndDate,
+		&i.Status,
+		&i.Type,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
 const getClassById = `-- name: GetClassById :one
-SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at, updated_at, updated_by FROM classes WHERE id = $1::uuid
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, type, created_by, created_at, updated_at, updated_by FROM classes WHERE id = $1::uuid
 `
 
 func (q *Queries) GetClassById(ctx context.Context, id uuid.UUID) (Class, error) {
@@ -105,6 +134,39 @@ func (q *Queries) GetClassById(ctx context.Context, id uuid.UUID) (Class, error)
 		&i.StartDate,
 		&i.EndDate,
 		&i.Status,
+		&i.Type,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const getClassByIdAndStatus = `-- name: GetClassByIdAndStatus :one
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, type, created_by, created_at, updated_at, updated_by FROM classes WHERE id = $1::uuid AND status = $2
+`
+
+type GetClassByIdAndStatusParams struct {
+	ID     uuid.UUID `db:"id" json:"id"`
+	Status int16     `db:"status" json:"status"`
+}
+
+func (q *Queries) GetClassByIdAndStatus(ctx context.Context, arg GetClassByIdAndStatusParams) (Class, error) {
+	row := q.db.QueryRow(ctx, getClassByIdAndStatus, arg.ID, arg.Status)
+	var i Class
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.SubjectID,
+		&i.ProgramID,
+		&i.Password,
+		&i.Name,
+		&i.Link,
+		&i.StartDate,
+		&i.EndDate,
+		&i.Status,
+		&i.Type,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -114,7 +176,7 @@ func (q *Queries) GetClassById(ctx context.Context, id uuid.UUID) (Class, error)
 }
 
 const getClassCompletedByCode = `-- name: GetClassCompletedByCode :one
-SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at, updated_at, updated_by FROM classes WHERE code = $1 AND status = 1
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, type, created_by, created_at, updated_at, updated_by FROM classes WHERE code = $1 AND status = 1
 `
 
 func (q *Queries) GetClassCompletedByCode(ctx context.Context, code string) (Class, error) {
@@ -131,6 +193,7 @@ func (q *Queries) GetClassCompletedByCode(ctx context.Context, code string) (Cla
 		&i.StartDate,
 		&i.EndDate,
 		&i.Status,
+		&i.Type,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -193,14 +256,16 @@ const updateClass = `-- name: UpdateClass :exec
 UPDATE classes
 SET name = $1,
     code = $2,
-    password = $3
-WHERE id = $4::uuid
+    password = $3,
+    type = $4
+WHERE id = $5::uuid
 `
 
 type UpdateClassParams struct {
 	Name     string    `db:"name" json:"name"`
 	Code     string    `db:"code" json:"code"`
 	Password string    `db:"password" json:"password"`
+	Type     int16     `db:"type" json:"type"`
 	ID       uuid.UUID `db:"id" json:"id"`
 }
 
@@ -209,6 +274,7 @@ func (q *Queries) UpdateClass(ctx context.Context, arg UpdateClassParams) error 
 		arg.Name,
 		arg.Code,
 		arg.Password,
+		arg.Type,
 		arg.ID,
 	)
 	return err

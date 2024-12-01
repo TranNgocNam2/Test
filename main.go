@@ -2,6 +2,7 @@ package main
 
 import (
 	"Backend/api/handlers/classgrp"
+	"Backend/api/handlers/classgrp/assignmentgrp"
 	"Backend/api/handlers/learnergrp"
 	"Backend/api/handlers/programgrp"
 	"Backend/api/handlers/schoolgrp"
@@ -107,4 +108,5 @@ func LoadRoutes(router *gin.Engine, app *app.Application) {
 	skillgrp.SkillRoutes(router, app)
 	learnergrp.LearnerRoutes(router, app)
 	teachergrp.TeacherRoutes(router, app)
+	assignmentgrp.AssignmentRoutes(router, app)
 }

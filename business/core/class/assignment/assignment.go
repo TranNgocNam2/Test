@@ -10,7 +10,6 @@ import (
 	"Backend/internal/web/payload"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -262,6 +261,25 @@ func (c *Core) Query(ctx *gin.Context, classId uuid.UUID, orderBy order.By, page
 		assignments = append(assignments, assignment)
 	}
 	return assignments
+}
+
+func (c *Core) Count(ctx *gin.Context, classId uuid.UUID) int {
+	data := map[string]interface{}{
+		"class_id": classId,
+	}
+
+	const q = `SELECT COUNT(1) FROM assignments`
+	buf := bytes.NewBufferString(q)
+	var count struct {
+		Count int `db:"count"`
+	}
+
+	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	return count.Count
 }
 
 func (c *Core) GradeAssignment(ctx *gin.Context, learnerId uuid.UUID, asmId uuid.UUID, data payload.AssignmentGrade) error {

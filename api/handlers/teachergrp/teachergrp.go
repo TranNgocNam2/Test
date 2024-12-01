@@ -5,6 +5,7 @@ import (
 	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/web"
+	"Backend/internal/web/payload"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -28,7 +29,7 @@ func (h *Handlers) GenerateAttendanceCode() gin.HandlerFunc {
 			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidSlotId)
 			return
 		}
-		err = h.teacher.GenerateAttendanceCode(ctx, slotId)
+		attendanceCode, err := h.teacher.GenerateAttendanceCode(ctx, slotId)
 		if err != nil {
 			switch {
 			case errors.Is(err, model.ErrSlotNotFound):
@@ -49,7 +50,10 @@ func (h *Handlers) GenerateAttendanceCode() gin.HandlerFunc {
 				return
 			}
 		}
-		web.Respond(ctx, nil, http.StatusOK, nil)
+
+		data := map[string]string{"attendanceCode": attendanceCode}
+
+		web.Respond(ctx, data, http.StatusOK, nil)
 	}
 }
 
@@ -76,5 +80,43 @@ func (h *Handlers) GetTeachersInClass() gin.HandlerFunc {
 			}
 		}
 		web.Respond(ctx, teachers, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) UpdateRecord() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		slotId, err := uuid.Parse(ctx.Param("slotId"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidSlotId)
+			return
+		}
+
+		var request payload.UpdateRecord
+		if err = web.Decode(ctx, &request); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err = validateUpdateRecordRequest(request); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.teacher.UpdateRecordLink(ctx, slotId, toCoreUpdateRecord(request))
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrSlotNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser),
+				errors.Is(err, model.ErrTeacherIsNotInSlot):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+		web.Respond(ctx, nil, http.StatusOK, nil)
 	}
 }

@@ -6,38 +6,40 @@ import (
 	"github.com/google/uuid"
 )
 
+type NewSchool struct {
+	Name       string
+	Address    string
+	DistrictId int32
+}
+
+type UpdateSchool struct {
+	Name       string
+	Address    string
+	DistrictId int32
+}
+
 // School
 
 type School struct {
-	ID         uuid.UUID
-	Name       string
-	Address    string
-	DistrictID int32
+	ID       uuid.UUID `json:"id"`
+	Name     string    `json:"name"`
+	Address  string    `json:"address"`
+	District District  `json:"district"`
+	Province Province  `json:"province"`
 }
 
 func toCoreSchool(dbSchool sqlc.School) School {
 	return School{
-		ID:         dbSchool.ID,
-		Name:       dbSchool.Name,
-		Address:    dbSchool.Address,
-		DistrictID: dbSchool.DistrictID,
+		ID:      dbSchool.ID,
+		Name:    dbSchool.Name,
+		Address: dbSchool.Address,
 	}
-}
-
-func toCoreSchoolSlice(dbSchools []sqlc.School) []School {
-	schools := make([]School, len(dbSchools))
-	for i, school := range dbSchools {
-		schools[i] = toCoreSchool(school)
-	}
-
-	return schools
 }
 
 // Province
-
 type Province struct {
-	ID   int32
-	Name string
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 func toCoreProvince(dbProvince sqlc.Province) Province {
@@ -58,16 +60,14 @@ func toCoreProvinceSlice(dbProvinces []sqlc.Province) []Province {
 // District
 
 type District struct {
-	ID         int32
-	Name       string
-	ProvinceID int32
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 func toCoreDistrict(dbDistrict sqlc.District) District {
 	return District{
-		ID:         dbDistrict.ID,
-		Name:       dbDistrict.Name,
-		ProvinceID: dbDistrict.ProvinceID,
+		ID:   dbDistrict.ID,
+		Name: dbDistrict.Name,
 	}
 }
 

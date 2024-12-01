@@ -44,6 +44,90 @@ func (q *Queries) DeleteSchool(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getAllSchoolInformationById = `-- name: GetAllSchoolInformationById :one
+SELECT s.id, s.name, s.address, s.district_id, s.is_deleted, d.id AS district_id, d.name AS district_name, p.id AS province_id, p.name AS province_name
+FROM schools s JOIN districts d ON s.district_id = d.id
+               JOIN provinces p ON p.id = d.province_id
+WHERE s.id = $1::uuid
+`
+
+type GetAllSchoolInformationByIdRow struct {
+	ID           uuid.UUID `db:"id" json:"id"`
+	Name         string    `db:"name" json:"name"`
+	Address      string    `db:"address" json:"address"`
+	DistrictID   int32     `db:"district_id" json:"districtId"`
+	IsDeleted    *bool     `db:"is_deleted" json:"isDeleted"`
+	DistrictID_2 int32     `db:"district_id_2" json:"districtId2"`
+	DistrictName string    `db:"district_name" json:"districtName"`
+	ProvinceID   int32     `db:"province_id" json:"provinceId"`
+	ProvinceName string    `db:"province_name" json:"provinceName"`
+}
+
+func (q *Queries) GetAllSchoolInformationById(ctx context.Context, id uuid.UUID) (GetAllSchoolInformationByIdRow, error) {
+	row := q.db.QueryRow(ctx, getAllSchoolInformationById, id)
+	var i GetAllSchoolInformationByIdRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.DistrictID,
+		&i.IsDeleted,
+		&i.DistrictID_2,
+		&i.DistrictName,
+		&i.ProvinceID,
+		&i.ProvinceName,
+	)
+	return i, err
+}
+
+const getAllSchools = `-- name: GetAllSchools :many
+SELECT s.id, s.name, s.address, s.district_id, s.is_deleted, d.id AS district_id, d.name AS district_name, p.id AS province_id, p.name AS province_name
+FROM schools s JOIN districts d ON s.district_id = d.id
+               JOIN provinces p ON p.id = d.province_id
+`
+
+type GetAllSchoolsRow struct {
+	ID           uuid.UUID `db:"id" json:"id"`
+	Name         string    `db:"name" json:"name"`
+	Address      string    `db:"address" json:"address"`
+	DistrictID   int32     `db:"district_id" json:"districtId"`
+	IsDeleted    *bool     `db:"is_deleted" json:"isDeleted"`
+	DistrictID_2 int32     `db:"district_id_2" json:"districtId2"`
+	DistrictName string    `db:"district_name" json:"districtName"`
+	ProvinceID   int32     `db:"province_id" json:"provinceId"`
+	ProvinceName string    `db:"province_name" json:"provinceName"`
+}
+
+func (q *Queries) GetAllSchools(ctx context.Context) ([]GetAllSchoolsRow, error) {
+	rows, err := q.db.Query(ctx, getAllSchools)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllSchoolsRow
+	for rows.Next() {
+		var i GetAllSchoolsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Address,
+			&i.DistrictID,
+			&i.IsDeleted,
+			&i.DistrictID_2,
+			&i.DistrictName,
+			&i.ProvinceID,
+			&i.ProvinceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSchoolById = `-- name: GetSchoolById :one
 SELECT id, name, address, district_id, is_deleted FROM schools
 WHERE id = $1::uuid AND is_deleted = false

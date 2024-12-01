@@ -116,7 +116,7 @@ func (h *Handlers) GetSchoolById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidSchoolID)
 			return
 		}
 
@@ -132,7 +132,7 @@ func (h *Handlers) GetSchoolById() gin.HandlerFunc {
 			}
 		}
 
-		web.Respond(ctx, toSchoolResponse(schoolRes), http.StatusOK, nil)
+		web.Respond(ctx, schoolRes, http.StatusOK, nil)
 	}
 }
 
@@ -154,7 +154,7 @@ func (h *Handlers) GetSchools() gin.HandlerFunc {
 
 		schools := h.school.Query(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		total := h.school.Count(ctx, filter)
-		result := page.NewPageResponse(toSchoolsResponse(schools), total, pageInfo.Number, pageInfo.Size)
+		result := page.NewPageResponse(schools, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}
@@ -170,11 +170,19 @@ func (h *Handlers) GetSchoolsByDistrict() gin.HandlerFunc {
 
 		schools, err := h.school.GetSchoolsByDistrictId(ctx, id)
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusInternalServerError, err)
-			return
+			switch {
+			case
+				errors.Is(err, model.ErrDistrictNotFound),
+				errors.Is(err, model.ErrSchoolNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
 		}
 
-		web.Respond(ctx, toSchoolsResponse(schools), http.StatusOK, nil)
+		web.Respond(ctx, schools, http.StatusOK, nil)
 	}
 }
 
@@ -186,7 +194,7 @@ func (h *Handlers) GetProvinces() gin.HandlerFunc {
 			return
 		}
 
-		web.Respond(ctx, toProvinceResponses(provinces), http.StatusOK, nil)
+		web.Respond(ctx, provinces, http.StatusOK, nil)
 	}
 }
 
@@ -204,6 +212,6 @@ func (h *Handlers) GetDistrictsByProvince() gin.HandlerFunc {
 			return
 		}
 
-		web.Respond(ctx, toDistrictsResponse(districts), http.StatusOK, nil)
+		web.Respond(ctx, districts, http.StatusOK, nil)
 	}
 }

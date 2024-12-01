@@ -49,3 +49,8 @@ WHERE id = sqlc.arg(id);
 SELECT COUNT(*) FROM slots
 WHERE class_id = sqlc.arg(class_id)
     AND end_time < now();
+
+-- name: UpdateRecordLink :exec
+UPDATE slots
+SET record_link = sqlc.arg(record_link)
+WHERE id = sqlc.arg(id);

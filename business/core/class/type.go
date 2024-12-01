@@ -1,6 +1,6 @@
 package class
 
 const (
-	DOC = iota
-	CAR
+	Private = iota
+	Public
 )

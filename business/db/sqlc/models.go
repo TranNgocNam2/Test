@@ -44,6 +44,7 @@ type Class struct {
 	StartDate *time.Time `db:"start_date" json:"startDate"`
 	EndDate   *time.Time `db:"end_date" json:"endDate"`
 	Status    int16      `db:"status" json:"status"`
+	Type      int16      `db:"type" json:"type"`
 	CreatedBy string     `db:"created_by" json:"createdBy"`
 	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
 	UpdatedAt *time.Time `db:"updated_at" json:"updatedAt"`
@@ -142,6 +143,7 @@ type Slot struct {
 	Index          int32      `db:"index" json:"index"`
 	TeacherID      *string    `db:"teacher_id" json:"teacherId"`
 	AttendanceCode *string    `db:"attendance_code" json:"attendanceCode"`
+	RecordLink     *string    `db:"record_link" json:"recordLink"`
 }
 
 type Specialization struct {

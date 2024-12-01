@@ -28,6 +28,62 @@ func (q *Queries) AddLearnerToClass(ctx context.Context, arg AddLearnerToClassPa
 	return err
 }
 
+const addLearnersToClass = `-- name: AddLearnersToClass :many
+INSERT INTO class_learners (id, class_id, learner_id)
+VALUES (uuid_generate_v4(), $1::uuid, unnest($2::text[]))
+RETURNING id::uuid AS ids
+`
+
+type AddLearnersToClassParams struct {
+	ClassID    uuid.UUID `db:"class_id" json:"classId"`
+	LearnerIds []string  `db:"learner_ids" json:"learnerIds"`
+}
+
+func (q *Queries) AddLearnersToClass(ctx context.Context, arg AddLearnersToClassParams) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, addLearnersToClass, arg.ClassID, arg.LearnerIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var ids uuid.UUID
+		if err := rows.Scan(&ids); err != nil {
+			return nil, err
+		}
+		items = append(items, ids)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const checkLearnerInClass = `-- name: CheckLearnerInClass :one
+SELECT STRING_AGG(email, ', ') AS emails
+FROM (
+         SELECT u.email
+         FROM users u
+                  JOIN class_learners cl ON cl.learner_id = u.id
+                  JOIN classes c ON cl.class_id = c.id
+         WHERE cl.learner_id = ANY($1::text[])
+         AND c.id = $2::uuid
+         GROUP BY cl.learner_id, u.email
+     ) as ucse
+`
+
+type CheckLearnerInClassParams struct {
+	LearnerIds []string  `db:"learner_ids" json:"learnerIds"`
+	ClassID    uuid.UUID `db:"class_id" json:"classId"`
+}
+
+func (q *Queries) CheckLearnerInClass(ctx context.Context, arg CheckLearnerInClassParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, checkLearnerInClass, arg.LearnerIds, arg.ClassID)
+	var emails []byte
+	err := row.Scan(&emails)
+	return emails, err
+}
+
 const checkLearnerTimeOverlap = `-- name: CheckLearnerTimeOverlap :one
 SELECT EXISTS (
     SELECT 1
@@ -66,7 +122,7 @@ func (q *Queries) CountLearnersByClassId(ctx context.Context, classID uuid.UUID)
 }
 
 const getClassesByLearnerId = `-- name: GetClassesByLearnerId :many
-SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, created_by, created_at, updated_at, updated_by FROM classes
+SELECT id, code, subject_id, program_id, password, name, link, start_date, end_date, status, type, created_by, created_at, updated_at, updated_by FROM classes
 WHERE id IN (SELECT class_id FROM class_learners WHERE learner_id = $1)
 `
 
@@ -90,6 +146,7 @@ func (q *Queries) GetClassesByLearnerId(ctx context.Context, learnerID string) (
 			&i.StartDate,
 			&i.EndDate,
 			&i.Status,
+			&i.Type,
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -124,7 +181,8 @@ func (q *Queries) GetLearnerByClassId(ctx context.Context, arg GetLearnerByClass
 }
 
 const getLearnersByClassId = `-- name: GetLearnersByClassId :many
-SELECT u.id, u.full_name, u.email, u.phone, u.auth_role, u.profile_photo, u.status, u.is_verified, u.school_id, u.type, cl.id AS class_learner_id, s.id AS school_id, s.name AS school_name
+SELECT u.id, u.full_name, u.email, u.phone, u.profile_photo, u.status, u.type,
+       cl.id AS class_learner_id, s.id AS school_id, s.name AS school_name
 FROM users u
         JOIN class_learners cl ON cl.learner_id = u.id
         JOIN classes c ON cl.class_id = c.id
@@ -134,19 +192,16 @@ WHERE c.id = $1::uuid
 `
 
 type GetLearnersByClassIdRow struct {
-	ID             string     `db:"id" json:"id"`
-	FullName       *string    `db:"full_name" json:"fullName"`
-	Email          string     `db:"email" json:"email"`
-	Phone          *string    `db:"phone" json:"phone"`
-	AuthRole       int16      `db:"auth_role" json:"authRole"`
-	ProfilePhoto   *string    `db:"profile_photo" json:"profilePhoto"`
-	Status         int32      `db:"status" json:"status"`
-	IsVerified     bool       `db:"is_verified" json:"isVerified"`
-	SchoolID       *uuid.UUID `db:"school_id" json:"schoolId"`
-	Type           *int16     `db:"type" json:"type"`
-	ClassLearnerID uuid.UUID  `db:"class_learner_id" json:"classLearnerId"`
-	SchoolID_2     uuid.UUID  `db:"school_id_2" json:"schoolId2"`
-	SchoolName     string     `db:"school_name" json:"schoolName"`
+	ID             string    `db:"id" json:"id"`
+	FullName       *string   `db:"full_name" json:"fullName"`
+	Email          string    `db:"email" json:"email"`
+	Phone          *string   `db:"phone" json:"phone"`
+	ProfilePhoto   *string   `db:"profile_photo" json:"profilePhoto"`
+	Status         int32     `db:"status" json:"status"`
+	Type           *int16    `db:"type" json:"type"`
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	SchoolID       uuid.UUID `db:"school_id" json:"schoolId"`
+	SchoolName     string    `db:"school_name" json:"schoolName"`
 }
 
 func (q *Queries) GetLearnersByClassId(ctx context.Context, classID uuid.UUID) ([]GetLearnersByClassIdRow, error) {
@@ -163,14 +218,11 @@ func (q *Queries) GetLearnersByClassId(ctx context.Context, classID uuid.UUID) (
 			&i.FullName,
 			&i.Email,
 			&i.Phone,
-			&i.AuthRole,
 			&i.ProfilePhoto,
 			&i.Status,
-			&i.IsVerified,
-			&i.SchoolID,
 			&i.Type,
 			&i.ClassLearnerID,
-			&i.SchoolID_2,
+			&i.SchoolID,
 			&i.SchoolName,
 		); err != nil {
 			return nil, err
@@ -181,4 +233,31 @@ func (q *Queries) GetLearnersByClassId(ctx context.Context, classID uuid.UUID) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const getLearnersTimeOverlap = `-- name: GetLearnersTimeOverlap :one
+SELECT STRING_AGG(email, ', ') AS emails
+FROM (
+    SELECT u.email
+        FROM users u
+            JOIN class_learners cl ON cl.learner_id = u.id
+            JOIN slots s ON s.class_id = cl.class_id
+      WHERE u.email = ANY($1::text[])
+        AND s.start_time < $2
+        AND s.end_time > $3
+      GROUP BY cl.learner_id, u.email
+          ) as ucse
+`
+
+type GetLearnersTimeOverlapParams struct {
+	Emails    []string   `db:"emails" json:"emails"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+}
+
+func (q *Queries) GetLearnersTimeOverlap(ctx context.Context, arg GetLearnersTimeOverlapParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getLearnersTimeOverlap, arg.Emails, arg.EndTime, arg.StartTime)
+	var emails []byte
+	err := row.Scan(&emails)
+	return emails, err
 }

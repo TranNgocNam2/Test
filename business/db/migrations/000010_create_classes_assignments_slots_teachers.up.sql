@@ -3,12 +3,13 @@ CREATE table classes(
     code                    character varying(10) NOT NULL UNIQUE,
     subject_id              uuid NOT NULL,
     program_id              uuid NOT NULL,
-    password                text NOT NULL,
+    password                character varying(10) NOT NULL,
     name                    character varying(50) NOT NULL,
     link                    text,
     start_date              timestamp with time zone,
     end_date                timestamp with time zone,
     status                  smallint NOT NULL DEFAULT 0,
+    type                    smallint NOT NULL DEFAULT 1,
     created_by              character varying(50) NOT NULL,
     created_at              timestamp with time zone NOT NULL DEFAULT now(),
     updated_at              timestamp with time zone,
@@ -48,6 +49,7 @@ CREATE table slots(
     index               int NOT NULL,
     teacher_id          character varying(50),
     attendance_code     character varying(6) DEFAULT NULL,
+    record_link         text,
 
     CONSTRAINT fk_slot_sessions
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,

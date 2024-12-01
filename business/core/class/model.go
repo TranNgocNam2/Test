@@ -13,6 +13,7 @@ type NewClass struct {
 	Name      string
 	Code      string
 	Link      *string
+	Type      int16
 	Slots     struct {
 		WeekDays  []time.Weekday
 		StartTime *time.Time
@@ -29,10 +30,15 @@ type UpdateSlot struct {
 	Index     int32
 }
 
+type ImportLearners struct {
+	Emails []string
+}
+
 type UpdateClass struct {
 	Name     string
 	Code     string
 	Password *string
+	Type     int16
 }
 
 type UpdateMeeting struct {
@@ -46,6 +52,8 @@ type Details struct {
 	Link          string     `json:"link"`
 	Password      *string    `json:"password,omitempty"`
 	StartDate     *time.Time `json:"startDate"`
+	Status        int16      `json:"status"`
+	Type          int16      `json:"type"`
 	EndDate       *time.Time `json:"endDate"`
 	Program       Program    `json:"program"`
 	Subject       Subject    `json:"subject"`
@@ -61,7 +69,8 @@ type Class struct {
 	Program       Program    `json:"program"`
 	StartDate     *time.Time `json:"startDate"`
 	EndDate       *time.Time `json:"endDate"`
-	Status        *int16     `json:"status,omitempty"`
+	Status        *int16     `json:"status"`
+	Type          int16      `json:"type"`
 	Subject       Subject    `json:"subject"`
 	Skills        []Skill    `json:"skills"`
 	TotalLearners int64      `json:"totalLearners"`
@@ -93,12 +102,13 @@ type Teacher struct {
 }
 
 type Slot struct {
-	ID        uuid.UUID `json:"id"`
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
-	Index     int32     `json:"index"`
-	Session   Session   `json:"session"`
-	Teacher   Teacher   `json:"teacher"`
+	ID         uuid.UUID `json:"id"`
+	StartTime  time.Time `json:"startTime"`
+	EndTime    time.Time `json:"endTime"`
+	Index      int32     `json:"index"`
+	Session    Session   `json:"session"`
+	Teacher    Teacher   `json:"teacher"`
+	RecordLink *string   `json:"recordLink"`
 }
 
 type Session struct {
