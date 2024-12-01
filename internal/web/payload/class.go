@@ -26,7 +26,7 @@ type UpdateMeetingLink struct {
 	Link string `json:"link" validate:"required"`
 }
 
-type UpdateSlot struct {
+type UpdateSlots struct {
 	Status *int `json:"status" validate:"required,gte=0,lte=1"`
 	Slots  []struct {
 		ID        string `json:"id" validate:"required"`
@@ -46,4 +46,12 @@ type CheckTeacherTime struct {
 
 type ImportLearners struct {
 	Emails []string `json:"emails" validate:"required,unique"`
+}
+
+type AddLearner struct {
+	LearnerId string `json:"learnerId" validate:"required"`
+}
+
+type RemoveLearner struct {
+	LearnerId string `json:"learnerId" validate:"required"`
 }

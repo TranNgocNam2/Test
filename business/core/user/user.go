@@ -165,13 +165,8 @@ func (c *Core) Update(ctx *gin.Context, id string, updatedUser UpdateUser) error
 		return model.ErrUserNotFound
 	}
 
-	if updatedUser.Phone != "" && *dbUser.Phone != updatedUser.Phone {
-		return model.ErrPhoneAlreadyExists
-	}
-
 	if err = c.queries.UpdateUser(ctx, sqlc.UpdateUserParams{
 		FullName:     &updatedUser.FullName,
-		Phone:        &updatedUser.Phone,
 		ProfilePhoto: &updatedUser.Photo,
 		ID:           dbUser.ID,
 	}); err != nil {
@@ -227,7 +222,7 @@ func (c *Core) GetUsers(ctx *gin.Context, filter QueryFilter, orderBy order.By, 
 		"offset":        (page.Number - 1) * page.Size,
 		"rows_per_page": page.Size,
 	}
-	const q = `SELECT u.id, u.full_name, u.email, u.auth_role, u.status, u.profile_photo, u.phone, u.status, u.school_id
+	const q = `SELECT u.id, u.full_name, u.email, u.auth_role, u.status, u.profile_photo, u.is_verified, u.phone, u.status, u.school_id
 				FROM users u`
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf, false, UserStatus)
@@ -379,4 +374,78 @@ func (c *Core) CountVerificationUsers(ctx *gin.Context, filter QueryFilter) int 
 	}
 
 	return count.Count
+}
+
+func (c *Core) CreateLearner(ctx *gin.Context, learner NewLearner) error {
+	_, err := middleware.AuthorizeAdmin(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	qtx := c.queries.WithTx(tx)
+
+	if _, err := qtx.GetUserByEmail(ctx, learner.Email); err == nil {
+		return model.ErrEmailAlreadyExists
+	}
+
+	if _, err := qtx.GetUserById(ctx, learner.ID); err == nil {
+		return model.ErrUserAlreadyExist
+	}
+
+	if _, err := qtx.GetSchoolById(ctx, learner.SchoolID); err != nil {
+		return model.ErrSchoolNotFound
+	}
+
+	err = qtx.CreateLearner(ctx, sqlc.CreateLearnerParams{
+		ID:         learner.ID,
+		Email:      learner.Email,
+		AuthRole:   role.LEARNER,
+		FullName:   &learner.FullName,
+		IsVerified: true,
+		SchoolID:   &learner.SchoolID,
+	})
+	if err != nil {
+		return err
+	}
+
+	tx.Commit(ctx)
+	return nil
+}
+
+func (c *Core) UpdateLearner(ctx *gin.Context, id string, updatedLearner UpdateLearner) error {
+	_, err := middleware.AuthorizeAdmin(ctx, c.queries)
+	if err != nil {
+		return err
+	}
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	qtx := c.queries.WithTx(tx)
+
+	dbUser, err := qtx.GetUserById(ctx, id)
+	if err != nil {
+		return model.ErrUserNotFound
+	}
+
+	if _, err := qtx.GetSchoolById(ctx, updatedLearner.SchoolID); err != nil {
+		return model.ErrSchoolNotFound
+	}
+
+	if err = qtx.UpdateLearner(ctx, sqlc.UpdateLearnerParams{
+		SchoolID: &updatedLearner.SchoolID,
+		Type:     &updatedLearner.Type,
+		ID:       dbUser.ID,
+	}); err != nil {
+		return err
+	}
+
+	tx.Commit(ctx)
+	return nil
 }

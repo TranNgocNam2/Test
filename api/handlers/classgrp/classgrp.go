@@ -348,24 +348,24 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 			return
 		}
 
-		var updateSlot payload.UpdateSlot
-		if err = web.Decode(ctx, &updateSlot); err != nil {
+		var req payload.UpdateSlots
+		if err = web.Decode(ctx, &req); err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
-		if err = validateUpdateSlotRequest(updateSlot); err != nil {
+		if err = validateUpdateSlotRequest(req); err != nil {
 			web.Respond(ctx, err, http.StatusBadRequest, err)
 			return
 		}
 
-		updateSlots, err := toCoreUpdateSlot(updateSlot)
+		updateSlots, err := toCoreUpdateSlot(req)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 
-		err = h.class.UpdateSlot(ctx, id, updateSlots, *updateSlot.Status)
+		err = h.class.UpdateSlots(ctx, id, updateSlots, *req.Status)
 		if err != nil {
 			switch {
 			case
@@ -433,5 +433,89 @@ func (h *Handlers) CheckTeacherAvailable() gin.HandlerFunc {
 		}
 
 		web.Respond(ctx, res, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) AddLearner() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		var req payload.AddLearner
+		if err = web.Decode(ctx, &req); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err = validateAddLearnerRequest(req); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.class.AddLearner(ctx, id, toCoreAddLearner(req))
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.ErrLearnerNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, model.ErrFailedToAddLearnerToClass):
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) RemoveLearner() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		var req payload.RemoveLearner
+		if err = web.Decode(ctx, &req); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err = validateRemoveLearnerRequest(req); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.class.RemoveLearner(ctx, id, toCoreRemoveLearner(req))
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.ErrLearnerNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, model.ErrLearnerNotInClass),
+				errors.Is(err, model.ErrClassStarted):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
 	}
 }

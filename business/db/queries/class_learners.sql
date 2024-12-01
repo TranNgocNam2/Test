@@ -5,12 +5,17 @@ SELECT COUNT(*) FROM class_learners WHERE class_id = sqlc.arg(class_id)::uuid;
 INSERT INTO class_learners (id, class_id, learner_id)
 VALUES (sqlc.arg(id)::uuid, sqlc.arg(class_id)::uuid, sqlc.arg(learner_id));
 
+-- name: RemoveLearnerFromClass :exec
+DELETE FROM class_learners
+WHERE class_id = sqlc.arg(class_id)::uuid
+  AND learner_id = sqlc.arg(learner_id);
+
 -- name: AddLearnersToClass :many
 INSERT INTO class_learners (id, class_id, learner_id)
 VALUES (uuid_generate_v4(), sqlc.arg(class_id)::uuid, unnest(sqlc.arg(learner_ids)::text[]))
 RETURNING id::uuid AS ids;
 
--- name: GetLearnerByClassId :one
+-- name: GetClassLearnerByClassAndLearner :one
 SELECT * FROM class_learners
          WHERE class_id = sqlc.arg(class_id)::uuid
            AND learner_id = sqlc.arg(learner_id);
@@ -19,7 +24,23 @@ SELECT * FROM class_learners
 SELECT * FROM classes
 WHERE id IN (SELECT class_id FROM class_learners WHERE learner_id = sqlc.arg(learner_id));
 
--- name: CheckLearnerInClass :one
+-- name: CheckAllLearnersInClassTime :one
+SELECT STRING_AGG(email, ', ') AS emails
+FROM (
+         SELECT u.email
+         FROM users u
+                  JOIN class_learners cl ON cl.learner_id = u.id
+                  JOIN slots s ON s.class_id = cl.class_id
+                  JOIN classes c ON cl.class_id = c.id
+         WHERE c.id = sqlc.arg(class_id)::uuid
+           AND s.start_time < sqlc.arg(end_time)
+           AND s.end_time > sqlc.arg(start_time)
+         GROUP BY cl.learner_id, u.email
+     ) as ucse;
+
+
+
+-- name: CheckLearnersInClass :one
 SELECT STRING_AGG(email, ', ') AS emails
 FROM (
          SELECT u.email

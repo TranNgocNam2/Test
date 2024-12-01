@@ -12,6 +12,33 @@ import (
 	"github.com/google/uuid"
 )
 
+const createLearner = `-- name: CreateLearner :exec
+INSERT INTO users (id, email, auth_role, full_name, is_verified, school_id)
+VALUES ($1, $2, $3, $4,
+        $5, $6) ON CONFLICT DO NOTHING
+`
+
+type CreateLearnerParams struct {
+	ID         string     `db:"id" json:"id"`
+	Email      string     `db:"email" json:"email"`
+	AuthRole   int16      `db:"auth_role" json:"authRole"`
+	FullName   *string    `db:"full_name" json:"fullName"`
+	IsVerified bool       `db:"is_verified" json:"isVerified"`
+	SchoolID   *uuid.UUID `db:"school_id" json:"schoolId"`
+}
+
+func (q *Queries) CreateLearner(ctx context.Context, arg CreateLearnerParams) error {
+	_, err := q.db.Exec(ctx, createLearner,
+		arg.ID,
+		arg.Email,
+		arg.AuthRole,
+		arg.FullName,
+		arg.IsVerified,
+		arg.SchoolID,
+	)
+	return err
+}
+
 const createUser = `-- name: CreateUser :exec
 INSERT INTO users (id, email, auth_role, full_name, is_verified)
 VALUES ($1, $2, $3, $4,
@@ -387,34 +414,39 @@ func (q *Queries) HandleUserStatus(ctx context.Context, arg HandleUserStatusPara
 	return err
 }
 
+const updateLearner = `-- name: UpdateLearner :exec
+UPDATE users
+SET school_id = $1,
+    type = $2
+WHERE id = $3
+`
+
+type UpdateLearnerParams struct {
+	SchoolID *uuid.UUID `db:"school_id" json:"schoolId"`
+	Type     *int16     `db:"type" json:"type"`
+	ID       string     `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateLearner(ctx context.Context, arg UpdateLearnerParams) error {
+	_, err := q.db.Exec(ctx, updateLearner, arg.SchoolID, arg.Type, arg.ID)
+	return err
+}
+
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
 SET full_name = $1,
-    email = $2,
-    phone = $3,
-    profile_photo = $4,
-    status = $5
-WHERE id = $6
+    profile_photo = $2
+WHERE id = $3
 `
 
 type UpdateUserParams struct {
 	FullName     *string `db:"full_name" json:"fullName"`
-	Email        string  `db:"email" json:"email"`
-	Phone        *string `db:"phone" json:"phone"`
 	ProfilePhoto *string `db:"profile_photo" json:"profilePhoto"`
-	Status       int32   `db:"status" json:"status"`
 	ID           string  `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.Exec(ctx, updateUser,
-		arg.FullName,
-		arg.Email,
-		arg.Phone,
-		arg.ProfilePhoto,
-		arg.Status,
-		arg.ID,
-	)
+	_, err := q.db.Exec(ctx, updateUser, arg.FullName, arg.ProfilePhoto, arg.ID)
 	return err
 }
 

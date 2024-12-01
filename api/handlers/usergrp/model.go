@@ -6,6 +6,7 @@ import (
 	"Backend/internal/common/status"
 	"Backend/internal/validate"
 	"Backend/internal/web/payload"
+	"github.com/google/uuid"
 	"net/mail"
 )
 
@@ -36,16 +37,11 @@ func validateNewUserRequest(newUserRequest payload.NewUser) error {
 	return nil
 }
 
-func toCoreUpdateUser(updateUserRequest payload.UpdateUser) (user.UpdateUser, error) {
-	if !user.IsValidPhoneNumber(updateUserRequest.Phone) {
-		return user.UpdateUser{}, model.ErrInvalidPhoneNumber
-	}
-
+func toCoreUpdateUser(updateUserRequest payload.UpdateUser) user.UpdateUser {
 	return user.UpdateUser{
 		FullName: updateUserRequest.FullName,
-		Phone:    updateUserRequest.Phone,
 		Photo:    updateUserRequest.Photo,
-	}, nil
+	}
 }
 
 func validateUpdateUserRequest(updateUserRequest payload.UpdateUser) error {
@@ -69,6 +65,51 @@ func toCoreVerifyUser(req payload.VerifyLearner) (user.VerifyLearner, error) {
 
 func validateVerifyUserRequest(verifyUserRequest payload.VerifyLearner) error {
 	if err := validate.Check(verifyUserRequest); err != nil {
+		return err
+	}
+	return nil
+}
+
+func toCoreCreateLearner(req payload.NewLearner) (user.NewLearner, error) {
+	schoolID, err := uuid.Parse(req.SchoolId)
+	if err != nil {
+		return user.NewLearner{}, model.ErrInvalidSchoolID
+	}
+	emailAddr, err := mail.ParseAddress(req.Email)
+	if err != nil {
+		return user.NewLearner{}, model.ErrInvalidEmail
+	}
+
+	return user.NewLearner{
+		ID:       req.ID,
+		Email:    emailAddr.String(),
+		FullName: req.FullName,
+		Type:     int16(*req.Type),
+		SchoolID: schoolID,
+	}, nil
+}
+
+func validateCreateLearnerRequest(req payload.NewLearner) error {
+	if err := validate.Check(req); err != nil {
+		return err
+	}
+	return nil
+}
+
+func toCoreUpdateLearner(req payload.UpdateLearner) (user.UpdateLearner, error) {
+	schoolID, err := uuid.Parse(req.SchoolId)
+	if err != nil {
+		return user.UpdateLearner{}, model.ErrInvalidSchoolID
+	}
+
+	return user.UpdateLearner{
+		Type:     int16(*req.Type),
+		SchoolID: schoolID,
+	}, nil
+}
+
+func validateUpdateLearnerRequest(req payload.UpdateLearner) error {
+	if err := validate.Check(req); err != nil {
 		return err
 	}
 	return nil

@@ -37,6 +37,10 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
+const (
+	TimeLayout = "15:04 02/01/2006"
+)
+
 func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 	staffId, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
@@ -168,11 +172,11 @@ func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLea
 			IsVerified: true,
 			AuthRole:   role.LEARNER,
 		})
-		return fmt.Errorf(model.ErrLearnerNotFound, emails)
+		return fmt.Errorf(model.ErrLearnersNotFound, emails)
 	}
 
 	// Check if the learners are already in the class
-	learnersInClass, err := qtx.CheckLearnerInClass(ctx, sqlc.CheckLearnerInClassParams{
+	learnersInClass, err := qtx.CheckLearnersInClass(ctx, sqlc.CheckLearnersInClassParams{
 		ClassID:    class.ID,
 		LearnerIds: userIds,
 	})
@@ -201,8 +205,8 @@ func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLea
 			return model.ErrCannotImportLearners
 		}
 		if emails != nil {
-			return fmt.Errorf(model.ErrLearnerTimeOverlap, emails, slot.StartTime.Format("15:04 02/01/2006"),
-				slot.EndTime.Format("15:04 02/01/2006"))
+			return fmt.Errorf(model.ErrLearnerTimeOverlap, emails, slot.StartTime.Format(TimeLayout),
+				slot.EndTime.Format(TimeLayout))
 		}
 		slotIds = append(slotIds, slot.ID)
 	}
@@ -227,6 +231,150 @@ func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLea
 	return nil
 }
 
+func (c *Core) AddLearner(ctx *gin.Context, id uuid.UUID, learner AddLearner) error {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrCannotImportLearners
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	_, err = middleware.AuthorizeStaff(ctx, qtx)
+	if err != nil {
+		return err
+	}
+
+	class, err := qtx.GetClassByIdAndStatus(ctx, sqlc.GetClassByIdAndStatusParams{
+		ID:     id,
+		Status: int16(status.ClassCompleted),
+	})
+	if err != nil {
+		return model.ErrClassNotFound
+	}
+
+	// Check if the class is already started
+	if class.StartDate.Before(time.Now().UTC()) {
+		return model.ErrClassStarted
+	}
+
+	dbLearner, err := qtx.GetVerifiedLearnersByLearnerId(ctx,
+		sqlc.GetVerifiedLearnersByLearnerIdParams{
+			ID:     learner.LearnerId,
+			Status: int32(status.Valid),
+		})
+	if err != nil {
+		return model.ErrLearnerNotFound
+	}
+
+	// Check if the learner is already in the class
+	_, err = qtx.GetClassLearnerByClassAndLearner(ctx,
+		sqlc.GetClassLearnerByClassAndLearnerParams{
+			ClassID:   class.ID,
+			LearnerID: dbLearner.ID,
+		})
+	if err == nil {
+		return model.ErrLearnerAlreadyInClass
+	}
+
+	dbSlots, _ := qtx.GetSlotsByClassId(ctx, class.ID)
+	var slotIds []uuid.UUID
+	for _, dbSlot := range dbSlots {
+		scheduleConflict, _ := c.queries.CheckLearnerTimeOverlap(ctx,
+			sqlc.CheckLearnerTimeOverlapParams{
+				LearnerID: dbLearner.ID,
+				EndTime:   dbSlot.EndTime,
+				StartTime: dbSlot.StartTime,
+			})
+		if scheduleConflict {
+			return fmt.Errorf(model.ErrScheduleConflict, dbSlot.StartTime.Format(TimeLayout),
+				dbSlot.EndTime.Format(TimeLayout))
+		}
+		slotIds = append(slotIds, dbSlot.ID)
+	}
+
+	classLearner := sqlc.AddLearnerToClassParams{
+		ID:        uuid.New(),
+		ClassID:   class.ID,
+		LearnerID: dbLearner.ID,
+	}
+	err = qtx.AddLearnerToClass(ctx, classLearner)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
+	}
+
+	err = qtx.GenerateLearnerAttendance(ctx, sqlc.GenerateLearnerAttendanceParams{
+		ClassLearnerID: classLearner.ID,
+		SlotIds:        slotIds,
+	})
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
+	}
+
+	tx.Commit(ctx)
+	return nil
+}
+
+func (c *Core) RemoveLearner(ctx *gin.Context, id uuid.UUID, learner RemoveLearner) error {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	_, err = middleware.AuthorizeStaff(ctx, qtx)
+	if err != nil {
+		return err
+	}
+
+	class, err := qtx.GetClassByIdAndStatus(ctx, sqlc.GetClassByIdAndStatusParams{
+		ID:     id,
+		Status: int16(status.ClassCompleted),
+	})
+	if err != nil {
+		return model.ErrClassNotFound
+	}
+
+	// Check if the class is already started
+	if class.StartDate.Before(time.Now().UTC()) {
+		return model.ErrClassStarted
+	}
+
+	dbLearner, err := qtx.GetVerifiedLearnersByLearnerId(ctx,
+		sqlc.GetVerifiedLearnersByLearnerIdParams{
+			ID:     learner.LearnerId,
+			Status: int32(status.Valid),
+		})
+	if err != nil {
+		return model.ErrLearnerNotFound
+	}
+
+	// Check if the learner is already in the class
+	_, err = qtx.GetClassLearnerByClassAndLearner(ctx,
+		sqlc.GetClassLearnerByClassAndLearnerParams{
+			ClassID:   class.ID,
+			LearnerID: dbLearner.ID,
+		})
+	if err != nil {
+		return model.ErrLearnerNotInClass
+	}
+
+	err = qtx.RemoveLearnerFromClass(ctx, sqlc.RemoveLearnerFromClassParams{
+		ClassID:   class.ID,
+		LearnerID: dbLearner.ID,
+	})
+	if err != nil {
+		return err
+	}
+
+	tx.Commit(ctx)
+	return nil
+}
 func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Class, error) {
 	_, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
@@ -577,7 +725,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	return class, nil
 }
 
-func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, classStatus int) error {
+func (c *Core) UpdateSlots(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, classStatus int) error {
 	_, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
@@ -856,7 +1004,7 @@ func generateSlots(newClass NewClass, sessions []sqlc.Session, duration float32,
 
 			slotStartTime := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(),
 				newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.UTC)
-			slotEndTime := slotStartTime.Add(time.Duration(duration * float32(time.Hour)))
+			slotEndTime := slotStartTime.Add(time.Duration(duration * float32(time.Hour)).Round(time.Second))
 
 			startTime := &slotStartTime
 			endTime := &slotEndTime

@@ -20,5 +20,7 @@ func UserRoutes(router *gin.Engine, app *app.Application) {
 		users.PUT("/:id", handlers.UpdateUser())
 		users.PUT("/verifications/:verificationId", handlers.VerifyUser())
 		users.PUT("/:id/handle", handlers.HandleUser())
+		users.POST("/learners", handlers.CreateLearner())
+		users.PUT("/:id/learners", handlers.UpdateLearner())
 	}
 }

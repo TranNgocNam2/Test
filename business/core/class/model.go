@@ -34,6 +34,14 @@ type ImportLearners struct {
 	Emails []string
 }
 
+type AddLearner struct {
+	LearnerId string
+}
+
+type RemoveLearner struct {
+	LearnerId string
+}
+
 type UpdateClass struct {
 	Name     string
 	Code     string
