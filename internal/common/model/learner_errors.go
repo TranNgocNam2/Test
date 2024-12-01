@@ -14,7 +14,8 @@ var (
 	ErrFailedToAddLearnerToClass     = errors.New("Không thể thêm học sinh vào lớp học!")
 	ErrLearnerAlreadyInClass         = errors.New("Học sinh đã ở trong lớp học!")
 	CannotGetAllLearners             = errors.New("Không thể lấy danh sách học sinh!")
-	ErrLearnerNotFound               = "Học sinh có email %s không tồn tại trong hệ thống!"
+	ErrLearnerNotFound               = errors.New("Học sinh không tồn tại trong hệ thống!")
+	ErrLearnersNotFound              = "Học sinh có email %s không tồn tại trong hệ thống!"
 	ErrImportedLearnerAlreadyInClass = "Học sinh có email %s đã ở trong lớp học!"
 	ErrLearnerTimeOverlap            = "Học sinh có email %s bị trùng lịch học trong khoảng thời gian %v đến khoảng thời gian %v!"
 	ErrScheduleConflict              = "Học sinh bị trùng lịch học trong khoảng thời gian %v đến khoảng thời gian %v!"

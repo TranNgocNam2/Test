@@ -13,16 +13,16 @@ import (
 
 const generateLearnerAttendance = `-- name: GenerateLearnerAttendance :exec
 INSERT INTO learner_attendances(id, class_learner_id, slot_id)
-VALUES (uuid_generate_v4(), $1, $2::uuid)
+VALUES (uuid_generate_v4(), $1, UNNEST($2::uuid[]))
 `
 
 type GenerateLearnerAttendanceParams struct {
-	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
-	SlotID         uuid.UUID `db:"slot_id" json:"slotId"`
+	ClassLearnerID uuid.UUID   `db:"class_learner_id" json:"classLearnerId"`
+	SlotIds        []uuid.UUID `db:"slot_ids" json:"slotIds"`
 }
 
 func (q *Queries) GenerateLearnerAttendance(ctx context.Context, arg GenerateLearnerAttendanceParams) error {
-	_, err := q.db.Exec(ctx, generateLearnerAttendance, arg.ClassLearnerID, arg.SlotID)
+	_, err := q.db.Exec(ctx, generateLearnerAttendance, arg.ClassLearnerID, arg.SlotIds)
 	return err
 }
 

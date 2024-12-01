@@ -184,3 +184,29 @@ func validateUpdateMeetingLinkRequest(updateMeetingLink payload.UpdateMeetingLin
 	}
 	return nil
 }
+
+func toCoreAddLearner(req payload.AddLearner) class.AddLearner {
+	return class.AddLearner{
+		LearnerId: req.LearnerId,
+	}
+}
+
+func validateAddLearnerRequest(req payload.AddLearner) error {
+	if err := validate.Check(req); err != nil {
+		return err
+	}
+	return nil
+}
+
+func toCoreRemoveLearner(req payload.RemoveLearner) class.RemoveLearner {
+	return class.RemoveLearner{
+		LearnerId: req.LearnerId,
+	}
+}
+
+func validateRemoveLearnerRequest(req payload.RemoveLearner) error {
+	if err := validate.Check(req); err != nil {
+		return err
+	}
+	return nil
+}
