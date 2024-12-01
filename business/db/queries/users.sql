@@ -10,10 +10,7 @@ VALUES (sqlc.arg(id), sqlc.arg(email), sqlc.arg(auth_role), sqlc.arg(full_name),
 -- name: UpdateUser :exec
 UPDATE users
 SET full_name = sqlc.arg(full_name),
-    email = sqlc.arg(email),
-    phone = sqlc.arg(phone),
-    profile_photo = sqlc.arg(profile_photo),
-    status = sqlc.arg(status)
+    profile_photo = sqlc.arg(profile_photo)
 WHERE id = sqlc.arg(id);
 
 -- name: GetUserByEmail :one
@@ -101,3 +98,13 @@ FROM (
            AND auth_role = sqlc.arg(auth_role)
      ) missing_emails;
 
+-- name: CreateLearner :exec
+INSERT INTO users (id, email, auth_role, full_name, is_verified, school_id)
+VALUES (sqlc.arg(id), sqlc.arg(email), sqlc.arg(auth_role), sqlc.arg(full_name),
+        sqlc.arg(is_verified), sqlc.arg(school_id)) ON CONFLICT DO NOTHING;
+
+-- name: UpdateLearner :exec
+UPDATE users
+SET school_id = sqlc.arg(school_id),
+    type = sqlc.arg(type)
+WHERE id = sqlc.arg(id);

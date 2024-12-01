@@ -100,13 +100,9 @@ func (h *Handlers) UpdateUser() gin.HandlerFunc {
 			return
 		}
 
-		updateUser, err := toCoreUpdateUser(updateUserRequest)
-		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, err)
-			return
-		}
+		updateUser := toCoreUpdateUser(updateUserRequest)
 
-		err = h.user.Update(ctx, userID, updateUser)
+		err := h.user.Update(ctx, userID, updateUser)
 		if err != nil {
 			switch {
 			case
@@ -283,5 +279,88 @@ func (h *Handlers) GetUsers() gin.HandlerFunc {
 		total := h.user.CountUsers(ctx, filter)
 		result := page.NewPageResponse(users, total, pageInfo.Number, pageInfo.Size)
 		web.Respond(ctx, result, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) CreateLearner() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var newLearnerRequest payload.NewLearner
+		if err := web.Decode(ctx, &newLearnerRequest); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err := validateCreateLearnerRequest(newLearnerRequest); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		newLearner, err := toCoreCreateLearner(newLearnerRequest)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.user.CreateLearner(ctx, newLearner)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrEmailAlreadyExists),
+				errors.Is(err, model.ErrUserAlreadyExist):
+
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			case errors.Is(err, model.ErrSchoolNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) UpdateLearner() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		learnerId := ctx.Param("id")
+
+		var updateLearnerRequest payload.UpdateLearner
+		if err := web.Decode(ctx, &updateLearnerRequest); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err := validateUpdateLearnerRequest(updateLearnerRequest); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		updateLearner, err := toCoreUpdateLearner(updateLearnerRequest)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.user.UpdateLearner(ctx, learnerId, updateLearner)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrUserNotFound),
+				errors.Is(err, model.ErrSchoolNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
 	}
 }

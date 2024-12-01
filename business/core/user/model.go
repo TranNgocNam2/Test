@@ -56,13 +56,25 @@ type VerifyLearner struct {
 
 type UpdateUser struct {
 	FullName string
-	Phone    string
 	Photo    string
 }
 
 type School struct {
 	ID   uuid.UUID `json:"id,omitempty"`
 	Name string    `json:"name,omitempty"`
+}
+
+type NewLearner struct {
+	ID       string
+	Email    string
+	FullName string
+	Type     int16
+	SchoolID uuid.UUID
+}
+
+type UpdateLearner struct {
+	Type     int16
+	SchoolID uuid.UUID
 }
 
 func toCoreUser(dbUser sqlc.User) Details {
