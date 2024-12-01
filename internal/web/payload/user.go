@@ -26,8 +26,6 @@ type NewLearner struct {
 }
 
 type UpdateLearner struct {
-	FullName string `json:"fullName" validate:"required"`
-	Photo    string `json:"photo" validate:"required"`
 	Type     *int   `json:"type" validate:"required,gte=0,lte=1"`
 	SchoolId string `json:"schoolId" validate:"required"`
 }
