@@ -724,7 +724,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	return class, nil
 }
 
-func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, classStatus int) error {
+func (c *Core) UpdateSlots(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateSlot, classStatus int) error {
 	_, err := middleware.AuthorizeStaff(ctx, c.queries)
 	if err != nil {
 		return err
@@ -1002,7 +1002,7 @@ func generateSlots(newClass NewClass, sessions []sqlc.Session, duration float32,
 
 			slotStartTime := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(),
 				newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.UTC)
-			slotEndTime := slotStartTime.Add(time.Duration(duration * float32(time.Hour)))
+			slotEndTime := slotStartTime.Add(time.Duration(duration * float32(time.Hour)).Round(time.Second))
 
 			startTime := &slotStartTime
 			endTime := &slotEndTime

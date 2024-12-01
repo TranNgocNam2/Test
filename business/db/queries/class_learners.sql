@@ -24,6 +24,22 @@ SELECT * FROM class_learners
 SELECT * FROM classes
 WHERE id IN (SELECT class_id FROM class_learners WHERE learner_id = sqlc.arg(learner_id));
 
+-- name: CheckAllLearnersInClassTime :one
+SELECT STRING_AGG(email, ', ') AS emails
+FROM (
+         SELECT u.email
+         FROM users u
+                  JOIN class_learners cl ON cl.learner_id = u.id
+                  JOIN slots s ON s.class_id = cl.class_id
+                  JOIN classes c ON cl.class_id = c.id
+         WHERE c.id = sqlc.arg(class_id)::uuid
+           AND s.start_time < sqlc.arg(end_time)
+           AND s.end_time > sqlc.arg(start_time)
+         GROUP BY cl.learner_id, u.email
+     ) as ucse;
+
+
+
 -- name: CheckLearnersInClass :one
 SELECT STRING_AGG(email, ', ') AS emails
 FROM (

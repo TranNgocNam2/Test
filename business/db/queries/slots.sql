@@ -16,6 +16,12 @@ SET start_time = sqlc.arg(start_time),
     teacher_id = sqlc.arg(teacher_id)
 WHERE id = sqlc.arg(id);
 
+-- name: UpdateSlotTime :exec
+UPDATE slots
+SET start_time = sqlc.arg(start_time),
+    end_time = sqlc.arg(end_time)
+WHERE id = sqlc.arg(id);
+
 -- name: CheckTeacherTimeOverlap :one
 SELECT EXISTS (
     SELECT 1
@@ -28,6 +34,15 @@ SELECT EXISTS (
 
 -- name: GetSlotsByClassId :many
 SELECT * FROM slots WHERE class_id = sqlc.arg(class_id) ORDER BY index;
+
+-- name: GetConflictingSlotIndexes :one
+SELECT STRING_AGG(index::TEXT, ',') AS indexes
+FROM slots
+WHERE class_id = sqlc.arg(class_id)
+  AND id <> sqlc.arg(slot_id)
+  AND (
+       sqlc.arg(new_start_time), sqlc.arg(new_end_time)
+          ) OVERLAPS (start_time, end_time);
 
 -- name: CountSlotsByClassId :one
 SELECT COUNT(*) FROM slots WHERE class_id = sqlc.arg(class_id);
