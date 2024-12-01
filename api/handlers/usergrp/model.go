@@ -71,7 +71,7 @@ func validateVerifyUserRequest(verifyUserRequest payload.VerifyLearner) error {
 }
 
 func toCoreCreateLearner(req payload.NewLearner) (user.NewLearner, error) {
-	schoolID, err := uuid.Parse(req.SchoolID)
+	schoolID, err := uuid.Parse(req.SchoolId)
 	if err != nil {
 		return user.NewLearner{}, model.ErrInvalidSchoolID
 	}
@@ -97,7 +97,7 @@ func validateCreateLearnerRequest(req payload.NewLearner) error {
 }
 
 func toCoreUpdateLearner(req payload.UpdateLearner) (user.UpdateLearner, error) {
-	schoolID, err := uuid.Parse(req.SchoolID)
+	schoolID, err := uuid.Parse(req.SchoolId)
 	if err != nil {
 		return user.UpdateLearner{}, model.ErrInvalidSchoolID
 	}

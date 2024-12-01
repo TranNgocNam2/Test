@@ -22,12 +22,12 @@ type NewLearner struct {
 	Email    string `json:"email" validate:"required,email"`
 	FullName string `json:"fullName" validate:"required"`
 	Type     *int   `json:"type" validate:"required,gte=0,lte=1"`
-	SchoolID string `json:"schoolId" validate:"required"`
+	SchoolId string `json:"schoolId" validate:"required"`
 }
 
 type UpdateLearner struct {
 	FullName string `json:"fullName" validate:"required"`
 	Photo    string `json:"photo" validate:"required"`
 	Type     *int   `json:"type" validate:"required,gte=0,lte=1"`
-	SchoolID string `json:"schoolId" validate:"required"`
+	SchoolId string `json:"schoolId" validate:"required"`
 }
