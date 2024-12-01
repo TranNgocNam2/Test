@@ -7,6 +7,7 @@ import (
 	"Backend/internal/web/payload"
 	"Backend/internal/weekday"
 	"github.com/google/uuid"
+	"net/mail"
 	"time"
 )
 
@@ -40,8 +41,9 @@ func toCoreNewClass(newClassRequest payload.NewClass) (class.NewClass, error) {
 		ProgramId: programId,
 		SubjectId: subjectId,
 		Name:      newClassRequest.Name,
-		Link:      &newClassRequest.Link,
 		Code:      newClassRequest.Code,
+		Link:      &newClassRequest.Link,
+		Type:      int16(*newClassRequest.Type),
 		Password:  newClassRequest.Password,
 	}
 
@@ -64,14 +66,15 @@ func validateNewClassRequest(newClassRequest payload.NewClass) error {
 	return nil
 }
 
-func toCoreUpdateClass(updateClassRequest payload.UpdateClass) (class.UpdateClass, error) {
+func toCoreUpdateClass(updateClassRequest payload.UpdateClass) class.UpdateClass {
 	updateClass := class.UpdateClass{
 		Name:     updateClassRequest.Name,
 		Code:     updateClassRequest.Code,
 		Password: &updateClassRequest.Password,
+		Type:     int16(*updateClassRequest.Type),
 	}
 
-	return updateClass, nil
+	return updateClass
 }
 
 func validateUpdateClassRequest(updateClassRequest payload.UpdateClass) error {
@@ -83,6 +86,27 @@ func validateUpdateClassRequest(updateClassRequest payload.UpdateClass) error {
 
 func validateUpdateSlotRequest(updateSlotRequest payload.UpdateSlot) error {
 	if err := validate.Check(updateSlotRequest); err != nil {
+		return err
+	}
+	return nil
+}
+
+func toCoreImportLearners(importLearnersRequest payload.ImportLearners) (class.ImportLearners, error) {
+	for _, email := range importLearnersRequest.Emails {
+		_, err := mail.ParseAddress(email)
+		if err != nil {
+			return class.ImportLearners{}, model.ErrInvalidEmail
+		}
+
+	}
+
+	return class.ImportLearners{
+		Emails: importLearnersRequest.Emails,
+	}, nil
+}
+
+func validateImportLearnersRequest(request payload.ImportLearners) error {
+	if err := validate.Check(request); err != nil {
 		return err
 	}
 	return nil

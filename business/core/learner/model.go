@@ -22,6 +22,7 @@ type Learner struct {
 	Email       string       `json:"email"`
 	Phone       string       `json:"phone"`
 	Photo       string       `json:"photo"`
+	Type        int16        `json:"type"`
 	School      School       `json:"school"`
 	Attendances []Attendance `json:"attendances"`
 	Assignments []Assignment `json:"assignments"`

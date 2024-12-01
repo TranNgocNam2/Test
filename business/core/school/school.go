@@ -36,6 +36,7 @@ func (c *Core) Create(ctx *gin.Context, newSchool NewSchool) (uuid.UUID, error) 
 	}
 
 	if err := c.queries.CreateSchool(ctx, dbSchool); err != nil {
+		c.logger.Error(err.Error())
 		return uuid.Nil, err
 	}
 	return dbSchool.ID, nil
@@ -56,6 +57,7 @@ func (c *Core) Update(ctx *gin.Context, id uuid.UUID, updatedSchool UpdateSchool
 	}
 
 	if err = c.queries.UpdateSchool(ctx, updateSchool); err != nil {
+		c.logger.Error(err.Error())
 		return err
 	}
 	return nil
@@ -68,6 +70,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 	}
 
 	if err = c.queries.DeleteSchool(ctx, dbSchool.ID); err != nil {
+		c.logger.Error(err.Error())
 		return err
 	}
 	return nil
@@ -209,6 +212,7 @@ func (c *Core) GetSchoolsByDistrictId(ctx *gin.Context, id int) ([]School, error
 func (c *Core) GetAllProvinces(ctx *gin.Context) ([]Province, error) {
 	provinces, err := c.queries.GetAllProvince(ctx)
 	if err != nil {
+		c.logger.Error(err.Error())
 		return nil, err
 	}
 	return toCoreProvinceSlice(provinces), nil

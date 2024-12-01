@@ -6,6 +6,7 @@ type NewClass struct {
 	Name      string `json:"name" validate:"required"`
 	Code      string `json:"code" validate:"required"`
 	Link      string `json:"link"`
+	Type      *int   `json:"type" validate:"required,gte=0,lte=1"`
 	Slots     struct {
 		WeekDays  []int  `json:"weekDays" validate:"gte=0,lte=6"`
 		StartTime string `json:"startTime"`
@@ -18,6 +19,7 @@ type UpdateClass struct {
 	Name     string `json:"name" validate:"required"`
 	Code     string `json:"code" validate:"required"`
 	Password string `json:"password"`
+	Type     *int   `json:"type" validate:"required,gte=0,lte=1"`
 }
 
 type UpdateMeetingLink struct {
@@ -40,4 +42,8 @@ type CheckTeacherTime struct {
 	SlotId    string `json:"slotId" validate:"required"`
 	StartTime string `json:"startTime" validate:"required"`
 	EndTime   string `json:"endTime" validate:"required"`
+}
+
+type ImportLearners struct {
+	Emails []string `json:"emails" validate:"required,unique"`
 }

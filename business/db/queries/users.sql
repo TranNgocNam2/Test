@@ -78,3 +78,26 @@ FROM users u
 JOIN verification_learners vl ON u.id = vl.learner_id
 JOIN schools s ON vl.school_id = s.id
 WHERE vl.learner_id = sqlc.arg(learner_id);
+
+-- name: GetUsersByEmails :many
+SELECT id AS ids
+FROM users
+WHERE email = ANY(sqlc.arg(emails)::text[])
+  AND status = sqlc.arg(status)
+  AND is_verified = sqlc.arg(is_verified)
+  AND auth_role = sqlc.arg(auth_role);
+
+-- name: GetEmailsExcept :one
+SELECT STRING_AGG(email, ', ') AS emails
+FROM (
+         SELECT DISTINCT email
+         FROM UNNEST(sqlc.arg(emails)::text[]) AS unnested_emails(email)
+         EXCEPT
+         SELECT email
+         FROM users
+         WHERE email = ANY(sqlc.arg(emails)::text[])
+           AND status = sqlc.arg(status)
+           AND is_verified = sqlc.arg(is_verified)
+           AND auth_role = sqlc.arg(auth_role)
+     ) missing_emails;
+

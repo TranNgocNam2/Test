@@ -255,8 +255,8 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 	}
 
 	const q = `SELECT
-						u.id, u.full_name AS full_name, u.email, u.phone, u.profile_photo, u.status AS status, 
-						s.id AS school_id, s.name AS school_name, cl.id AS class_learner_id
+				u.id, u.full_name AS full_name, u.email, u.phone, u.profile_photo, u.status AS status, u.type,
+				s.id AS school_id, s.name AS school_name, cl.id AS class_learner_id
 			FROM users u
 				JOIN class_learners cl ON u.id = cl.learner_id
 				JOIN classes c ON cl.class_id = c.id
@@ -288,8 +288,9 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 			Email:    dbLearner.Email,
 			Phone:    *dbLearner.Phone,
 			Photo:    *dbLearner.ProfilePhoto,
+			Type:     *dbLearner.Type,
 			School: School{
-				ID:   *dbLearner.SchoolID,
+				ID:   dbLearner.SchoolID,
 				Name: dbLearner.SchoolName,
 			},
 		}

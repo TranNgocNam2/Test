@@ -170,8 +170,16 @@ func (h *Handlers) GetSchoolsByDistrict() gin.HandlerFunc {
 
 		schools, err := h.school.GetSchoolsByDistrictId(ctx, id)
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusInternalServerError, err)
-			return
+			switch {
+			case
+				errors.Is(err, model.ErrDistrictNotFound),
+				errors.Is(err, model.ErrSchoolNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
 		}
 
 		web.Respond(ctx, schools, http.StatusOK, nil)

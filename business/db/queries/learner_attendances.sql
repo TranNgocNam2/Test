@@ -2,6 +2,17 @@
 INSERT INTO learner_attendances(id, class_learner_id, slot_id)
 VALUES (uuid_generate_v4(), sqlc.arg(class_learner_id), sqlc.arg(slot_id)::uuid);
 
+-- name: GenerateLearnersAttendance :exec
+INSERT INTO learner_attendances(id, class_learner_id, slot_id)
+SELECT
+    uuid_generate_v4(),
+    class_learner_id,
+    slot_id
+FROM
+    UNNEST(sqlc.arg(class_learner_ids)::uuid[]) AS learner_ids(class_learner_id)
+        CROSS JOIN
+    UNNEST(sqlc.arg(slot_ids)::uuid[]) AS slot_ids(slot_id);
+
 -- name: SubmitLearnerAttendance :exec
 UPDATE learner_attendances
 SET status = sqlc.arg(status)
