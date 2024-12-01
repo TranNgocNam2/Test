@@ -66,6 +66,40 @@ func (q *Queries) CreateVerificationRequest(ctx context.Context, arg CreateVerif
 	return id, err
 }
 
+const getEmailsExcept = `-- name: GetEmailsExcept :one
+SELECT STRING_AGG(email, ', ') AS emails
+FROM (
+         SELECT DISTINCT email
+         FROM UNNEST($1::text[]) AS unnested_emails(email)
+         EXCEPT
+         SELECT email
+         FROM users
+         WHERE email = ANY($1::text[])
+           AND status = $2
+           AND is_verified = $3
+           AND auth_role = $4
+     ) missing_emails
+`
+
+type GetEmailsExceptParams struct {
+	Emails     []string `db:"emails" json:"emails"`
+	Status     int32    `db:"status" json:"status"`
+	IsVerified bool     `db:"is_verified" json:"isVerified"`
+	AuthRole   int16    `db:"auth_role" json:"authRole"`
+}
+
+func (q *Queries) GetEmailsExcept(ctx context.Context, arg GetEmailsExceptParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getEmailsExcept,
+		arg.Emails,
+		arg.Status,
+		arg.IsVerified,
+		arg.AuthRole,
+	)
+	var emails []byte
+	err := row.Scan(&emails)
+	return emails, err
+}
+
 const getLearnerVerificationById = `-- name: GetLearnerVerificationById :one
 SELECT id, school_id, learner_id, image_link, status, verified_by, type, verified_at, note, created_at
 FROM verification_learners
@@ -210,6 +244,47 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone *string) (User, erro
 		&i.Type,
 	)
 	return i, err
+}
+
+const getUsersByEmails = `-- name: GetUsersByEmails :many
+SELECT id AS ids
+FROM users
+WHERE email = ANY($1::text[])
+  AND status = $2
+  AND is_verified = $3
+  AND auth_role = $4
+`
+
+type GetUsersByEmailsParams struct {
+	Emails     []string `db:"emails" json:"emails"`
+	Status     int32    `db:"status" json:"status"`
+	IsVerified bool     `db:"is_verified" json:"isVerified"`
+	AuthRole   int16    `db:"auth_role" json:"authRole"`
+}
+
+func (q *Queries) GetUsersByEmails(ctx context.Context, arg GetUsersByEmailsParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, getUsersByEmails,
+		arg.Emails,
+		arg.Status,
+		arg.IsVerified,
+		arg.AuthRole,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var ids string
+		if err := rows.Scan(&ids); err != nil {
+			return nil, err
+		}
+		items = append(items, ids)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getVerificationLearners = `-- name: GetVerificationLearners :many

@@ -9,6 +9,7 @@ CREATE table classes(
     start_date              timestamp with time zone,
     end_date                timestamp with time zone,
     status                  smallint NOT NULL DEFAULT 0,
+    type                    smallint NOT NULL DEFAULT 1,
     created_by              character varying(50) NOT NULL,
     created_at              timestamp with time zone NOT NULL DEFAULT now(),
     updated_at              timestamp with time zone,

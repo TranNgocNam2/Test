@@ -77,6 +77,54 @@ func (h *Handlers) CreateClass() gin.HandlerFunc {
 	}
 }
 
+func (h *Handlers) ImportLearners() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		var req payload.ImportLearners
+		if err = web.Decode(ctx, &req); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err = validateImportLearnersRequest(req); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		learners, err := toCoreImportLearners(req)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.class.ImportLearners(ctx, id, learners)
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.CannotGetAllLearners):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, model.ErrCannotImportLearners):
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
 func (h *Handlers) GetClassesByManager() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		pageInfo := page.Parse(ctx)
@@ -223,7 +271,7 @@ func (h *Handlers) UpdateClass() gin.HandlerFunc {
 			return
 		}
 
-		updateClass, err := toCoreUpdateClass(updateClassRequest)
+		updateClass := toCoreUpdateClass(updateClassRequest)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return

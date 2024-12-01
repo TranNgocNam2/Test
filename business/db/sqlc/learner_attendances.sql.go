@@ -26,6 +26,28 @@ func (q *Queries) GenerateLearnerAttendance(ctx context.Context, arg GenerateLea
 	return err
 }
 
+const generateLearnersAttendance = `-- name: GenerateLearnersAttendance :exec
+INSERT INTO learner_attendances(id, class_learner_id, slot_id)
+SELECT
+    uuid_generate_v4(),
+    class_learner_id,
+    slot_id
+FROM
+    UNNEST($1::uuid[]) AS learner_ids(class_learner_id)
+        CROSS JOIN
+    UNNEST($2::uuid[]) AS slot_ids(slot_id)
+`
+
+type GenerateLearnersAttendanceParams struct {
+	ClassLearnerIds []uuid.UUID `db:"class_learner_ids" json:"classLearnerIds"`
+	SlotIds         []uuid.UUID `db:"slot_ids" json:"slotIds"`
+}
+
+func (q *Queries) GenerateLearnersAttendance(ctx context.Context, arg GenerateLearnersAttendanceParams) error {
+	_, err := q.db.Exec(ctx, generateLearnersAttendance, arg.ClassLearnerIds, arg.SlotIds)
+	return err
+}
+
 const getAttendanceByClassLearner = `-- name: GetAttendanceByClassLearner :many
 SELECT id, class_learner_id, slot_id, status FROM learner_attendances
     WHERE class_learner_id = $1::uuid
