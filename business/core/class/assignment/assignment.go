@@ -423,7 +423,7 @@ func (c *Core) SubmitAssignment(ctx *gin.Context, asmId uuid.UUID, req payload.L
 		return model.ErrInvalidAssignmentSubmision
 	}
 
-	now := time.Now().UTC()
+	now := time.Now()
 
 	if now.After(*asm.Deadline) && !*asm.CanOverdue {
 		return model.ErrSubmitOverdue
@@ -454,7 +454,7 @@ func (c *Core) SubmitAssignment(ctx *gin.Context, asmId uuid.UUID, req payload.L
 		return model.ErrDataConversion
 	}
 
-	submissionTime := time.Now().UTC()
+	submissionTime := time.Now()
 
 	submissionStatus := SUBMITTED
 	if submissionTime.After(*asm.Deadline) {
