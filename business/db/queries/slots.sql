@@ -28,8 +28,23 @@ SELECT EXISTS (
     FROM slots
     WHERE teacher_id = sqlc.arg(teacher_id)
       AND id <> sqlc.arg(slot_id)
+      AND start_time IS NOT NULL
+      AND end_time IS NOT NULL
       AND NOT (end_time <= sqlc.arg(start_time)
                    OR start_time >= sqlc.arg(end_time))
+) AS overlap;
+
+-- name: CheckTeacherTimeOverlapExcludeClass :one
+SELECT EXISTS (
+    SELECT 1
+    FROM slots
+    WHERE teacher_id = sqlc.arg(teacher_id)
+      AND id <> sqlc.arg(slot_id)
+      AND class_id <> slots.class_id
+      AND start_time IS NOT NULL
+      AND end_time IS NOT NULL
+      AND NOT (end_time <= sqlc.arg(start_time)
+        OR start_time >= sqlc.arg(end_time))
 ) AS overlap;
 
 -- name: GetSlotsByClassId :many

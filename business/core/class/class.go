@@ -776,12 +776,15 @@ func (c *Core) UpdateSlots(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateS
 		}
 
 		if dbSlot.StartTime.After(currentTime) {
-			isTeacherAvailable, err := c.IsTeacherAvailable(ctx, CheckTeacherTime{
-				TeacherId: updateSlot.TeacherId,
-				StartTime: updateSlot.StartTime,
-				EndTime:   updateSlot.EndTime,
+			isTeacherOverlap, err := qtx.CheckTeacherTimeOverlap(ctx, sqlc.CheckTeacherTimeOverlapParams{
+				TeacherID: &updateSlot.TeacherId,
+				SlotID:    dbSlot.ID,
+				StartTime: &updateSlot.StartTime,
+				EndTime:   &updateSlot.EndTime,
 			})
-			if err != nil || !isTeacherAvailable {
+			if err != nil || isTeacherOverlap {
+				fmt.Println("Teacher %s is not available at %s - %s!", updateSlot.TeacherId, updateSlot.StartTime.Format(TimeLayout),
+					updateSlot.EndTime.Format(TimeLayout))
 				return model.ErrTeacherNotAvailable
 			}
 		}
@@ -922,14 +925,14 @@ func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime
 	if err != nil {
 		return false, model.ErrTeacherNotFound
 	}
-	checkCondition := sqlc.CheckTeacherTimeOverlapParams{
+	checkCondition := sqlc.CheckTeacherTimeOverlapExcludeClassParams{
 		TeacherID: &teacher.ID,
 		EndTime:   &teacherTime.EndTime,
 		StartTime: &teacherTime.StartTime,
 		SlotID:    teacherTime.SlotId,
 	}
 
-	status, err := c.queries.CheckTeacherTimeOverlap(ctx, checkCondition)
+	status, err := c.queries.CheckTeacherTimeOverlapExcludeClass(ctx, checkCondition)
 	if err != nil {
 		return false, err
 	}
