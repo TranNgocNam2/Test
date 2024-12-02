@@ -2,7 +2,7 @@ CREATE table learner_specializations(
     id                      uuid PRIMARY KEY,
     learner_id              character varying(50) NOT NULL,
     specialization_id       uuid NOT NULL,
-    joined_at               timestamp with time zone DEFAULT now(),
+    joined_at               timestamp without time zone DEFAULT now(),
 
     CONSTRAINT fk_learners_specializations_learner
         FOREIGN KEY (learner_id)

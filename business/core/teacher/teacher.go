@@ -46,11 +46,11 @@ func (c *Core) GenerateAttendanceCode(ctx *gin.Context, slotId uuid.UUID) (strin
 		return "", model.ErrTeacherIsNotInSlot
 	}
 
-	if slot.StartTime.UTC().After(time.Now().UTC()) {
+	if slot.StartTime.After(time.Now()) {
 		return "", model.ErrSlotNotStarted
 	}
 
-	if slot.EndTime.UTC().Before(time.Now().UTC()) {
+	if slot.EndTime.Before(time.Now()) {
 		return "", model.ErrSlotEnded
 	}
 	if slot.AttendanceCode != nil {

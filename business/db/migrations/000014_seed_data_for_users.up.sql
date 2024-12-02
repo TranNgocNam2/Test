@@ -1,15 +1,15 @@
 -- Data for learners
-INSERT INTO users (id, full_name, email, phone, auth_role, status, profile_photo, is_verified, school_id)
+INSERT INTO users (id, full_name, email, phone, auth_role, status, profile_photo, is_verified, school_id, type)
 VALUES  ('google-oauth2|103166434261305612270', 'Test Learner 0', 'ngocnamsieuquay01@gmail.com', '0363832486', 0, 0,
-        'https://lh3.googleusercontent.com', false, '3729211e-d63d-4ebf-abf6-9b209c28c2f6'),
+        'https://lh3.googleusercontent.com', false, '3729211e-d63d-4ebf-abf6-9b209c28c2f6', 1),
         ('google-oauth2|103166434261305612269', 'Test Learner 1', 'ngocnamsieuquay02@gmail.com', '0363832496', 0, 0,
-         'https://lh3.googleusercontent.com', true, '3729211e-d63d-4ebf-abf6-9b209c28c2f6'),
+         'https://lh3.googleusercontent.com', true, '3729211e-d63d-4ebf-abf6-9b209c28c2f6', 0),
         ('google-oauth2|103166434261305612268', 'Test Learner 2', 'ngocnamsieuquay03@gmail.com', '0363832506', 0, 0,
-         'https://lh3.googleusercontent.com', true, '3729211e-d63d-4ebf-abf6-9b209c28c2f6'),
+         'https://lh3.googleusercontent.com', true, '3729211e-d63d-4ebf-abf6-9b209c28c2f6', 1),
         ('google-oauth2|103166434261305612267', 'Test Learner 3', 'ngocnamsieuquay04@gmail.com', '0363832516', 0, 0,
-         'https://lh3.googleusercontent.com', true, '3729211e-d63d-4ebf-abf6-9b209c28c2f6'),
+         'https://lh3.googleusercontent.com', true, '3729211e-d63d-4ebf-abf6-9b209c28c2f6', 0),
         ('google-oauth2|103166434261305612266', 'Test Learner 4', 'ngocnamsieuquay05@gmail.com', '0363832526', 0, 0,
-         'https://lh3.googleusercontent.com', true, '3729211e-d63d-4ebf-abf6-9b209c28c2f6');
+         'https://lh3.googleusercontent.com', true, '3729211e-d63d-4ebf-abf6-9b209c28c2f6', 1);
 
 INSERT INTO users (id, full_name, email, phone, auth_role, profile_photo, status, is_verified)
 VALUES

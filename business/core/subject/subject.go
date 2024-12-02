@@ -59,7 +59,7 @@ func (c *Core) Create(ctx *gin.Context, subject payload.NewSubject) (string, err
 		SessionsPerWeek: int16(subject.SessionsPerWeek),
 		TimePerSession:  subject.TimePerSession,
 		CreatedBy:       staffId,
-		CreatedAt:       time.Now().UTC(),
+		CreatedAt:       time.Now(),
 		LearnerType:     subject.LearnerType,
 	}
 
@@ -163,7 +163,7 @@ func (c *Core) UpdateDraft(ctx *gin.Context, s payload.UpdateSubject, id uuid.UU
 
 	qtx := c.queries.WithTx(tx)
 
-	now := time.Now().UTC()
+	now := time.Now()
 
 	subParams := sqlc.UpdateSubjectParams{
 		Name:            s.Name,
@@ -334,7 +334,7 @@ func (c *Core) UpdatePublished(ctx *gin.Context, s payload.UpdateSubject, id uui
 	defer tx.Rollback(ctx)
 
 	qtx := c.queries.WithTx(tx)
-	now := time.Now().UTC()
+	now := time.Now()
 	subParams := sqlc.UpdateSubjectParams{
 		Name:            s.Name,
 		Code:            s.Code,

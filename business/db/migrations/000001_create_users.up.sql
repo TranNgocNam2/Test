@@ -19,9 +19,9 @@ CREATE table verification_learners(
     status              smallint DEFAULT 0 NOT NULL,
     verified_by         character varying(50),
     type                smallint DEFAULT 0 NOT NULL,
-    verified_at         timestamp with time zone,
+    verified_at         timestamp without time zone,
     note                text,
-    created_at          timestamp with time zone NOT NULL DEFAULT NOW(),
+    created_at          timestamp without time zone NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_users_learner
         FOREIGN KEY (learner_id)

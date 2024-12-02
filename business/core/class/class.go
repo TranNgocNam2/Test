@@ -89,7 +89,7 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 
 	if firstSlot != nil && firstSlot.After(dbProgram.StartDate) {
 		startDate := time.Date(firstSlot.Year(), firstSlot.Month(), firstSlot.Day(),
-			0, 0, 0, 0, time.UTC)
+			0, 0, 0, 0, time.Local)
 		startDateClass = &startDate
 	}
 
@@ -97,7 +97,7 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 	lastSlot := slots[len(slots)-1:][0].EndTime
 	if lastSlot != nil && lastSlot.Before(dbProgram.EndDate) {
 		endDate := time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(),
-			0, 0, 0, 0, time.UTC)
+			0, 0, 0, 0, time.Local)
 		endDateClass = &endDate
 	}
 
@@ -149,7 +149,7 @@ func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLea
 		return model.ErrClassNotFound
 	}
 	// Check if the class is already started
-	if class.StartDate.Before(time.Now().UTC()) {
+	if class.StartDate.Before(time.Now()) {
 		return model.ErrClassStarted
 	}
 
@@ -254,7 +254,7 @@ func (c *Core) AddLearner(ctx *gin.Context, id uuid.UUID, learner AddLearner) er
 	}
 
 	// Check if the class is already started
-	if class.StartDate.Before(time.Now().UTC()) {
+	if class.StartDate.Before(time.Now()) {
 		return model.ErrClassStarted
 	}
 
@@ -340,7 +340,7 @@ func (c *Core) RemoveLearner(ctx *gin.Context, id uuid.UUID, learner RemoveLearn
 	}
 
 	// Check if the class is already started
-	if class.StartDate.Before(time.Now().UTC()) {
+	if class.StartDate.Before(time.Now()) {
 		return model.ErrClassStarted
 	}
 
@@ -743,7 +743,7 @@ func (c *Core) UpdateSlots(ctx *gin.Context, id uuid.UUID, updateSlots []UpdateS
 		return model.ErrClassNotFound
 	}
 
-	currentTime := time.Now().UTC()
+	currentTime := time.Now()
 
 	dbProgram, _ := qtx.GetProgramById(ctx, dbClass.ProgramID)
 	if err = validateSlotTimes(dbClass, dbProgram, updateSlots); err != nil {
@@ -832,7 +832,7 @@ func (c *Core) Delete(ctx *gin.Context, id uuid.UUID) error {
 		return model.ErrClassNotFound
 	}
 
-	if dbClass.StartDate.After(time.Now().UTC()) {
+	if dbClass.StartDate.After(time.Now()) {
 		err = c.queries.DeleteClass(ctx, dbClass.ID)
 		if err != nil {
 			return err
@@ -896,7 +896,7 @@ func (c *Core) UpdateMeetingLink(ctx *gin.Context, id uuid.UUID, updateMeeting U
 		return model.ErrClassNotCompleted
 	}
 
-	if class.EndDate != nil && class.EndDate.UTC().Before(time.Now().UTC()) {
+	if class.EndDate != nil && class.EndDate.Before(time.Now()) {
 		return model.ErrClassIsEnded
 	}
 
@@ -946,7 +946,7 @@ func validateSlotTimes(dbClass sqlc.Class, dbProgram sqlc.Program, updateSlots [
 		return model.ErrInvalidSlotStartTime
 	}
 
-	firstSlot = time.Date(firstSlot.Year(), firstSlot.Month(), firstSlot.Day(), 0, 0, 0, 0, time.UTC)
+	firstSlot = time.Date(firstSlot.Year(), firstSlot.Month(), firstSlot.Day(), 0, 0, 0, 0, time.Local)
 	dbClass.StartDate = &firstSlot
 
 	lastSlot := updateSlots[len(updateSlots)-1].EndTime
@@ -955,9 +955,9 @@ func validateSlotTimes(dbClass sqlc.Class, dbProgram sqlc.Program, updateSlots [
 	}
 
 	if lastSlot.Hour() != 0 || lastSlot.Minute() != 0 {
-		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day()+1, 0, 0, 0, 0, time.UTC)
+		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day()+1, 0, 0, 0, 0, time.Local)
 	} else {
-		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(), 0, 0, 0, 0, time.UTC)
+		lastSlot = time.Date(lastSlot.Year(), lastSlot.Month(), lastSlot.Day(), 0, 0, 0, 0, time.Local)
 	}
 	dbClass.EndDate = &lastSlot
 
@@ -1004,7 +1004,7 @@ func generateSlots(newClass NewClass, sessions []sqlc.Session, duration float32,
 			currentDate = &slotDate
 
 			slotStartTime := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(),
-				newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.UTC)
+				newClass.Slots.StartTime.Hour(), newClass.Slots.StartTime.Minute(), 0, 0, time.Local)
 			slotEndTime := slotStartTime.Add(time.Duration(duration * float32(time.Hour)).Round(time.Second))
 
 			startTime := &slotStartTime
