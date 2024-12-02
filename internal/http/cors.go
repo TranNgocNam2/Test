@@ -9,6 +9,6 @@ import (
 var (
 	AllowMethods = []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions}
 	AllowHeaders = []string{header.Origin, header.ContentLength, header.ContentType, header.Authorization,
-		header.XCsrfToken, header.XRequestId, header.AccessControlAllowOrigin, header.XApiKey}
+		header.XCsrfToken, header.XRequestId, header.AccessControlAllowOrigin, header.XApiKey, header.XUserId}
 	CorsMaxAge = 12 * time.Hour
 )
