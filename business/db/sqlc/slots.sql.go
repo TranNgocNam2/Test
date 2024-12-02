@@ -42,6 +42,37 @@ func (q *Queries) CheckTeacherTimeOverlap(ctx context.Context, arg CheckTeacherT
 	return overlap, err
 }
 
+const checkTeacherTimeOverlapExcludeClass = `-- name: CheckTeacherTimeOverlapExcludeClass :one
+SELECT EXISTS (
+    SELECT 1
+    FROM slots
+    WHERE teacher_id = $1
+      AND id <> $2
+      AND class_id <> slots.class_id
+      AND NOT (end_time <= $3
+        OR start_time >= $4)
+) AS overlap
+`
+
+type CheckTeacherTimeOverlapExcludeClassParams struct {
+	TeacherID *string    `db:"teacher_id" json:"teacherId"`
+	SlotID    uuid.UUID  `db:"slot_id" json:"slotId"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+}
+
+func (q *Queries) CheckTeacherTimeOverlapExcludeClass(ctx context.Context, arg CheckTeacherTimeOverlapExcludeClassParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkTeacherTimeOverlapExcludeClass,
+		arg.TeacherID,
+		arg.SlotID,
+		arg.StartTime,
+		arg.EndTime,
+	)
+	var overlap bool
+	err := row.Scan(&overlap)
+	return overlap, err
+}
+
 const countCompletedSlotsByClassId = `-- name: CountCompletedSlotsByClassId :one
 SELECT COUNT(*) FROM slots
 WHERE class_id = $1
