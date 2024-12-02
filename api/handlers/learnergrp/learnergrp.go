@@ -52,6 +52,7 @@ func (h *Handlers) AddLearnerToClass() gin.HandlerFunc {
 				return
 			case errors.Is(err, model.ErrFailedToAddLearnerToClass):
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
 			default:
 				web.Respond(ctx, nil, http.StatusBadRequest, err)
 				return

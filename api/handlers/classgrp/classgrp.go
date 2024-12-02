@@ -359,7 +359,7 @@ func (h *Handlers) UpdateClassSlot() gin.HandlerFunc {
 			return
 		}
 
-		updateSlots, err := toCoreUpdateSlot(req)
+		updateSlots, err := toCoreUpdateSlots(req)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return

@@ -112,15 +112,15 @@ func validateImportLearnersRequest(request payload.ImportLearners) error {
 	return nil
 }
 
-func toCoreUpdateSlot(updateSlotRequest payload.UpdateSlots) ([]class.UpdateSlot, error) {
+func toCoreUpdateSlots(updateSlotRequest payload.UpdateSlots) ([]class.UpdateSlot, error) {
 	var updateSlots []class.UpdateSlot
 	for _, slot := range updateSlotRequest.Slots {
-		startTime, err := time.Parse(time.DateTime, slot.StartTime)
+		startTime, err := time.Parse(time.RFC3339, slot.StartTime)
 		if err != nil {
 			return nil, model.ErrInvalidTime
 		}
 
-		endTime, err := time.Parse(time.DateTime, slot.EndTime)
+		endTime, err := time.Parse(time.RFC3339, slot.EndTime)
 		if err != nil {
 			return nil, model.ErrInvalidTime
 		}
