@@ -20,9 +20,9 @@ type Learner struct {
 	ID          string       `json:"id"`
 	FullName    string       `json:"fullName"`
 	Email       string       `json:"email"`
-	Phone       string       `json:"phone"`
-	Photo       string       `json:"photo"`
-	Type        int16        `json:"type"`
+	Phone       *string      `json:"phone"`
+	Photo       *string      `json:"photo"`
+	Type        *int16       `json:"type"`
 	School      School       `json:"school"`
 	Attendances []Attendance `json:"attendances"`
 	Assignments []Assignment `json:"assignments"`

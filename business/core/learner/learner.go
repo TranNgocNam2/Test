@@ -287,9 +287,9 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 			ID:       dbLearner.ID,
 			FullName: *dbLearner.FullName,
 			Email:    dbLearner.Email,
-			Phone:    *dbLearner.Phone,
-			Photo:    *dbLearner.ProfilePhoto,
-			Type:     *dbLearner.Type,
+			Phone:    dbLearner.Phone,
+			Photo:    dbLearner.ProfilePhoto,
+			Type:     dbLearner.Type,
 			School: School{
 				ID:   dbLearner.SchoolID,
 				Name: dbLearner.SchoolName,
