@@ -245,7 +245,8 @@ func (c *Core) Query(ctx *gin.Context, classId uuid.UUID, orderBy order.By, page
 
 	const q = `SELECT
                         id, class_id, question, deadline, status, type, can_overdue
-               FROM assignments`
+               FROM assignments
+               WHERE class_id = :class_id`
 
 	buf := bytes.NewBufferString(q)
 	buf.WriteString(orderByClause(orderBy))
@@ -277,6 +278,82 @@ func (c *Core) Query(ctx *gin.Context, classId uuid.UUID, orderBy order.By, page
 		assignments = append(assignments, assignment)
 	}
 	return assignments
+}
+
+func (c *Core) QueryLearnerAssignment(ctx *gin.Context, assignmentId uuid.UUID, pageNumber int, rowsPerPage int) ([]LearnerAssignmentQuery, error) {
+
+	_, err := c.queries.GetAssignmentById(ctx, assignmentId)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, model.ErrAssignmentNotFound
+	}
+
+	data := map[string]interface{}{
+		"assignment_id": assignmentId,
+		"offset":        (pageNumber - 1) * rowsPerPage,
+		"rows_per_page": rowsPerPage,
+	}
+
+	const q = `SELECT
+                        cl.learner_id, la.grade, la.data, la.submission_status, la.grading_status
+               FROM learner_assignments la
+                JOIN class_learners cl ON la.class_learner_id = cl.id
+                WHERE la.assignment_id = :assignment_id`
+
+	buf := bytes.NewBufferString(q)
+	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
+	c.logger.Info(buf.String())
+
+	var learnerAssignments []struct {
+		LearnerId        string  `db:"learner_id"`
+		Grade            float32 `db:"grade"`
+		Data             []byte  `db:"data"`
+		SubmissionStatus int16   `db:"submission_status"`
+		GradingStatus    int16   `db:"grading_status"`
+	}
+
+	if err := pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &learnerAssignments); err != nil {
+		c.logger.Error(err.Error())
+		return nil, err
+	}
+
+	if learnerAssignments == nil {
+		return nil, err
+	}
+
+	var assignments []LearnerAssignmentQuery
+	for _, asm := range learnerAssignments {
+		assignment := LearnerAssignmentQuery{
+			LearnerId:        asm.LearnerId,
+			Grade:            asm.Grade,
+			Data:             json.RawMessage(asm.Data),
+			SubmissionStatus: int(asm.SubmissionStatus),
+			GradingStatus:    int(asm.GradingStatus),
+			AssignmentId:     assignmentId,
+		}
+
+		assignments = append(assignments, assignment)
+	}
+	return assignments, nil
+}
+
+func (c *Core) CountLearnerAssignment(ctx *gin.Context, assignmentId uuid.UUID) int {
+	data := map[string]interface{}{
+		"assignment_id": assignmentId,
+	}
+
+	const q = `SELECT COUNT(1) FROM learner_assignments`
+	buf := bytes.NewBufferString(q)
+	var count struct {
+		Count int `db:"count"`
+	}
+
+	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	return count.Count
 }
 
 func (c *Core) Count(ctx *gin.Context, classId uuid.UUID) int {

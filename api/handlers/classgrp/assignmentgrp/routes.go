@@ -24,6 +24,7 @@ func AssignmentRoutes(router *gin.Engine, app *app.Application) {
 		assignments.GET("/:id", handlers.GetById())
 		assignments.PUT("/:id/learners/:learnerId", handlers.GradeAssignment())
 		assignments.POST("/:id/learnerAssignments", handlers.SubmitAssignment())
+		assignments.GET("/:id/learnerAssignments", handlers.GetLearnerAssignments())
 	}
 
 	learners := router.Group("/learnerAssignments")

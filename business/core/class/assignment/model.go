@@ -25,3 +25,12 @@ type LearnerAssignment struct {
 	GradingStatus    int             `json:"gradingStatus"`
 	Assignment       Assignment      `json:"assignment"`
 }
+
+type LearnerAssignmentQuery struct {
+	LearnerId        string          `json:"learnerId"`
+	Grade            float32         `json:"grade"`
+	Data             json.RawMessage `json:"data"`
+	SubmissionStatus int             `json:"submissionStatus"`
+	GradingStatus    int             `json:"gradingStatus"`
+	AssignmentId     uuid.UUID       `json:"assignmentId"`
+}

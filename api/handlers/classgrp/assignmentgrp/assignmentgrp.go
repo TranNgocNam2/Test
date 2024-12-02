@@ -335,6 +335,31 @@ func (h *Handlers) GetAssignments() gin.HandlerFunc {
 	}
 }
 
+func (h *Handlers) GetLearnerAssignments() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		pageInfo := page.Parse(ctx)
+
+		assignmentId, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			fmt.Println(err.Error())
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		assignments, err := h.assignment.QueryLearnerAssignment(ctx, assignmentId, pageInfo.Number, pageInfo.Size)
+
+		if errors.Is(err, model.ErrAssignmentNotFound) {
+			web.Respond(ctx, nil, http.StatusBadRequest, nil)
+			return
+		}
+
+		total := h.assignment.CountLearnerAssignment(ctx, assignmentId)
+		result := page.NewPageResponse(assignments, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, result, http.StatusOK, nil)
+	}
+}
+
 func validateNewAssignmentRequest(request payload.Assignment) error {
 	if err := validate.Check(request); err != nil {
 		return err
