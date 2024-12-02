@@ -299,7 +299,7 @@ func (c *Core) GradeAssignment(ctx *gin.Context, learnerId uuid.UUID, asmId uuid
 		return model.ErrCannotGradeVisibleAssignment
 	}
 
-	classLearner, err := c.queries.GetLearnerByClassId(ctx, sqlc.GetLearnerByClassIdParams{
+	classLearner, err := c.queries.GetClassLearnerByClassAndLearner(ctx, sqlc.GetClassLearnerByClassAndLearnerParams{
 		ClassID:   asm.ClassID,
 		LearnerID: learnerId.String(),
 	})
@@ -358,7 +358,7 @@ func (c *Core) GetLearnerAssignment(ctx *gin.Context, asmId uuid.UUID) (*Learner
 		CanOverdue: *asm.CanOverdue,
 	}
 
-	classLearner, err := c.queries.GetLearnerByClassId(ctx, sqlc.GetLearnerByClassIdParams{
+	classLearner, err := c.queries.GetClassLearnerByClassAndLearner(ctx, sqlc.GetClassLearnerByClassAndLearnerParams{
 		ClassID:   asm.ClassID,
 		LearnerID: learner.ID,
 	})
@@ -407,7 +407,7 @@ func (c *Core) SubmitAssignment(ctx *gin.Context, asmId uuid.UUID, req payload.L
 		return model.ErrInvalidAssignmentSubmision
 	}
 
-	classLearner, err := c.queries.GetLearnerByClassId(ctx, sqlc.GetLearnerByClassIdParams{
+	classLearner, err := c.queries.GetClassLearnerByClassAndLearner(ctx, sqlc.GetClassLearnerByClassAndLearnerParams{
 		ClassID:   asm.ClassID,
 		LearnerID: learner.ID,
 	})
