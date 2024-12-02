@@ -10,6 +10,8 @@ import (
 	"Backend/internal/order"
 	"Backend/internal/weekday"
 	"bytes"
+	"time"
+
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -17,7 +19,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"gitlab.com/innovia69420/kit/enum/role"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Core struct {
@@ -940,6 +941,7 @@ func (c *Core) IsTeacherAvailable(ctx *gin.Context, teacherTime CheckTeacherTime
 	return !status, nil
 }
 
+// private func
 func validateSlotTimes(dbClass sqlc.Class, dbProgram sqlc.Program, updateSlots []UpdateSlot) error {
 	firstSlot := updateSlots[0].StartTime
 	if firstSlot.Before(dbProgram.StartDate) {

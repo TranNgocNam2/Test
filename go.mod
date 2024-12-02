@@ -14,6 +14,7 @@ require (
 	gitlab.com/innovia69420/kit v0.0.0-20241130061738-dd1fb0bd3a27
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.27.0
+	golang.org/x/tools v0.25.0
 )
 
 require (
