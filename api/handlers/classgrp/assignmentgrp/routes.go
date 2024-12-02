@@ -23,7 +23,7 @@ func AssignmentRoutes(router *gin.Engine, app *app.Application) {
 		assignments.DELETE("/:id", handlers.DeleteAssignment())
 		assignments.GET("/:id", handlers.GetById())
 		assignments.PUT("/:id/learners/:learnerId", handlers.GradeAssignment())
-		assignments.POST("/:id", handlers.SubmitAssignment())
+		assignments.POST("/:id/learnerAssignments", handlers.SubmitAssignment())
 	}
 
 	learners := router.Group("/learnerAssignments")

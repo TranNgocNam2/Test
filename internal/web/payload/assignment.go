@@ -3,8 +3,8 @@ package payload
 type Assignment struct {
 	Question   interface{} `json:"question"`
 	Deadline   string      `json:"deadline" validate:"required"`
-	Type       *int        `json:"type" validate:"gte=0,lte=1,required"`
-	Status     *int        `json:"status" validate:"gte=0,lte=1, required"`
+	Type       *int        `json:"type" validate:"required,gte=0,lte=1"`
+	Status     *int        `json:"status" validate:"required,gte=0,lte=1"`
 	CanOverdue bool        `json:"canOverdue" validate:"required"`
 }
 

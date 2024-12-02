@@ -12,4 +12,6 @@ var (
 	ErrLearnerAssignmentNotFound    = errors.New("Không tìm thấy assignment của learner")
 	ErrGradingNotStartedAssignment  = errors.New("Assignment này chưa bắt đầu")
 	ErrInvalidAssignmentSubmision   = errors.New("Assignment này không gửi bài được")
+	ErrInvalidAssignmentId          = errors.New("Assignment Id khong phai uuid")
+	ErrSubmitOverdue                = errors.New("Assignment khong chap nhan nop tre")
 )

@@ -1,5 +1,5 @@
 -- name: InsertAssignment :one
-INSERT INTO assignments (id, classId, question, deadline, status, type, can_overdue)
+INSERT INTO assignments (id, class_id, question, deadline, status, type, can_overdue)
 VALUES (sqlc.arg(id)::uuid, sqlc.arg(classId)::uuid, sqlc.arg(question), sqlc.arg(deadline),
         sqlc.arg(status), sqlc.arg(type), sqlc.arg(can_overdue))
 RETURNING id;
@@ -45,3 +45,6 @@ SET data = sqlc.arg(data),
     submission_status = sqlc.arg(submission_status)
 WHERE class_learner_id = sqlc.arg(class_learner_id)::uuid
 AND assignment_id = sqlc.arg(assignment_id)::uuid;
+
+-- name: DeleleLearnerAssignment :exec
+DELETE FROM learner_assignments WHERE assignment_id = sqlc.arg(assignment_id);

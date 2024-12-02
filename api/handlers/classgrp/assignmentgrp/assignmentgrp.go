@@ -10,6 +10,7 @@ import (
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -287,7 +288,7 @@ func (h *Handlers) GetLearnerAssignment() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		asmId, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidAssignmentId)
 			return
 		}
 
@@ -316,8 +317,9 @@ func (h *Handlers) GetAssignments() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		pageInfo := page.Parse(ctx)
 
-		classId, err := uuid.Parse(ctx.Param("classId"))
+		classId, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
+			fmt.Println(err.Error())
 			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
 			return
 		}

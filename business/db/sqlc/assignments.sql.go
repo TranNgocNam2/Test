@@ -32,6 +32,15 @@ func (q *Queries) CheckAssignmentInClass(ctx context.Context, arg CheckAssignmen
 	return exists, err
 }
 
+const deleleLearnerAssignment = `-- name: DeleleLearnerAssignment :exec
+DELETE FROM learner_assignments WHERE assignment_id = $1
+`
+
+func (q *Queries) DeleleLearnerAssignment(ctx context.Context, assignmentID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleleLearnerAssignment, assignmentID)
+	return err
+}
+
 const deleteAssignment = `-- name: DeleteAssignment :exec
 DELETE FROM assignments WHERE id = $1::uuid
 `
@@ -85,7 +94,7 @@ func (q *Queries) GetLearnerAssignment(ctx context.Context, arg GetLearnerAssign
 }
 
 const insertAssignment = `-- name: InsertAssignment :one
-INSERT INTO assignments (id, classId, question, deadline, status, type, can_overdue)
+INSERT INTO assignments (id, class_id, question, deadline, status, type, can_overdue)
 VALUES ($1::uuid, $2::uuid, $3, $4,
         $5, $6, $7)
 RETURNING id

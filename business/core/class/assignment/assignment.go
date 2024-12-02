@@ -143,7 +143,7 @@ func (c *Core) UpdateAssignment(ctx *gin.Context, classId uuid.UUID, asmId uuid.
 
 	dbProgram, _ := c.queries.GetProgramById(ctx, class.ProgramID)
 
-	deadline, err := time.Parse(time.DateOnly, data.Deadline)
+	deadline, err := time.Parse(time.DateTime, data.Deadline)
 	if err != nil {
 		return model.ErrTimeFormat
 	}
@@ -192,7 +192,23 @@ func (c *Core) DeleteAssignment(ctx *gin.Context, asmId uuid.UUID) error {
 		return model.ErrAssignmentDeletion
 	}
 
-	if err := c.queries.DeleteAssignment(ctx, asmId); err != nil {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	if err := qtx.DeleleLearnerAssignment(ctx, asmId); err != nil {
+		return err
+	}
+
+	if err := qtx.DeleteAssignment(ctx, asmId); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(ctx); err != nil {
 		return err
 	}
 
@@ -405,6 +421,12 @@ func (c *Core) SubmitAssignment(ctx *gin.Context, asmId uuid.UUID, req payload.L
 
 	if asm.Status == VISIBLE || asm.Status == CLOSED {
 		return model.ErrInvalidAssignmentSubmision
+	}
+
+	now := time.Now().UTC()
+
+	if now.After(*asm.Deadline) && !*asm.CanOverdue {
+		return model.ErrSubmitOverdue
 	}
 
 	classLearner, err := c.queries.GetClassLearnerByClassAndLearner(ctx, sqlc.GetClassLearnerByClassAndLearnerParams{
