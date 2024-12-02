@@ -29,22 +29,15 @@ CREATE table classes(
 
 CREATE table assignments(
     id                  uuid PRIMARY KEY,
-    transcript_id       uuid NOT NULL,
-    teacher_id          character varying(50) NOT NULL,
     class_id            uuid NOT NULL,
-    created_at          timestamp without time zone NOT NULL DEFAULT now(),
-    updated_at          timestamp without time zone,
-    updated_by          character varying(50),
+    question            json NOT NULL,
+    deadline            timestamp without time zone,
+    status              smallint DEFAULT 0 CHECK (status in (0, 1, 2)) NOT NULL,
+    can_overdue         bool DEFAULT false,
+    type                smallint DEFAULT 0 CHECK (type in (0, 1, 2)) NOT NULL,
 
-    CONSTRAINT fk_assignment_teacher
-        FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_assignment_staff_updated_by
-        FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_assignment_class
-        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
-
-    CONSTRAINT fk_assignment_transcript
-        FOREIGN KEY (transcript_id) REFERENCES transcripts(id) ON DELETE CASCADE
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
 );
 
 CREATE table slots(

@@ -12,7 +12,7 @@ import (
 )
 
 const getAssignmentsByClassLearner = `-- name: GetAssignmentsByClassLearner :many
-SELECT id, class_learner_id, assignment_id, grade FROM learner_assignments
+SELECT id, class_learner_id, assignment_id, grade, data, grading_status, submission_status FROM learner_assignments
     WHERE class_learner_id = $1::uuid
 `
 
@@ -30,6 +30,9 @@ func (q *Queries) GetAssignmentsByClassLearner(ctx context.Context, classLearner
 			&i.ClassLearnerID,
 			&i.AssignmentID,
 			&i.Grade,
+			&i.Data,
+			&i.GradingStatus,
+			&i.SubmissionStatus,
 		); err != nil {
 			return nil, err
 		}

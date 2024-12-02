@@ -27,9 +27,12 @@ CREATE table learner_attendances(
 
 CREATE table learner_assignments(
     id                  uuid PRIMARY KEY,
-    class_learner_id     uuid NOT NULL,
+    class_learner_id    uuid NOT NULL,
     assignment_id       uuid NOT NULL,
     grade               real NOT NULL,
+    data                json,
+    grading_status      smallint DEFAULT 0 CHECK (grading_status in (0, 1)) NOT NULL,
+    submission_status   smallint DEFAULT 0 CHECK (submission_status in (0, 1, 2)) NOT NULL,
 
     CONSTRAINT fk_learner_assignments_class_learners
         FOREIGN KEY (class_learner_id)
