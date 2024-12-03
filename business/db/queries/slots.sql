@@ -19,7 +19,8 @@ WHERE id = sqlc.arg(id);
 -- name: UpdateSlotTime :exec
 UPDATE slots
 SET start_time = sqlc.arg(start_time),
-    end_time = sqlc.arg(end_time)
+    end_time = sqlc.arg(end_time),
+    teacher_id = sqlc.arg(teacher_id)
 WHERE id = sqlc.arg(id);
 
 -- name: CheckTeacherTimeOverlap :one

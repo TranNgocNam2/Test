@@ -346,17 +346,24 @@ func (q *Queries) UpdateSlot(ctx context.Context, arg UpdateSlotParams) error {
 const updateSlotTime = `-- name: UpdateSlotTime :exec
 UPDATE slots
 SET start_time = $1,
-    end_time = $2
-WHERE id = $3
+    end_time = $2,
+    teacher_id = $3
+WHERE id = $4
 `
 
 type UpdateSlotTimeParams struct {
 	StartTime *time.Time `db:"start_time" json:"startTime"`
 	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	TeacherID *string    `db:"teacher_id" json:"teacherId"`
 	ID        uuid.UUID  `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateSlotTime(ctx context.Context, arg UpdateSlotTimeParams) error {
-	_, err := q.db.Exec(ctx, updateSlotTime, arg.StartTime, arg.EndTime, arg.ID)
+	_, err := q.db.Exec(ctx, updateSlotTime,
+		arg.StartTime,
+		arg.EndTime,
+		arg.TeacherID,
+		arg.ID,
+	)
 	return err
 }

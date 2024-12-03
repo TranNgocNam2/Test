@@ -51,8 +51,13 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlot UpdateSlot)
 		return model.ErrSlotNotFound
 	}
 
+	teacher, err := qtx.GetTeacherById(ctx, updateSlot.TeacherId)
+	if err != nil {
+		return model.ErrTeacherNotFound
+	}
+
 	if slot.StartTime.Equal(updateSlot.StartTime) && slot.EndTime.Equal(updateSlot.EndTime) &&
-		*slot.TeacherID == updateSlot.TeacherId {
+		teacher.ID == *slot.TeacherID {
 		return nil
 	}
 
@@ -75,7 +80,7 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlot UpdateSlot)
 	}
 
 	isTeacherOverlap, err := qtx.CheckTeacherTimeOverlap(ctx, sqlc.CheckTeacherTimeOverlapParams{
-		TeacherID: &updateSlot.TeacherId,
+		TeacherID: &teacher.ID,
 		SlotID:    slot.ID,
 		StartTime: &updateSlot.StartTime,
 		EndTime:   &updateSlot.EndTime,
@@ -110,6 +115,7 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlot UpdateSlot)
 		StartTime: &updateSlot.StartTime,
 		EndTime:   &updateSlot.EndTime,
 		ID:        slot.ID,
+		TeacherID: &teacher.ID,
 	})
 	if err != nil {
 		c.logger.Error(err.Error())
