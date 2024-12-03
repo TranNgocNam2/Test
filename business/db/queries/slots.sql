@@ -52,7 +52,7 @@ SELECT EXISTS (
 SELECT * FROM slots WHERE class_id = sqlc.arg(class_id) ORDER BY index;
 
 -- name: GetConflictingSlotIndexes :one
-SELECT STRING_AGG(index+1::TEXT, ',') AS indexes
+SELECT STRING_AGG((index+1)::TEXT, ', ') AS indexes
 FROM slots
 WHERE class_id = sqlc.arg(class_id)
   AND id <> sqlc.arg(slot_id)
