@@ -149,6 +149,9 @@ func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLea
 	if err != nil {
 		return model.ErrClassNotFound
 	}
+
+	subject, _ := qtx.GetSubjectById(ctx, class.SubjectID)
+
 	// Check if the class is already started
 	if class.StartDate.Before(time.Now()) {
 		return model.ErrClassStarted
@@ -160,6 +163,7 @@ func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLea
 			Status:     int32(status.Valid),
 			IsVerified: true,
 			AuthRole:   role.LEARNER,
+			Type:       subject.LearnerType,
 		})
 	if err != nil {
 		c.logger.Error(err.Error())
@@ -259,6 +263,8 @@ func (c *Core) AddLearner(ctx *gin.Context, id uuid.UUID, learner AddLearner) er
 		return model.ErrClassStarted
 	}
 
+	subject, _ := qtx.GetSubjectById(ctx, class.SubjectID)
+
 	dbLearner, err := qtx.GetVerifiedLearnersByLearnerId(ctx,
 		sqlc.GetVerifiedLearnersByLearnerIdParams{
 			ID:     learner.LearnerId,
@@ -266,6 +272,9 @@ func (c *Core) AddLearner(ctx *gin.Context, id uuid.UUID, learner AddLearner) er
 		})
 	if err != nil {
 		return model.ErrLearnerNotFound
+	}
+	if subject.LearnerType != dbLearner.Type {
+		return model.ErrLearnerTypeMismatch
 	}
 
 	// Check if the learner is already in the class
