@@ -57,7 +57,13 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 		return model.ErrClassNotFound
 	}
 
-	_, err = c.queries.GetClassLearnerByClassAndLearner(ctx,
+	dbSubject, _ := qtx.GetSubjectById(ctx, dbClass.SubjectID)
+
+	if dbSubject.LearnerType != learner.Type {
+		return model.ErrLearnerTypeMismatch
+	}
+
+	_, err = qtx.GetClassLearnerByClassAndLearner(ctx,
 		sqlc.GetClassLearnerByClassAndLearnerParams{
 			ClassID:   dbClass.ID,
 			LearnerID: learner.ID,
@@ -77,7 +83,7 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 	dbSlots, _ := qtx.GetSlotsByClassId(ctx, dbClass.ID)
 	var slotIds []uuid.UUID
 	for _, dbSlot := range dbSlots {
-		scheduleConflict, _ := c.queries.CheckLearnerTimeOverlap(ctx,
+		scheduleConflict, _ := qtx.CheckLearnerTimeOverlap(ctx,
 			sqlc.CheckLearnerTimeOverlapParams{
 				LearnerID: learner.ID,
 				EndTime:   dbSlot.EndTime,

@@ -280,6 +280,7 @@ WHERE email = ANY($1::text[])
   AND status = $2
   AND is_verified = $3
   AND auth_role = $4
+  AND type = $5
 `
 
 type GetUsersByEmailsParams struct {
@@ -287,6 +288,7 @@ type GetUsersByEmailsParams struct {
 	Status     int32    `db:"status" json:"status"`
 	IsVerified bool     `db:"is_verified" json:"isVerified"`
 	AuthRole   int16    `db:"auth_role" json:"authRole"`
+	Type       *int16   `db:"type" json:"type"`
 }
 
 func (q *Queries) GetUsersByEmails(ctx context.Context, arg GetUsersByEmailsParams) ([]string, error) {
@@ -295,6 +297,7 @@ func (q *Queries) GetUsersByEmails(ctx context.Context, arg GetUsersByEmailsPara
 		arg.Status,
 		arg.IsVerified,
 		arg.AuthRole,
+		arg.Type,
 	)
 	if err != nil {
 		return nil, err

@@ -82,7 +82,8 @@ FROM users
 WHERE email = ANY(sqlc.arg(emails)::text[])
   AND status = sqlc.arg(status)
   AND is_verified = sqlc.arg(is_verified)
-  AND auth_role = sqlc.arg(auth_role);
+  AND auth_role = sqlc.arg(auth_role)
+  AND type = sqlc.arg(type);
 
 -- name: GetEmailsExcept :one
 SELECT STRING_AGG(email, ', ') AS emails
