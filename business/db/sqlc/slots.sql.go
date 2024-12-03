@@ -12,12 +12,41 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkSlotOrder = `-- name: CheckSlotOrder :one
+SELECT EXISTS (
+    SELECT 1
+    FROM slots AS s1
+             JOIN slots AS s2
+                  ON s1.class_id = s2.class_id
+                      AND s1.index < s2.index
+    WHERE s2.id = $1
+      AND s2.start_time < s1.end_time
+      AND s2.start_time = $2
+      AND s2.end_time = $3
+) AS invalid
+`
+
+type CheckSlotOrderParams struct {
+	SlotID    uuid.UUID  `db:"slot_id" json:"slotId"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+}
+
+func (q *Queries) CheckSlotOrder(ctx context.Context, arg CheckSlotOrderParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkSlotOrder, arg.SlotID, arg.StartTime, arg.EndTime)
+	var invalid bool
+	err := row.Scan(&invalid)
+	return invalid, err
+}
+
 const checkTeacherTimeOverlap = `-- name: CheckTeacherTimeOverlap :one
 SELECT EXISTS (
     SELECT 1
     FROM slots
     WHERE teacher_id = $1
       AND id <> $2
+      AND start_time IS NOT NULL
+      AND end_time IS NOT NULL
       AND NOT (end_time <= $3
                    OR start_time >= $4)
 ) AS overlap
@@ -49,6 +78,8 @@ SELECT EXISTS (
     WHERE teacher_id = $1
       AND id <> $2
       AND class_id <> slots.class_id
+      AND start_time IS NOT NULL
+      AND end_time IS NOT NULL
       AND NOT (end_time <= $3
         OR start_time >= $4)
 ) AS overlap
@@ -118,7 +149,7 @@ type CreateSlotsParams struct {
 }
 
 const getConflictingSlotIndexes = `-- name: GetConflictingSlotIndexes :one
-SELECT STRING_AGG(index::TEXT, ',') AS indexes
+SELECT STRING_AGG(index+1::TEXT, ',') AS indexes
 FROM slots
 WHERE class_id = $1
   AND id <> $2
