@@ -26,7 +26,7 @@ func toCoreNewClass(newClassRequest payload.NewClass) (class.NewClass, error) {
 	var slotStartTime time.Time
 	if newClassRequest.Slots.StartTime != "" && newClassRequest.Slots.StartDate != "" {
 		slotStartDate, err = time.Parse(time.DateOnly, newClassRequest.Slots.StartDate)
-		if err != nil || slotStartDate.Before(time.Now().UTC()) {
+		if err != nil || slotStartDate.Before(time.Now()) {
 			return class.NewClass{}, model.ErrInvalidSlotStartDate
 		}
 

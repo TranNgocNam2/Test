@@ -66,7 +66,7 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 		return model.ErrLearnerAlreadyInClass
 	}
 
-	if dbClass.StartDate.Before(time.Now().UTC()) {
+	if dbClass.StartDate.Before(time.Now()) {
 		return model.ErrClassStarted
 	}
 
@@ -210,8 +210,7 @@ func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceS
 		return model.ErrInvalidAttendanceCode
 	}
 
-	now := time.Now().UTC().Format(time.DateTime)
-	currentTime, _ := time.Parse(time.DateTime, now)
+	currentTime := time.Now()
 
 	if slot.EndTime.Before(currentTime) {
 		return model.ErrSlotEnded
