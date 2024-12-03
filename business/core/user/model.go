@@ -16,6 +16,7 @@ type User struct {
 	Role     *int16  `json:"role,omitempty"`
 	Status   *int32  `json:"status,omitempty"`
 	School   *School `json:"school,omitempty"`
+	Type     *int16  `json:"type,omitempty"`
 }
 
 type Verification struct {
