@@ -86,8 +86,8 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlot UpdateSlot)
 		EndTime:   &updateSlot.EndTime,
 	})
 	if err != nil || isTeacherOverlap {
-		return fmt.Errorf(model.ErrTeacherIsNotAvailable, updateSlot.StartTime.Format(class.TimeLayout),
-			updateSlot.EndTime.Format(class.TimeLayout))
+		return fmt.Errorf(model.ErrTeacherIsNotAvailable, updateSlot.StartTime.Local().Format(class.TimeLayout),
+			updateSlot.EndTime.Local().Format(class.TimeLayout))
 	}
 
 	isSlotOrderConflict, err := qtx.CheckSlotOrder(ctx, sqlc.CheckSlotOrderParams{
@@ -104,11 +104,12 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlot UpdateSlot)
 			ClassID:   slot.ClassID,
 			EndTime:   &updateSlot.EndTime,
 			StartTime: &updateSlot.StartTime,
+			SlotID:    slot.ID,
 		})
 	if len(learnerEmails) > 0 {
 		return fmt.Errorf(model.ErrLearnerTimeOverlap, learnerEmails,
-			updateSlot.StartTime.Format(class.TimeLayout),
-			updateSlot.EndTime.Format(class.TimeLayout))
+			updateSlot.StartTime.Local().Format(class.TimeLayout),
+			updateSlot.EndTime.Local().Format(class.TimeLayout))
 	}
 
 	err = qtx.UpdateSlotTime(ctx, sqlc.UpdateSlotTimeParams{

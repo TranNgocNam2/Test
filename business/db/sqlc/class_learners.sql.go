@@ -68,20 +68,27 @@ FROM (
                   JOIN slots s ON s.class_id = cl.class_id
                   JOIN classes c ON cl.class_id = c.id
          WHERE c.id = $1::uuid
-           AND s.start_time < $2
-           AND s.end_time > $3
+           AND s.id <> $2
+           AND s.start_time < $3
+           AND s.end_time > $4
          GROUP BY cl.learner_id, u.email
      ) as ucse
 `
 
 type CheckAllLearnersInClassTimeParams struct {
 	ClassID   uuid.UUID  `db:"class_id" json:"classId"`
+	SlotID    uuid.UUID  `db:"slot_id" json:"slotId"`
 	EndTime   *time.Time `db:"end_time" json:"endTime"`
 	StartTime *time.Time `db:"start_time" json:"startTime"`
 }
 
 func (q *Queries) CheckAllLearnersInClassTime(ctx context.Context, arg CheckAllLearnersInClassTimeParams) ([]byte, error) {
-	row := q.db.QueryRow(ctx, checkAllLearnersInClassTime, arg.ClassID, arg.EndTime, arg.StartTime)
+	row := q.db.QueryRow(ctx, checkAllLearnersInClassTime,
+		arg.ClassID,
+		arg.SlotID,
+		arg.EndTime,
+		arg.StartTime,
+	)
 	var emails []byte
 	err := row.Scan(&emails)
 	return emails, err

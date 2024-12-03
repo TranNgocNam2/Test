@@ -33,6 +33,7 @@ FROM (
                   JOIN slots s ON s.class_id = cl.class_id
                   JOIN classes c ON cl.class_id = c.id
          WHERE c.id = sqlc.arg(class_id)::uuid
+           AND s.id <> sqlc.arg(slot_id)
            AND s.start_time < sqlc.arg(end_time)
            AND s.end_time > sqlc.arg(start_time)
          GROUP BY cl.learner_id, u.email
