@@ -51,6 +51,16 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlot UpdateSlot)
 		return model.ErrSlotNotFound
 	}
 
+	teacher, err := qtx.GetTeacherById(ctx, updateSlot.TeacherId)
+	if err != nil {
+		return model.ErrTeacherNotFound
+	}
+
+	if slot.StartTime.Equal(updateSlot.StartTime) && slot.EndTime.Equal(updateSlot.EndTime) &&
+		teacher.ID == *slot.TeacherID {
+		return nil
+	}
+
 	if slot.StartTime.Before(time.Now()) {
 		return model.ErrSlotAlreadyStarted
 	}
@@ -69,6 +79,26 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlot UpdateSlot)
 		return fmt.Errorf(model.ErrSlotTimeConflict, slotConflict)
 	}
 
+	isTeacherOverlap, err := qtx.CheckTeacherTimeOverlap(ctx, sqlc.CheckTeacherTimeOverlapParams{
+		TeacherID: &teacher.ID,
+		SlotID:    slot.ID,
+		StartTime: &updateSlot.StartTime,
+		EndTime:   &updateSlot.EndTime,
+	})
+	if err != nil || isTeacherOverlap {
+		return fmt.Errorf(model.ErrTeacherIsNotAvailable, updateSlot.StartTime.Format(class.TimeLayout),
+			updateSlot.EndTime.Format(class.TimeLayout))
+	}
+
+	isSlotOrderConflict, err := qtx.CheckSlotOrder(ctx, sqlc.CheckSlotOrderParams{
+		SlotID:    slot.ID,
+		StartTime: &updateSlot.StartTime,
+		EndTime:   &updateSlot.EndTime,
+	})
+	if err != nil || isSlotOrderConflict {
+		return model.ErrSlotOrderTimeConflict
+	}
+
 	learnerEmails, _ := qtx.CheckAllLearnersInClassTime(ctx,
 		sqlc.CheckAllLearnersInClassTimeParams{
 			ClassID:   slot.ClassID,
@@ -85,6 +115,7 @@ func (c *Core) UpdateSlot(ctx *gin.Context, id uuid.UUID, updateSlot UpdateSlot)
 		StartTime: &updateSlot.StartTime,
 		EndTime:   &updateSlot.EndTime,
 		ID:        slot.ID,
+		TeacherID: &teacher.ID,
 	})
 	if err != nil {
 		c.logger.Error(err.Error())

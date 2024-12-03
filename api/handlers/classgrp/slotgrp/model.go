@@ -21,6 +21,7 @@ func toCoreUpdateSlot(req payload.UpdateSlot) (slot.UpdateSlot, error) {
 	return slot.UpdateSlot{
 		StartTime: startTime,
 		EndTime:   endTime,
+		TeacherId: req.TeacherId,
 	}, nil
 }
 
