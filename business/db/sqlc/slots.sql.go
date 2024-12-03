@@ -149,7 +149,7 @@ type CreateSlotsParams struct {
 }
 
 const getConflictingSlotIndexes = `-- name: GetConflictingSlotIndexes :one
-SELECT STRING_AGG(index+1::TEXT, ',') AS indexes
+SELECT STRING_AGG((index+1)::TEXT, ', ') AS indexes
 FROM slots
 WHERE class_id = $1
   AND id <> $2
