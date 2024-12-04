@@ -20,6 +20,31 @@ func (q *Queries) DeleteSubjectTranscripts(ctx context.Context, subjectID uuid.U
 	return err
 }
 
+const getTranscriptIdsBySubjectId = `-- name: GetTranscriptIdsBySubjectId :many
+SELECT id AS ids FROM transcripts
+    WHERE subject_id = $1 ORDER BY index
+`
+
+func (q *Queries) GetTranscriptIdsBySubjectId(ctx context.Context, subjectID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, getTranscriptIdsBySubjectId, subjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var ids uuid.UUID
+		if err := rows.Scan(&ids); err != nil {
+			return nil, err
+		}
+		items = append(items, ids)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTranscriptsBySubjectId = `-- name: GetTranscriptsBySubjectId :many
 SELECT id, subject_id, name, index, min_grade, weight FROM transcripts WHERE subject_id = $1 ORDER BY index
 `
