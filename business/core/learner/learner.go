@@ -58,11 +58,14 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 	}
 
 	dbSubject, _ := qtx.GetSubjectById(ctx, dbClass.SubjectID)
-
-	if dbSubject.LearnerType != learner.Type {
+	if *dbSubject.LearnerType != *learner.Type {
 		return model.ErrLearnerTypeMismatch
 	}
-
+	transcriptIds, err := qtx.GetTranscriptIdsBySubjectId(ctx, dbSubject.ID)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
+	}
 	_, err = qtx.GetClassLearnerByClassAndLearner(ctx,
 		sqlc.GetClassLearnerByClassAndLearnerParams{
 			ClassID:   dbClass.ID,
@@ -102,6 +105,15 @@ func (c *Core) JoinClass(ctx *gin.Context, classAccess ClassAccess) error {
 		LearnerID: learner.ID,
 	}
 	err = qtx.AddLearnerToClass(ctx, classLearner)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
+	}
+
+	err = qtx.GenerateLearnerTranscripts(ctx, sqlc.GenerateLearnerTranscriptsParams{
+		ClassLearnerID: classLearner.ID,
+		TranscriptIds:  transcriptIds,
+	})
 	if err != nil {
 		c.logger.Error(err.Error())
 		return model.ErrFailedToAddLearnerToClass
