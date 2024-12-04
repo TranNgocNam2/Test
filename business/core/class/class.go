@@ -71,7 +71,7 @@ func (c *Core) Create(ctx *gin.Context, newClass NewClass) (uuid.UUID, error) {
 	}
 
 	sessions, err := qtx.GetSessionsBySubjectId(ctx, newClass.SubjectId)
-	if err != nil {
+	if err != nil || len(sessions) == 0 {
 		return uuid.Nil, model.ErrSessionNotFound
 	}
 
@@ -215,6 +215,12 @@ func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLea
 		slotIds = append(slotIds, slot.ID)
 	}
 
+	transcriptIds, err := qtx.GetTranscriptIdsBySubjectId(ctx, subject.ID)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrCannotImportLearners
+	}
+
 	classLearners, err := qtx.AddLearnersToClass(ctx, sqlc.AddLearnersToClassParams{
 		ClassID:    class.ID,
 		LearnerIds: userIds,
@@ -223,11 +229,22 @@ func (c *Core) ImportLearners(ctx *gin.Context, id uuid.UUID, learners ImportLea
 		c.logger.Error(err.Error())
 		return model.ErrCannotImportLearners
 	}
+
+	err = qtx.GenerateLearnersTranscripts(ctx, sqlc.GenerateLearnersTranscriptsParams{
+		ClassLearnerIds: classLearners,
+		TranscriptIds:   transcriptIds,
+	})
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrCannotImportLearners
+	}
+
 	err = qtx.GenerateLearnersAttendance(ctx, sqlc.GenerateLearnersAttendanceParams{
 		ClassLearnerIds: classLearners,
 		SlotIds:         slotIds,
 	})
 	if err != nil {
+		c.logger.Error(err.Error())
 		return model.ErrCannotImportLearners
 	}
 
@@ -273,7 +290,7 @@ func (c *Core) AddLearner(ctx *gin.Context, id uuid.UUID, learner AddLearner) er
 	if err != nil {
 		return model.ErrLearnerNotFound
 	}
-	if subject.LearnerType != dbLearner.Type {
+	if *subject.LearnerType != *dbLearner.Type {
 		return model.ErrLearnerTypeMismatch
 	}
 
@@ -314,6 +331,20 @@ func (c *Core) AddLearner(ctx *gin.Context, id uuid.UUID, learner AddLearner) er
 		return model.ErrFailedToAddLearnerToClass
 	}
 
+	transcriptIds, err := qtx.GetTranscriptIdsBySubjectId(ctx, subject.ID)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrCannotImportLearners
+	}
+
+	err = qtx.GenerateLearnerTranscripts(ctx, sqlc.GenerateLearnerTranscriptsParams{
+		ClassLearnerID: classLearner.ID,
+		TranscriptIds:  transcriptIds,
+	})
+	if err != nil {
+		c.logger.Error(err.Error())
+		return model.ErrFailedToAddLearnerToClass
+	}
 	err = qtx.GenerateLearnerAttendance(ctx, sqlc.GenerateLearnerAttendanceParams{
 		ClassLearnerID: classLearner.ID,
 		SlotIds:        slotIds,

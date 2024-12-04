@@ -87,6 +87,15 @@ type LearnerSpecialization struct {
 	JoinedAt         *time.Time `db:"joined_at" json:"joinedAt"`
 }
 
+type LearnerTranscript struct {
+	ID             uuid.UUID  `db:"id" json:"id"`
+	ClassLearnerID uuid.UUID  `db:"class_learner_id" json:"classLearnerId"`
+	TranscriptID   uuid.UUID  `db:"transcript_id" json:"transcriptId"`
+	Grade          *float32   `db:"grade" json:"grade"`
+	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
+	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
+}
+
 type Material struct {
 	ID        uuid.UUID       `db:"id" json:"id"`
 	SessionID uuid.UUID       `db:"session_id" json:"sessionId"`

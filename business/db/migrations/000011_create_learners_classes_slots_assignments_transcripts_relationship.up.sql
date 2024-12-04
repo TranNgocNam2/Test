@@ -43,3 +43,22 @@ CREATE table learner_assignments(
 
     CONSTRAINT unique_learner_assignment UNIQUE (assignment_id, class_learner_id)
 );
+
+CREATE table learner_transcripts(
+    id                  uuid PRIMARY KEY,
+    class_learner_id    uuid NOT NULL,
+    transcript_id       uuid NOT NULL,
+    grade               real,
+    updated_at          timestamp without time zone,
+    updated_by          character varying(50),
+    CONSTRAINT fk_learner_transcripts_class_learners
+        FOREIGN KEY (class_learner_id)
+            REFERENCES class_learners(id) ON DELETE CASCADE,
+    CONSTRAINT fk_learner_transcripts_transcript
+        FOREIGN KEY (transcript_id)
+            REFERENCES transcripts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_learner_transcripts_updated_by
+        FOREIGN KEY (updated_by)
+            REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT unique_learner_transcripts UNIQUE (transcript_id, class_learner_id)
+);
