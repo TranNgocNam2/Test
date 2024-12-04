@@ -562,3 +562,45 @@ func (c *Core) GetVerificationsInformation(ctx *gin.Context) (*VerifyLearnerInfo
 
 	return &learnerVerification, nil
 }
+
+func (c *Core) GetAttendanceReports(ctx *gin.Context, classId uuid.UUID) ([]AttendanceReport, error) {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+	learner, err := middleware.AuthorizeLearner(ctx, qtx)
+	if err != nil {
+		return nil, err
+	}
+
+	class, err := qtx.GetClassById(ctx, classId)
+	if err != nil {
+		return nil, model.ErrClassNotFound
+	}
+
+	attendanceReports, err := qtx.GetLearnerAttendanceRecords(ctx,
+		sqlc.GetLearnerAttendanceRecordsParams{
+			ClassID:   class.ID,
+			LearnerID: learner.ID,
+		})
+	if err != nil {
+		return nil, model.ErrAttendanceReportsNotFound
+	}
+
+	var reports []AttendanceReport
+	for _, attendanceReport := range attendanceReports {
+		report := AttendanceReport{
+			ID:        attendanceReport.ID,
+			Index:     attendanceReport.Index,
+			Status:    attendanceReport.Status,
+			StartTime: *attendanceReport.StartTime,
+			EndTime:   *attendanceReport.EndTime,
+		}
+		reports = append(reports, report)
+	}
+
+	return reports, nil
+}

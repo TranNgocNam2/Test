@@ -19,5 +19,6 @@ func LearnerRoutes(router *gin.Engine, app *app.Application) {
 		learners.PUT("/classes/:classId/attendance", handlers.SubmitAttendance())
 		learners.GET("/classes/:classId", handlers.GetLearnerClasses())
 		learners.GET("/slots/:slotId", handlers.GetAttendanceRecords())
+		learners.GET("/classes/:classId/slots", handlers.GetAttendanceReports())
 	}
 }
