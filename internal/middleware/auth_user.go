@@ -3,8 +3,6 @@ package middleware
 import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/common/status"
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	"gitlab.com/innovia69420/kit/enum/http/header"
 	"gitlab.com/innovia69420/kit/enum/role"
@@ -46,9 +44,7 @@ func AuthorizeTeacher(ctx *gin.Context, queries *sqlc.Queries) (string, error) {
 	}
 
 	teacher, err := queries.GetUserById(ctx, ctx.GetHeader(header.XUserId))
-	fmt.Println(teacher.Status)
 	if err != nil || teacher.AuthRole != role.TEACHER || status.User(teacher.Status) != status.Valid {
-		fmt.Println(err.Error())
 		return "", ErrInvalidUser
 	}
 

@@ -108,6 +108,9 @@ func (h *Handlers) UpdateRecord() gin.HandlerFunc {
 			case errors.Is(err, model.ErrSlotNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
+			case errors.Is(err, model.ErrStartTimeNotStarted):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
 			case errors.Is(err, middleware.ErrInvalidUser),
 				errors.Is(err, model.ErrTeacherIsNotInSlot):
 				web.Respond(ctx, nil, http.StatusUnauthorized, err)

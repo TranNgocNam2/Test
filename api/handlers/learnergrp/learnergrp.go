@@ -315,3 +315,30 @@ func (h *Handlers) GetVerificationInfo() gin.HandlerFunc {
 		web.Respond(ctx, verificationInfo, http.StatusOK, nil)
 	}
 }
+
+func (h *Handlers) GetAttendanceReports() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		classId, err := uuid.Parse(ctx.Param("classId"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		reports, err := h.learner.GetAttendanceReports(ctx, classId)
+		if err != nil {
+			switch {
+			case errors.Is(err, model.ErrAttendanceReportsNotFound),
+				errors.Is(err, model.ErrClassNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+
+			}
+		}
+
+		web.Respond(ctx, reports, http.StatusOK, nil)
+
+	}
+}
