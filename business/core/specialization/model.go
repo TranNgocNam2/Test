@@ -12,7 +12,7 @@ type Details struct {
 	Code        string    `json:"code"`
 	Status      int16     `json:"status"`
 	Description *string   `json:"description"`
-	TimeAmount  *float64  `json:"timeAmount"`
+	TimeAmount  *float32  `json:"timeAmount"`
 	Image       *string   `json:"image"`
 	CreatedAt   time.Time `json:"createdAt"`
 	Subjects    []Subject `json:"subjects"`
@@ -100,6 +100,7 @@ func toCoreSpecializationDetails(dbSpec sqlc.Specialization) Details {
 		Name:        dbSpec.Name,
 		Code:        dbSpec.Code,
 		Status:      dbSpec.Status,
+		TimeAmount:  dbSpec.TimeAmount,
 		Description: dbSpec.Description,
 		Image:       dbSpec.ImageLink,
 		CreatedAt:   dbSpec.CreatedAt,
