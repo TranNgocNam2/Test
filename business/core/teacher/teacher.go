@@ -95,13 +95,13 @@ func (c *Core) GetTeachersInClass(ctx *gin.Context, classId uuid.UUID) ([]Teache
 	return teachers, nil
 }
 
-func (c *Core) UpdateRecordLink(ctx *gin.Context, slotID uuid.UUID, recordLink UpdateRecord) error {
+func (c *Core) UpdateRecordLink(ctx *gin.Context, slotId uuid.UUID, recordLink UpdateRecord) error {
 	teacherID, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
 		return err
 	}
 
-	slot, err := c.queries.GetSlotById(ctx, slotID)
+	slot, err := c.queries.GetSlotById(ctx, slotId)
 	if err != nil {
 		return model.ErrSlotNotFound
 	}
@@ -109,10 +109,13 @@ func (c *Core) UpdateRecordLink(ctx *gin.Context, slotID uuid.UUID, recordLink U
 	if strings.Compare(*slot.TeacherID, teacherID) != 0 {
 		return model.ErrTeacherIsNotInSlot
 	}
+	if slot.StartTime.After(time.Now()) {
+		return model.ErrStartTimeNotStarted
+	}
 
 	err = c.queries.UpdateRecordLink(ctx, sqlc.UpdateRecordLinkParams{
 		RecordLink: &recordLink.Link,
-		ID:         slotID,
+		ID:         slotId,
 	})
 	if err != nil {
 		c.logger.Error(err.Error())
