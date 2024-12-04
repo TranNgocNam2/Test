@@ -29,8 +29,8 @@ VALUES  (uuid_generate_v4(), '3c1a1849-198a-415e-a136-ad06e114e2bb', '2300b4ec-0
 
 INSERT INTO transcripts(id, name, index, min_grade, weight, subject_id)
 VALUES
-    ('886636c6-7037-494e-a985-6bfc5fcddd77', 'Progress Test 1', 0, 5, 20, '3c1a1849-198a-415e-a136-ad06e114e2bb'),
-    ('b8263ee1-d0c2-4df7-a768-70c84f71e75a', 'Progress Test 2', 1, 5, 20, '3c1a1849-198a-415e-a136-ad06e114e2bb'),
+    ('be4d8156-c09f-4a94-9df7-4f84832c1737', 'Progress Test 1', 0, 5, 20, '3c1a1849-198a-415e-a136-ad06e114e2bb'),
+    ('544830b0-e12e-43f1-8564-e979c3febcb7', 'Progress Test 2', 1, 5, 20, '3c1a1849-198a-415e-a136-ad06e114e2bb'),
     ('a7599942-d07d-4ddb-adb5-450f0f7e0c54', 'Assignment', 2, 5, 10, '3c1a1849-198a-415e-a136-ad06e114e2bb'),
     ('d712d0a6-6436-4b6d-86c2-ebc2452d5042', 'Final', 3, 5, 50, '3c1a1849-198a-415e-a136-ad06e114e2bb'),
     ('107a51e2-3367-4a7f-aa12-21855f247d11', 'Progress Test 1', 0, 5, 20, 'd7fe9772-8ed9-4e96-a274-ebe793d5cb66'),
@@ -42,17 +42,17 @@ VALUES
     ('a294d2a7-89ad-489d-92cf-b350ab12025f', 'Assignment', 2, 5, 10, 'b9f53e13-1e43-4b58-92d8-2f4ad31bbbf3'),
     ('20220302-28ad-456f-951c-fc756c3b2490', 'Final', 3, 5, 50, 'b9f53e13-1e43-4b58-92d8-2f4ad31bbbf3'),
     ('428e4991-9e26-4877-9184-339441331a0a', 'Progress Test 1', 0, 5, 20, 'f2a58c91-82d2-4b12-9ed8-54ea6f91bb10'),
-    ('259da1ae-db26-4b71-978d-f1b6c6140bfa', 'Progress Test 2', 1, 5, 20, 'f2a58c91-82d2-4b12-9ed8-54ea6f91bb10'),
-    ('259da1ae-db26-4b71-978d-f1b6c6140bfa', 'Assignment', 2, 5, 10, 'f2a58c91-82d2-4b12-9ed8-54ea6f91bb10'),
+    ('f885b45f-3329-47ba-b2ea-aa983f9740a4', 'Progress Test 2', 1, 5, 20, 'f2a58c91-82d2-4b12-9ed8-54ea6f91bb10'),
+    ('da585c23-2c52-4efa-86cb-0efe11803e01', 'Assignment', 2, 5, 10, 'f2a58c91-82d2-4b12-9ed8-54ea6f91bb10'),
     ('259da1ae-db26-4b71-978d-f1b6c6140bfa', 'Final', 3, 5, 50, 'f2a58c91-82d2-4b12-9ed8-54ea6f91bb10'),
-    ('886636c6-7037-494e-a985-6bfc5fcddd77', 'Progress Test 1', 0, 5, 20, 'e3d87aa5-f42d-4b25-9058-4e239f97a13b'),
+    ('87979911-d7fb-4933-b18c-4975c3c3c5ae', 'Progress Test 1', 0, 5, 20, 'e3d87aa5-f42d-4b25-9058-4e239f97a13b'),
     ('b8263ee1-d0c2-4df7-a768-70c84f71e75a', 'Progress Test 2', 1, 5, 20, 'e3d87aa5-f42d-4b25-9058-4e239f97a13b'),
-    ('a7599942-d07d-4ddb-adb5-450f0f7e0c54', 'Assignment', 2, 5, 10, 'e3d87aa5-f42d-4b25-9058-4e239f97a13b'),
-    ('d712d0a6-6436-4b6d-86c2-ebc2452d5042', 'Final', 3, 5, 50, 'e3d87aa5-f42d-4b25-9058-4e239f97a13b'),
+    ('270a81df-d7e7-49cf-bffa-7132647b38e0', 'Assignment', 2, 5, 10, 'e3d87aa5-f42d-4b25-9058-4e239f97a13b'),
+    ('6b60794a-ddae-4109-828b-d4326e1728c9', 'Final', 3, 5, 50, 'e3d87aa5-f42d-4b25-9058-4e239f97a13b'),
     ('886636c6-7037-494e-a985-6bfc5fcddd77', 'Progress Test 1', 0, 5, 20, '12ef93f3-5d28-4e0b-8d43-f1ac9deff501'),
-    ('b8263ee1-d0c2-4df7-a768-70c84f71e75a', 'Progress Test 2', 1, 5, 20, '12ef93f3-5d28-4e0b-8d43-f1ac9deff501'),
-    ('a7599942-d07d-4ddb-adb5-450f0f7e0c54', 'Assignment', 2, 5, 10, '12ef93f3-5d28-4e0b-8d43-f1ac9deff501'),
-    ('d712d0a6-6436-4b6d-86c2-ebc2452d5042', 'Final', 3, 5, 50, '12ef93f3-5d28-4e0b-8d43-f1ac9deff501');
+    ('23806ade-7be2-4154-b0ad-c686c9e8824c', 'Progress Test 2', 1, 5, 20, '12ef93f3-5d28-4e0b-8d43-f1ac9deff501'),
+    ('4fcb831a-4f4a-4a6b-b028-7bd0613c59ff', 'Assignment', 2, 5, 10, '12ef93f3-5d28-4e0b-8d43-f1ac9deff501'),
+    ('01504c2f-8a73-4863-afe0-be9fdd0b528c', 'Final', 3, 5, 50, '12ef93f3-5d28-4e0b-8d43-f1ac9deff501');
 
 INSERT INTO sessions(id, name, index, subject_id)
 VALUES
@@ -72,16 +72,16 @@ VALUES
 
 INSERT INTO materials(id, name, index, type, data, is_shared, session_id)
 VALUES
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '54fd2adf-47d6-4680-89a0-31fda67d6818'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '4911d302-128a-458c-8fd1-0d231f0136bb'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '5617b702-0290-4c62-a96b-56a639d0a395'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '520e4631-5418-4498-9984-cb387b8e1e0d'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '5b6f7396-3062-4b26-afaa-d33264727497'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, 'f0b4206d-ea9e-4d25-a09d-d3df1f94774d'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '04990dce-f6e8-4bd5-825d-4ddcd6905819'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '5655cb6e-ecaf-45d5-b2e0-19e8a1f49eda'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '0c81fd33-736f-4dc5-ba97-677453d15897'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, 'f99614fa-293c-4f2b-af73-6fc2868dd307'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '5504c448-9e8b-4588-a46a-34de1ee08605'),
-    (uuid_generate_v4(), "", 0, "h1", "Gioi thieu", false, '5073add0-cb21-445d-99c1-11d7e4242bfc');
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '54fd2adf-47d6-4680-89a0-31fda67d6818'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '4911d302-128a-458c-8fd1-0d231f0136bb'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '5617b702-0290-4c62-a96b-56a639d0a395'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '520e4631-5418-4498-9984-cb387b8e1e0d'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '5b6f7396-3062-4b26-afaa-d33264727497'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, 'f0b4206d-ea9e-4d25-a09d-d3df1f94774d'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '04990dce-f6e8-4bd5-825d-4ddcd6905819'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '5655cb6e-ecaf-45d5-b2e0-19e8a1f49eda'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '0c81fd33-736f-4dc5-ba97-677453d15897'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, 'f99614fa-293c-4f2b-af73-6fc2868dd307'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '5504c448-9e8b-4588-a46a-34de1ee08605'),
+    (uuid_generate_v4(), 'not_share_1', 0, 'h1', '{"data": "Gioi thieu"}', false, '5073add0-cb21-445d-99c1-11d7e4242bfc');
 
