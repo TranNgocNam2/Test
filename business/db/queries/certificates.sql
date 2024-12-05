@@ -9,3 +9,8 @@ AND status = sqlc.arg(status)::int;
 INSERT INTO certificates (id, learner_id, specialization_id, name, status, created_at)
 VALUES (uuid_generate_v4(), sqlc.arg(learner_id), sqlc.arg(specialization_id),
         sqlc.arg(name), sqlc.arg(status), now());
+
+-- name: GetCertificateById :one
+SELECT *
+FROM certificates
+WHERE id = sqlc.arg(id);

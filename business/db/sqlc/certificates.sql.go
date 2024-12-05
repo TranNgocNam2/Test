@@ -34,8 +34,32 @@ func (q *Queries) CreateSpecializationCertificate(ctx context.Context, arg Creat
 	return err
 }
 
+const getCertificateById = `-- name: GetCertificateById :one
+SELECT id, learner_id, specialization_id, subject_id, class_id, name, status, created_at, updated_at, updated_by
+FROM certificates
+WHERE id = $1
+`
+
+func (q *Queries) GetCertificateById(ctx context.Context, id uuid.UUID) (Certificate, error) {
+	row := q.db.QueryRow(ctx, getCertificateById, id)
+	var i Certificate
+	err := row.Scan(
+		&i.ID,
+		&i.LearnerID,
+		&i.SpecializationID,
+		&i.SubjectID,
+		&i.ClassID,
+		&i.Name,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
 const getCertificationsByLearnerAndSubjects = `-- name: GetCertificationsByLearnerAndSubjects :many
-SELECT id, learner_id, specialization_id, subject_id, name, status, created_at, updated_at, updated_by
+SELECT id, learner_id, specialization_id, subject_id, class_id, name, status, created_at, updated_at, updated_by
 FROM certificates
 WHERE learner_id = $1
 AND subject_id = ANY($2::uuid[])
@@ -62,6 +86,7 @@ func (q *Queries) GetCertificationsByLearnerAndSubjects(ctx context.Context, arg
 			&i.LearnerID,
 			&i.SpecializationID,
 			&i.SubjectID,
+			&i.ClassID,
 			&i.Name,
 			&i.Status,
 			&i.CreatedAt,

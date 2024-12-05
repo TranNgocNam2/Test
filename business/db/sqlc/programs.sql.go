@@ -48,6 +48,29 @@ func (q *Queries) DeleteProgram(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getProgramByClassId = `-- name: GetProgramByClassId :one
+SELECT p.id, p.name, p.start_date, p.end_date, p.created_by, p.updated_by, p.description, p.created_at, p.updated_at FROM programs p
+JOIN classes c ON p.id = c.program_id
+WHERE c.id = $1
+`
+
+func (q *Queries) GetProgramByClassId(ctx context.Context, classID uuid.UUID) (Program, error) {
+	row := q.db.QueryRow(ctx, getProgramByClassId, classID)
+	var i Program
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.StartDate,
+		&i.EndDate,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getProgramById = `-- name: GetProgramById :one
 SELECT id, name, start_date, end_date, created_by, updated_by, description, created_at, updated_at FROM programs WHERE id = $1
 `

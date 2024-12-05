@@ -416,7 +416,15 @@ func (c *Core) RemoveLearner(ctx *gin.Context, id uuid.UUID, learner RemoveLearn
 	return nil
 }
 func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Class, error) {
-	_, err := middleware.AuthorizeStaff(ctx, c.queries)
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	_, err = middleware.AuthorizeStaff(ctx, qtx)
 	if err != nil {
 		return nil, err
 	}
@@ -465,25 +473,25 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 			Type:      dbClass.Type,
 		}
 
-		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
+		dbProgram, _ := qtx.GetProgramById(ctx, dbClass.ProgramID)
 		class.Program = toCoreProgram(dbProgram)
 
-		dbSubject, _ := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
+		dbSubject, _ := qtx.GetSubjectById(ctx, dbClass.SubjectID)
 		class.Subject = toCoreSubject(dbSubject)
 
-		dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
+		dbSkills, err := qtx.GetSkillsBySubjectId(ctx, dbSubject.ID)
 		if err != nil {
 			return nil, nil
 		}
 		class.Skills = toCoreSkillSlice(dbSkills)
 
-		totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
+		totalLearners, err := qtx.CountLearnersByClassId(ctx, dbClass.ID)
 		if err != nil {
 			return nil, nil
 		}
 		class.TotalLearners = totalLearners
-		class.TotalSlots, _ = c.queries.CountSlotsByClassId(ctx, dbClass.ID)
-		class.CurrentSlot, _ = c.queries.CountCompletedSlotsByClassId(ctx, dbClass.ID)
+		class.TotalSlots, _ = qtx.CountSlotsByClassId(ctx, dbClass.ID)
+		class.CurrentSlot, _ = qtx.CountCompletedSlotsByClassId(ctx, dbClass.ID)
 
 		classes = append(classes, class)
 	}
@@ -496,8 +504,8 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, teacherId string, filter QueryFi
 	if err != nil {
 		return nil, err
 	}
-
 	defer tx.Commit(ctx)
+
 	qtx := c.queries.WithTx(tx)
 
 	teacher, err := qtx.GetTeacherById(ctx, teacherId)
@@ -721,17 +729,25 @@ func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
 }
 
 func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
-	user, err := middleware.AuthorizeUser(ctx, c.queries)
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return Details{}, err
+	}
+	defer tx.Commit(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
+	user, err := middleware.AuthorizeUser(ctx, qtx)
 	if err != nil {
 		return Details{}, err
 	}
 
-	dbClass, err := c.queries.GetClassById(ctx, id)
+	dbClass, err := qtx.GetClassById(ctx, id)
 	if err != nil {
 		return Details{}, model.ErrClassNotFound
 	}
 
-	totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
+	totalLearners, err := qtx.CountLearnersByClassId(ctx, dbClass.ID)
 	if err != nil {
 		c.logger.Error(err.Error())
 		return Details{}, err
@@ -754,28 +770,28 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		class.Password = nil
 	}
 
-	dbSubject, err := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
+	dbSubject, err := qtx.GetSubjectById(ctx, dbClass.SubjectID)
 	if err != nil {
 		return Details{}, model.ErrSubjectNotFound
 	}
 	class.Subject = toCoreSubject(dbSubject)
 
-	dbProgram, err := c.queries.GetProgramById(ctx, dbClass.ProgramID)
+	dbProgram, err := qtx.GetProgramById(ctx, dbClass.ProgramID)
 	if err != nil {
 		return Details{}, model.ErrProgramNotFound
 	}
 	class.Program = toCoreProgram(dbProgram)
 
-	dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
+	dbSkills, err := qtx.GetSkillsBySubjectId(ctx, dbSubject.ID)
 	if err != nil {
 		return Details{}, model.ErrSkillNotFound
 	}
 	class.Skills = toCoreSkillSlice(dbSkills)
 
 	var slots []Slot
-	dbSlots, _ := c.queries.GetSlotsByClassId(ctx, dbClass.ID)
+	dbSlots, _ := qtx.GetSlotsByClassId(ctx, dbClass.ID)
 	for _, dbSlot := range dbSlots {
-		dbSession, _ := c.queries.GetSessionById(ctx, dbSlot.SessionID)
+		dbSession, _ := qtx.GetSessionById(ctx, dbSlot.SessionID)
 		session := toCoreSession(dbSession)
 		startTime := *dbSlot.StartTime
 		endTime := *dbSlot.EndTime
@@ -789,7 +805,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		}
 
 		if dbSlot.TeacherID != nil {
-			dbTeacher, _ := c.queries.GetTeacherById(ctx, *dbSlot.TeacherID)
+			dbTeacher, _ := qtx.GetTeacherById(ctx, *dbSlot.TeacherID)
 			slot.Teacher = toCoreTeacher(dbTeacher)
 		}
 
