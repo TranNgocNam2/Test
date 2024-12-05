@@ -31,7 +31,7 @@ func NewCore(app *app.Application) *Core {
 	}
 }
 
-func (c *Core) ChangeScore(ctx *gin.Context, classId uuid.UUID, req payload.UpdateLearnerTranscript) error {
+func (c *Core) ChangeScore(ctx *gin.Context, classId uuid.UUID, req []payload.LearnerTranscript) error {
 	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
 		c.logger.Error(err.Error())
@@ -46,7 +46,7 @@ func (c *Core) ChangeScore(ctx *gin.Context, classId uuid.UUID, req payload.Upda
 
 	qtx := c.queries.WithTx(tx)
 
-	for _, transcript := range req.Learners {
+	for _, transcript := range req {
 		classLearner, err := qtx.GetClassLearnerByClassAndLearner(ctx, sqlc.GetClassLearnerByClassAndLearnerParams{
 			LearnerID: transcript.LearnerId,
 			ClassID:   classId,
