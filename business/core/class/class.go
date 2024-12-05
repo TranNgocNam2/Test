@@ -498,10 +498,21 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 	return classes, nil
 }
 
-func (c *Core) QueryByTeacher(ctx *gin.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Class, error) {
-	teacherId, err := middleware.AuthorizeTeacher(ctx, c.queries)
+func (c *Core) QueryByTeacher(ctx *gin.Context, teacherId string, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]Class, error) {
+	tx, err := c.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
+	}
+	defer tx.Commit(ctx)
+	qtx := c.queries.WithTx(tx)
+
+	teacher, err := qtx.GetTeacherById(ctx, teacherId)
+	if err != nil {
+		c.logger.Error(err.Error())
+		teacher.ID, err = middleware.AuthorizeTeacher(ctx, c.queries)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := filter.Validate(); err != nil {
@@ -509,7 +520,7 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, filter QueryFilter, orderBy orde
 	}
 
 	data := map[string]interface{}{
-		"teacher_id":    teacherId,
+		"teacher_id":    teacher.ID,
 		"status":        status.ClassCompleted,
 		"offset":        (pageNumber - 1) * rowsPerPage,
 		"rows_per_page": rowsPerPage,
@@ -552,26 +563,26 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, filter QueryFilter, orderBy orde
 			Type:      dbClass.Type,
 		}
 
-		dbProgram, _ := c.queries.GetProgramById(ctx, dbClass.ProgramID)
+		dbProgram, _ := qtx.GetProgramById(ctx, dbClass.ProgramID)
 		class.Program = toCoreProgram(dbProgram)
 
-		dbSubject, _ := c.queries.GetSubjectById(ctx, dbClass.SubjectID)
+		dbSubject, _ := qtx.GetSubjectById(ctx, dbClass.SubjectID)
 		class.Subject = toCoreSubject(dbSubject)
 
-		dbSkills, err := c.queries.GetSkillsBySubjectId(ctx, dbSubject.ID)
+		dbSkills, err := qtx.GetSkillsBySubjectId(ctx, dbSubject.ID)
 		if err != nil {
 			return nil, nil
 		}
 		class.Skills = toCoreSkillSlice(dbSkills)
 
-		totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
+		totalLearners, err := qtx.CountLearnersByClassId(ctx, dbClass.ID)
 		if err != nil {
 			return nil, nil
 		}
 		class.TotalLearners = totalLearners
 
-		class.TotalSlots, _ = c.queries.CountSlotsByClassId(ctx, dbClass.ID)
-		class.CurrentSlot, _ = c.queries.CountCompletedSlotsByClassId(ctx, dbClass.ID)
+		class.TotalSlots, _ = qtx.CountSlotsByClassId(ctx, dbClass.ID)
+		class.CurrentSlot, _ = qtx.CountCompletedSlotsByClassId(ctx, dbClass.ID)
 
 		classes = append(classes, class)
 	}
@@ -579,11 +590,18 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, filter QueryFilter, orderBy orde
 	return classes, nil
 }
 
-func (c *Core) CountByTeacher(ctx *gin.Context, filter QueryFilter) int {
-	teacherId, _ := middleware.AuthorizeTeacher(ctx, c.queries)
+func (c *Core) CountByTeacher(ctx *gin.Context, teacherId string, filter QueryFilter) int {
+	teacher, err := c.queries.GetTeacherById(ctx, teacherId)
+	if err != nil {
+		c.logger.Error(err.Error())
+		teacher.ID, err = middleware.AuthorizeTeacher(ctx, c.queries)
+		if err != nil {
+			return 0
+		}
+	}
 
 	data := map[string]interface{}{
-		"teacher_id": teacherId,
+		"teacher_id": teacher.ID,
 		"status":     status.ClassCompleted,
 	}
 	if err := filter.Validate(); err != nil {
@@ -611,7 +629,7 @@ func (c *Core) CountByTeacher(ctx *gin.Context, filter QueryFilter) int {
 	return count.Count
 }
 
-func (c *Core) QueryByLearner(ctx *gin.Context) ([]Class, error) {
+func (c *Core) QueryByLearner(ctx *gin.Context, learnerId string) ([]Class, error) {
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -619,9 +637,17 @@ func (c *Core) QueryByLearner(ctx *gin.Context) ([]Class, error) {
 
 	qtx := c.queries.WithTx(tx)
 
-	learner, err := middleware.AuthorizeVerifiedLearner(ctx, qtx)
+	learner, err := qtx.GetVerifiedLearnersByLearnerId(ctx,
+		sqlc.GetVerifiedLearnersByLearnerIdParams{
+			ID:     learnerId,
+			Status: int32(status.Valid),
+		})
 	if err != nil {
-		return nil, err
+		dbLearner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
+		if err != nil {
+			return nil, err
+		}
+		learner = *dbLearner
 	}
 
 	dbClasses, err := qtx.GetClassesByLearnerId(ctx, learner.ID)
@@ -717,7 +743,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 		return Details{}, model.ErrClassNotFound
 	}
 
-	totalLearners, err := c.queries.CountLearnersByClassId(ctx, dbClass.ID)
+	totalLearners, err := qtx.CountLearnersByClassId(ctx, dbClass.ID)
 	if err != nil {
 		c.logger.Error(err.Error())
 		return Details{}, err
