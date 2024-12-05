@@ -61,6 +61,14 @@ type AttendanceRecord struct {
 	Status   int32  `json:"status"`
 }
 
+type AttendanceReport struct {
+	ID        uuid.UUID `json:"id"`
+	Index     int32     `json:"index"`
+	Status    int32     `json:"status"`
+	StartTime time.Time `json:"startTime"`
+	EndTime   time.Time `json:"endTime"`
+}
+
 type UpdateLearner struct {
 	SchoolId   uuid.UUID
 	ImageLinks []string

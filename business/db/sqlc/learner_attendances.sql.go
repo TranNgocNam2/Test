@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -135,6 +136,55 @@ func (q *Queries) GetLearnerAttendanceBySlot(ctx context.Context, slotID uuid.UU
 			&i.SchoolID,
 			&i.SchoolName,
 			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLearnerAttendanceRecords = `-- name: GetLearnerAttendanceRecords :many
+SELECT la.id, la.status, s.start_time, s.end_time, s.index
+FROM learner_attendances la
+         JOIN slots s ON s.id = la.slot_id
+         JOIN class_learners cl ON cl.id = la.class_learner_id
+WHERE cl.class_id = $1::uuid
+  AND cl.learner_id = $2
+ORDER BY s.index
+`
+
+type GetLearnerAttendanceRecordsParams struct {
+	ClassID   uuid.UUID `db:"class_id" json:"classId"`
+	LearnerID string    `db:"learner_id" json:"learnerId"`
+}
+
+type GetLearnerAttendanceRecordsRow struct {
+	ID        uuid.UUID  `db:"id" json:"id"`
+	Status    int32      `db:"status" json:"status"`
+	StartTime *time.Time `db:"start_time" json:"startTime"`
+	EndTime   *time.Time `db:"end_time" json:"endTime"`
+	Index     int32      `db:"index" json:"index"`
+}
+
+func (q *Queries) GetLearnerAttendanceRecords(ctx context.Context, arg GetLearnerAttendanceRecordsParams) ([]GetLearnerAttendanceRecordsRow, error) {
+	rows, err := q.db.Query(ctx, getLearnerAttendanceRecords, arg.ClassID, arg.LearnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetLearnerAttendanceRecordsRow
+	for rows.Next() {
+		var i GetLearnerAttendanceRecordsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Status,
+			&i.StartTime,
+			&i.EndTime,
+			&i.Index,
 		); err != nil {
 			return nil, err
 		}

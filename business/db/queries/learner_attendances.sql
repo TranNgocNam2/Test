@@ -36,3 +36,12 @@ FROM users u
          JOIN schools s ON s.id = vl.school_id
          JOIN learner_attendances la ON la.class_learner_id = cl.id
 WHERE la.slot_id = sqlc.arg(slot_id)::uuid;
+
+-- name: GetLearnerAttendanceRecords :many
+SELECT la.id, la.status, s.start_time, s.end_time, s.index
+FROM learner_attendances la
+         JOIN slots s ON s.id = la.slot_id
+         JOIN class_learners cl ON cl.id = la.class_learner_id
+WHERE cl.class_id = sqlc.arg(class_id)::uuid
+  AND cl.learner_id = sqlc.arg(learner_id)
+ORDER BY s.index;
