@@ -38,7 +38,6 @@ func NewCore(app *app.Application) *Core {
 func (c *Core) CreateAssignment(ctx *gin.Context, classId uuid.UUID, asm payload.Assignment) (string, error) {
 	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
-
 		c.logger.Error(err.Error())
 		return "", middleware.ErrInvalidUser
 	}
@@ -84,7 +83,7 @@ func (c *Core) CreateAssignment(ctx *gin.Context, classId uuid.UUID, asm payload
 		Question:   json.RawMessage(question),
 		Status:     int16(*asm.Status),
 		Type:       int16(*asm.Type),
-		CanOverdue: &asm.CanOverdue,
+		CanOverdue: asm.CanOverdue,
 		Deadline:   &deadline,
 	})
 
@@ -166,7 +165,7 @@ func (c *Core) UpdateAssignment(ctx *gin.Context, classId uuid.UUID, asmId uuid.
 		Deadline:   &deadline,
 		Status:     int16(*data.Status),
 		Type:       int16(*data.Type),
-		CanOverdue: &data.CanOverdue,
+		CanOverdue: data.CanOverdue,
 		ID:         asmId,
 	}); err != nil {
 		return err

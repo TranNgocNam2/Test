@@ -5,7 +5,7 @@ type Assignment struct {
 	Deadline   string      `json:"deadline" validate:"required"`
 	Type       *int        `json:"type" validate:"required,gte=0,lte=1"`
 	Status     *int        `json:"status" validate:"required,gte=0,lte=1"`
-	CanOverdue bool        `json:"canOverdue" validate:"required"`
+	CanOverdue *bool       `json:"canOverdue" validate:"required"`
 }
 
 type AssignmentGrade struct {
