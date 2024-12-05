@@ -12,5 +12,6 @@ func CertificateRoutes(router *gin.Engine, app *app.Application) {
 	certificates := router.Group("/certificates")
 	{
 		certificates.GET("/:id", handlers.GetCertificateById())
+		certificates.GET("", handlers.GetCertificates())
 	}
 }
