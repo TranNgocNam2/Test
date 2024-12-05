@@ -420,7 +420,7 @@ func (c *Core) QueryByManager(ctx *gin.Context, filter QueryFilter, orderBy orde
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Commit(ctx)
 
 	qtx := c.queries.WithTx(tx)
 
@@ -504,8 +504,8 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, teacherId string, filter QueryFi
 	if err != nil {
 		return nil, err
 	}
-
 	defer tx.Commit(ctx)
+
 	qtx := c.queries.WithTx(tx)
 
 	teacher, err := qtx.GetTeacherById(ctx, teacherId)
@@ -733,7 +733,7 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	if err != nil {
 		return Details{}, err
 	}
-	tx.Rollback(ctx)
+	defer tx.Commit(ctx)
 
 	qtx := c.queries.WithTx(tx)
 
