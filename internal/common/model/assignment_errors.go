@@ -1,6 +1,6 @@
 package model
 
-import "errors"
+import "github.com/pkg/errors"
 
 var (
 	ErrTimeFormat                   = errors.New("Deadline không đúng định dạng")

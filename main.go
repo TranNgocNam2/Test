@@ -5,6 +5,7 @@ import (
 	"Backend/api/handlers/classgrp/assignmentgrp"
 	"Backend/api/handlers/classgrp/slotgrp"
 	"Backend/api/handlers/learnergrp"
+	"Backend/api/handlers/learnergrp/certificategrp"
 	"Backend/api/handlers/programgrp"
 	"Backend/api/handlers/schoolgrp"
 	"Backend/api/handlers/skillgrp"
@@ -111,4 +112,5 @@ func LoadRoutes(router *gin.Engine, app *app.Application) {
 	teachergrp.TeacherRoutes(router, app)
 	assignmentgrp.AssignmentRoutes(router, app)
 	slotgrp.SlotRoutes(router, app)
+	certificategrp.CertificateRoutes(router, app)
 }

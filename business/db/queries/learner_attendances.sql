@@ -1,6 +1,6 @@
 -- name: GenerateLearnerAttendance :exec
 INSERT INTO learner_attendances(id, class_learner_id, slot_id)
-VALUES (uuid_generate_v4(), sqlc.arg(class_learner_id), UNNEST(sqlc.arg(slot_ids)::uuid[]));
+VALUES ( , sqlc.arg(class_learner_id), UNNEST(sqlc.arg(slot_ids)::uuid[]));
 
 -- name: GenerateLearnersAttendance :exec
 INSERT INTO learner_attendances(id, class_learner_id, slot_id)

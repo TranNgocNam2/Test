@@ -19,3 +19,7 @@ SELECT * FROM programs WHERE id = sqlc.arg(id);
 -- name: DeleteProgram :exec
 DELETE FROM programs WHERE id = sqlc.arg(id);
 
+-- name: GetProgramByClassId :one
+SELECT * FROM programs
+JOIN classes c ON programs.id = c.program_id
+WHERE c.id = sqlc.arg(class_id);

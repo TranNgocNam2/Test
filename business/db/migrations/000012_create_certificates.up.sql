@@ -3,6 +3,7 @@ CREATE table certificates(
     learner_id          character varying(50) NOT NULL,
     specialization_id   uuid,
     subject_id          uuid,
+    class_id            uuid,
     name                character varying(50) NOT NULL,
 --     type                int NOT NULL DEFAULT 0,
     status              int NOT NULL DEFAULT 0,
@@ -19,6 +20,9 @@ CREATE table certificates(
     CONSTRAINT fk_certificates_subject
         FOREIGN KEY (subject_id)
             REFERENCES subjects(id) ON DELETE CASCADE,
+    CONSTRAINT fk_certificates_class
+        FOREIGN KEY (class_id)
+            REFERENCES classes(id) ON DELETE CASCADE,
 
     CONSTRAINT fk_certificates_updated_by
         FOREIGN KEY (updated_by)

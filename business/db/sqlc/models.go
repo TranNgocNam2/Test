@@ -26,6 +26,7 @@ type Certificate struct {
 	LearnerID        string     `db:"learner_id" json:"learnerId"`
 	SpecializationID *uuid.UUID `db:"specialization_id" json:"specializationId"`
 	SubjectID        *uuid.UUID `db:"subject_id" json:"subjectId"`
+	ClassID          *uuid.UUID `db:"class_id" json:"classId"`
 	Name             string     `db:"name" json:"name"`
 	Status           int32      `db:"status" json:"status"`
 	CreatedAt        time.Time  `db:"created_at" json:"createdAt"`
