@@ -47,3 +47,42 @@ func (q *Queries) GenerateLearnersTranscripts(ctx context.Context, arg GenerateL
 	_, err := q.db.Exec(ctx, generateLearnersTranscripts, arg.ClassLearnerIds, arg.TranscriptIds)
 	return err
 }
+
+const getLearnerTranscript = `-- name: GetLearnerTranscript :one
+SELECT id, class_learner_id, transcript_id, grade, updated_at, updated_by FROM learner_transcripts WHERE class_learner_id = $1 AND transcript_id = $2
+`
+
+type GetLearnerTranscriptParams struct {
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	TranscriptID   uuid.UUID `db:"transcript_id" json:"transcriptId"`
+}
+
+func (q *Queries) GetLearnerTranscript(ctx context.Context, arg GetLearnerTranscriptParams) (LearnerTranscript, error) {
+	row := q.db.QueryRow(ctx, getLearnerTranscript, arg.ClassLearnerID, arg.TranscriptID)
+	var i LearnerTranscript
+	err := row.Scan(
+		&i.ID,
+		&i.ClassLearnerID,
+		&i.TranscriptID,
+		&i.Grade,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const updateLearnerTranscriptGrade = `-- name: UpdateLearnerTranscriptGrade :exec
+UPDATE learner_transcripts
+SET grade = $1
+WHERE id = $2::uuid
+`
+
+type UpdateLearnerTranscriptGradeParams struct {
+	Grade *float32  `db:"grade" json:"grade"`
+	ID    uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateLearnerTranscriptGrade(ctx context.Context, arg UpdateLearnerTranscriptGradeParams) error {
+	_, err := q.db.Exec(ctx, updateLearnerTranscriptGrade, arg.Grade, arg.ID)
+	return err
+}
