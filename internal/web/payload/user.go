@@ -7,6 +7,10 @@ type NewUser struct {
 	Role     *int   `json:"role" validate:"required,gte=0,lte=3"`
 }
 
+type ImportUsers struct {
+	User []NewLearner `json:"users" validate:"required"`
+}
+
 type UpdateUser struct {
 	FullName string `json:"fullName" validate:"required"`
 	Photo    string `json:"photo" validate:"required"`
