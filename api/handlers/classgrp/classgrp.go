@@ -8,6 +8,7 @@ import (
 	"Backend/internal/page"
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -189,11 +190,12 @@ func (h *Handlers) GetClassesByTeacher() gin.HandlerFunc {
 
 		classes, err := h.class.QueryByTeacher(ctx, teacherId, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		if err != nil {
+			fmt.Println(err)
 			web.Respond(ctx, nil, http.StatusUnauthorized, err)
 			return
 		}
 
-		total := h.class.CountByTeacher(ctx, filter)
+		total := h.class.CountByTeacher(ctx, teacherId, filter)
 		result := page.NewPageResponse(classes, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)

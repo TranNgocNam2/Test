@@ -35,7 +35,7 @@ func namedQuerySlice[T any](ctx *gin.Context, logger *zap.Logger, db sqlx.ExtCon
 
 	defer func() {
 		if err != nil {
-			logger.Info(err.Error())
+			logger.Error(err.Error())
 		}
 	}()
 
@@ -60,6 +60,9 @@ func namedQuerySlice[T any](ctx *gin.Context, logger *zap.Logger, db sqlx.ExtCon
 
 	default:
 		rows, err = sqlx.NamedQueryContext(ctx, db, query, data)
+		if err != nil {
+			return err
+		}
 	}
 
 	defer rows.Close()

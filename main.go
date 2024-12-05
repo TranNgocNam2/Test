@@ -20,6 +20,7 @@ import (
 	"Backend/internal/middleware"
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v5"
 	"io"
 	"os"
 
@@ -67,12 +68,23 @@ func main() {
 	router.Use(logger.RequestLogger(log))
 	router.Use(logger.RequestHeaderLogger(log))
 
-	dbPool, err := pgxpool.New(context.Background(), cfg.DatabaseUrl)
+	//dbPool, err := pgxpool.New(context.Background(), cfg.DatabaseUrl)
+	//if err != nil {
+	//	log.Fatal(message.FailedConnectDatabase)
+	//	return
+	//}
+	config, err := pgxpool.ParseConfig(cfg.DatabaseUrl)
 	if err != nil {
-		fmt.Println(err)
 		log.Fatal(message.FailedConnectDatabase)
 		return
 	}
+	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheDescribe
+
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		log.Fatal(message.FailedConnectDatabase)
+	}
+
 	defer dbPool.Close()
 	db := sqlx.NewDb(stdlib.OpenDBFromPool(dbPool), "pgx")
 
