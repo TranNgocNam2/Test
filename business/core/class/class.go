@@ -497,6 +497,7 @@ func (c *Core) QueryByTeacher(ctx *gin.Context, teacherId string, filter QueryFi
 		return nil, err
 	}
 
+	defer tx.Commit(ctx)
 	qtx := c.queries.WithTx(tx)
 
 	teacher, err := qtx.GetTeacherById(ctx, teacherId)
@@ -627,6 +628,7 @@ func (c *Core) QueryByLearner(ctx *gin.Context, learnerId string) ([]Class, erro
 	if err != nil {
 		return nil, err
 	}
+	defer tx.Commit(ctx)
 
 	qtx := c.queries.WithTx(tx)
 
