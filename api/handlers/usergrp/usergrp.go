@@ -222,11 +222,7 @@ func (h *Handlers) GetVerificationUsers() gin.HandlerFunc {
 
 		filter, err := parseFilter(ctx)
 		if err != nil {
-			filter = user.QueryFilter{
-				FullName:   nil,
-				SchoolName: nil,
-				Status:     nil,
-			}
+			filter = user.QueryFilter{}
 		}
 
 		orderBy, err := parseOrder(ctx)
@@ -353,6 +349,50 @@ func (h *Handlers) UpdateLearner() gin.HandlerFunc {
 			case
 				errors.Is(err, model.ErrUserNotFound),
 				errors.Is(err, model.ErrSchoolNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) ImportUsers() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req payload.ImportUsers
+		if err := web.Decode(ctx, &req); err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		if err := validateImportUsersRequest(req); err != nil {
+			web.Respond(ctx, err, http.StatusBadRequest, err)
+			return
+		}
+
+		newUsers, err := toCoreImportLearners(req)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
+			return
+		}
+
+		err = h.user.Import(ctx, newUsers)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrEmailAlreadyExists),
+				errors.Is(err, model.ErrUserAlreadyExist):
+
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			case errors.Is(err, model.ErrSchoolNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
 				return
 			default:
