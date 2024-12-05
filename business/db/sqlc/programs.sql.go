@@ -49,41 +49,14 @@ func (q *Queries) DeleteProgram(ctx context.Context, id uuid.UUID) error {
 }
 
 const getProgramByClassId = `-- name: GetProgramByClassId :one
-SELECT programs.id, programs.name, programs.start_date, programs.end_date, programs.created_by, programs.updated_by, description, programs.created_at, programs.updated_at, c.id, code, subject_id, program_id, password, c.name, link, c.start_date, c.end_date, status, type, c.created_by, c.created_at, c.updated_at, c.updated_by FROM programs
-JOIN classes c ON programs.id = c.program_id
+SELECT p.id, p.name, p.start_date, p.end_date, p.created_by, p.updated_by, p.description, p.created_at, p.updated_at FROM programs p
+JOIN classes c ON p.id = c.program_id
 WHERE c.id = $1
 `
 
-type GetProgramByClassIdRow struct {
-	ID          uuid.UUID  `db:"id" json:"id"`
-	Name        string     `db:"name" json:"name"`
-	StartDate   time.Time  `db:"start_date" json:"startDate"`
-	EndDate     time.Time  `db:"end_date" json:"endDate"`
-	CreatedBy   string     `db:"created_by" json:"createdBy"`
-	UpdatedBy   *string    `db:"updated_by" json:"updatedBy"`
-	Description string     `db:"description" json:"description"`
-	CreatedAt   time.Time  `db:"created_at" json:"createdAt"`
-	UpdatedAt   *time.Time `db:"updated_at" json:"updatedAt"`
-	ID_2        uuid.UUID  `db:"id_2" json:"id2"`
-	Code        string     `db:"code" json:"code"`
-	SubjectID   uuid.UUID  `db:"subject_id" json:"subjectId"`
-	ProgramID   uuid.UUID  `db:"program_id" json:"programId"`
-	Password    string     `db:"password" json:"password"`
-	Name_2      string     `db:"name_2" json:"name2"`
-	Link        *string    `db:"link" json:"link"`
-	StartDate_2 *time.Time `db:"start_date_2" json:"startDate2"`
-	EndDate_2   *time.Time `db:"end_date_2" json:"endDate2"`
-	Status      int16      `db:"status" json:"status"`
-	Type        int16      `db:"type" json:"type"`
-	CreatedBy_2 string     `db:"created_by_2" json:"createdBy2"`
-	CreatedAt_2 time.Time  `db:"created_at_2" json:"createdAt2"`
-	UpdatedAt_2 *time.Time `db:"updated_at_2" json:"updatedAt2"`
-	UpdatedBy_2 *string    `db:"updated_by_2" json:"updatedBy2"`
-}
-
-func (q *Queries) GetProgramByClassId(ctx context.Context, classID uuid.UUID) (GetProgramByClassIdRow, error) {
+func (q *Queries) GetProgramByClassId(ctx context.Context, classID uuid.UUID) (Program, error) {
 	row := q.db.QueryRow(ctx, getProgramByClassId, classID)
-	var i GetProgramByClassIdRow
+	var i Program
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -94,21 +67,6 @@ func (q *Queries) GetProgramByClassId(ctx context.Context, classID uuid.UUID) (G
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.ID_2,
-		&i.Code,
-		&i.SubjectID,
-		&i.ProgramID,
-		&i.Password,
-		&i.Name_2,
-		&i.Link,
-		&i.StartDate_2,
-		&i.EndDate_2,
-		&i.Status,
-		&i.Type,
-		&i.CreatedBy_2,
-		&i.CreatedAt_2,
-		&i.UpdatedAt_2,
-		&i.UpdatedBy_2,
 	)
 	return i, err
 }

@@ -8,6 +8,7 @@ import (
 	"Backend/internal/page"
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -157,7 +158,8 @@ func (h *Handlers) GetClassesByManager() gin.HandlerFunc {
 
 func (h *Handlers) GetClassesByLearner() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		classes, err := h.class.QueryByLearner(ctx)
+		learnerId := ctx.Query("learnerId")
+		classes, err := h.class.QueryByLearner(ctx, learnerId)
 		if err != nil {
 			web.Respond(ctx, nil, http.StatusUnauthorized, err)
 			return
@@ -184,13 +186,16 @@ func (h *Handlers) GetClassesByTeacher() gin.HandlerFunc {
 			orderBy = order.NewBy(filterByCode, order.ASC)
 		}
 
-		classes, err := h.class.QueryByTeacher(ctx, filter, orderBy, pageInfo.Number, pageInfo.Size)
+		teacherId := ctx.Query("teacherId")
+
+		classes, err := h.class.QueryByTeacher(ctx, teacherId, filter, orderBy, pageInfo.Number, pageInfo.Size)
 		if err != nil {
+			fmt.Println(err)
 			web.Respond(ctx, nil, http.StatusUnauthorized, err)
 			return
 		}
 
-		total := h.class.CountByTeacher(ctx, filter)
+		total := h.class.CountByTeacher(ctx, teacherId, filter)
 		result := page.NewPageResponse(classes, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)

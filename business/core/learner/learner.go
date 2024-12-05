@@ -568,7 +568,7 @@ func (c *Core) GetAttendanceReports(ctx *gin.Context, classId uuid.UUID) ([]Atte
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Commit(ctx)
 
 	qtx := c.queries.WithTx(tx)
 	learner, err := middleware.AuthorizeLearner(ctx, qtx)

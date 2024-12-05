@@ -33,6 +33,7 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*Certificate, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer tx.Commit(ctx)
 
 	qtx := c.queries.WithTx(tx)
 
