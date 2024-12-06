@@ -20,3 +20,9 @@ SELECT * FROM learner_transcripts WHERE class_learner_id = sqlc.arg(class_learne
 UPDATE learner_transcripts
 SET grade = sqlc.arg(grade)
 WHERE id = sqlc.arg(id)::uuid;
+
+-- name: GetLearnerTranscriptByClassLearnerId :many
+SELECT lt.grade, lt.class_learner_id, lt.transcript_id, t.min_grade, t.weight
+FROM learner_transcripts lt
+JOIN transcripts t ON lt.transcript_id = t.id
+WHERE lt.class_learner_id = sqlc.arg(class_learner_id);

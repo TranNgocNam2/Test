@@ -71,6 +71,47 @@ func (q *Queries) GetLearnerTranscript(ctx context.Context, arg GetLearnerTransc
 	return i, err
 }
 
+const getLearnerTranscriptByClassLearnerId = `-- name: GetLearnerTranscriptByClassLearnerId :many
+SELECT lt.grade, lt.class_learner_id, lt.transcript_id, t.min_grade, t.weight
+FROM learner_transcripts lt
+JOIN transcripts t ON lt.transcript_id = t.id
+WHERE lt.class_learner_id = $1
+`
+
+type GetLearnerTranscriptByClassLearnerIdRow struct {
+	Grade          *float32  `db:"grade" json:"grade"`
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	TranscriptID   uuid.UUID `db:"transcript_id" json:"transcriptId"`
+	MinGrade       float64   `db:"min_grade" json:"minGrade"`
+	Weight         float64   `db:"weight" json:"weight"`
+}
+
+func (q *Queries) GetLearnerTranscriptByClassLearnerId(ctx context.Context, classLearnerID uuid.UUID) ([]GetLearnerTranscriptByClassLearnerIdRow, error) {
+	rows, err := q.db.Query(ctx, getLearnerTranscriptByClassLearnerId, classLearnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetLearnerTranscriptByClassLearnerIdRow
+	for rows.Next() {
+		var i GetLearnerTranscriptByClassLearnerIdRow
+		if err := rows.Scan(
+			&i.Grade,
+			&i.ClassLearnerID,
+			&i.TranscriptID,
+			&i.MinGrade,
+			&i.Weight,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateLearnerTranscriptGrade = `-- name: UpdateLearnerTranscriptGrade :exec
 UPDATE learner_transcripts
 SET grade = $1

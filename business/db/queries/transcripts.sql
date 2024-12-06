@@ -11,3 +11,4 @@ SELECT * FROM transcripts WHERE subject_id = sqlc.arg(subject_id) ORDER BY index
 -- name: GetTranscriptIdsBySubjectId :many
 SELECT id AS ids FROM transcripts
     WHERE subject_id = sqlc.arg(subject_id) ORDER BY index;
+

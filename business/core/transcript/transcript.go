@@ -33,7 +33,6 @@ func NewCore(app *app.Application) *Core {
 func (c *Core) ChangeScore(ctx *gin.Context, classId uuid.UUID, req []payload.LearnerTranscript) error {
 	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
-		c.logger.Error(err.Error())
 		return middleware.ErrInvalidUser
 	}
 
@@ -81,4 +80,35 @@ func (c *Core) ChangeScore(ctx *gin.Context, classId uuid.UUID, req []payload.Le
 	}
 
 	return nil
+}
+
+func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
+	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
+	if err != nil {
+		return middleware.ErrInvalidUser
+	}
+
+	class, err := c.queries.GetClassById(ctx, classId)
+	if err != nil {
+		return model.ErrClassNotFound
+	}
+
+	classLearners, err := c.queries.GetLearnersByClassId(ctx, class.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, learner := range classLearners {
+		transcripts, err := c.queries.GetLearnerTranscriptByClassLearnerId(ctx, learner.ClassLearnerID)
+		if err != nil {
+			return err
+		}
+		total := 0
+		for _, transcript := range transcripts {
+			if float64(*transcript.Grade) < transcript.MinGrade {
+
+			}
+            sum := transcript.Grade *
+		}
+	}
 }
