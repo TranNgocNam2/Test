@@ -57,7 +57,7 @@ func (q *Queries) DeleteSpecializationSubjects(ctx context.Context, specializati
 }
 
 const getSubjectIdsBySpecialization = `-- name: GetSubjectIdsBySpecialization :one
-SELECT array_agg(subject_id)::uuid[] as subject_ids
+SELECT array_agg(subject_id ORDER BY index)::uuid[] as subject_ids
 FROM specialization_subjects
 WHERE specialization_id = $1::uuid
 `

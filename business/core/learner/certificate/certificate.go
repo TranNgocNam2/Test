@@ -1,14 +1,20 @@
 package certificate
 
 import (
+	"Backend/business/db/pgx"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
-	"fmt"
+	"Backend/internal/common/status"
+	"Backend/internal/middleware"
+	"Backend/internal/order"
+	"Backend/internal/page"
+	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
+	"gitlab.com/innovia69420/kit/enum/role"
 	"go.uber.org/zap"
 )
 
@@ -39,86 +45,198 @@ func (c *Core) GetById(ctx *gin.Context, id uuid.UUID) (*Certificate, error) {
 
 	dbCert, err := qtx.GetCertificateById(ctx, id)
 	if err != nil || dbCert.Status == Invalid {
-		fmt.Println(err)
 		return nil, model.ErrCertificateNotFound
 	}
 
-	certificate := Certificate{
-		ID:             dbCert.ID,
-		Name:           dbCert.Name,
-		CreatedAt:      dbCert.CreatedAt,
-		Specialization: nil,
-		Subject:        nil,
+	certificate, err := handleCertificateData(ctx, qtx, dbCert)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, nil
 	}
 
+	return certificate, nil
+}
+
+func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, page page.Page) ([]Certificate, error) {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(ctx)
+
+	qtx := c.queries.WithTx(tx)
+	filter.LearnerId, err = getUserId(ctx, filter.LearnerId, qtx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := filter.Validate(); err != nil {
+		return nil, nil
+	}
+
+	data := map[string]interface{}{
+		"offset":        (page.Number - 1) * page.Size,
+		"rows_per_page": page.Size,
+	}
+
+	const q = `SELECT c.id, c.name, c.created_at, c.specialization_id, c.subject_id, c.class_id
+					FROM certificates c`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf, false)
+
+	buf.WriteString(orderByClause(orderBy))
+	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
+	c.logger.Info(buf.String())
+
+	var dbCertificates []sqlc.Certificate
+	err = pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &dbCertificates)
+	if err != nil {
+		c.logger.Error(err.Error())
+		return nil, nil
+	}
+
+	if dbCertificates == nil {
+		return nil, nil
+	}
+
+	var certificates []Certificate
+
+	for _, dbCert := range dbCertificates {
+		certificate, err := handleCertificateData(ctx, qtx, dbCert)
+		if err != nil {
+			c.logger.Error(err.Error())
+			return nil, nil
+		}
+
+		certificates = append(certificates, *certificate)
+	}
+
+	return certificates, nil
+}
+
+func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
+	if err := filter.Validate(); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	data := map[string]interface{}{}
+
+	const q = `SELECT
+                        count(1)
+               FROM
+                        certificates c`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf, false)
+
+	var count struct {
+		Count int `db:"count"`
+	}
+
+	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+
+	return count.Count
+}
+
+func (c *Core) GetSubjectCertificates(ctx *gin.Context, specId uuid.UUID, learnerId *string) ([]Certificate, error) {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(ctx)
+
+	qtx := c.queries.WithTx(tx)
+	learnerId, err = getUserId(ctx, learnerId, qtx)
+	if err != nil || learnerId == nil {
+		return nil, err
+	}
+
+	spec, err := qtx.GetSpecializationById(ctx, specId)
+	if err != nil {
+		return nil, model.ErrSpecNotFound
+	}
+
+	_, err = qtx.GetCertificateByLearnerAndSpecialization(ctx,
+		sqlc.GetCertificateByLearnerAndSpecializationParams{
+			LearnerID:        *learnerId,
+			SpecializationID: &spec.ID,
+			Status:           Valid,
+		})
+	if err != nil {
+		return nil, model.ErrCertificateNotFound
+	}
+
+	subjectIds, err := qtx.GetSubjectIdsBySpecialization(ctx, specId)
+	if err != nil {
+		return nil, model.ErrSubjectNotFound
+	}
+
+	dbCertificates, err := qtx.GetCertificatesByLearnerAndSubjects(ctx,
+		sqlc.GetCertificatesByLearnerAndSubjectsParams{
+			LearnerID:  *learnerId,
+			SubjectIds: subjectIds,
+			Status:     Valid,
+		})
+	if err != nil || dbCertificates == nil {
+		return nil, model.ErrCertificateNotFound
+	}
+
+	var certificates []Certificate
+	for _, dbCert := range dbCertificates {
+		certificate, err := handleCertificateData(ctx, qtx, dbCert)
+		if err != nil {
+			c.logger.Error(err.Error())
+			return nil, nil
+		}
+
+		certificates = append(certificates, *certificate)
+	}
+
+	return certificates, nil
+}
+func getUserId(ctx *gin.Context, userId *string, qtx *sqlc.Queries) (*string, error) {
+	if userId != nil {
+		learner, err := qtx.GetUserById(ctx, *userId)
+		if err != nil || learner.AuthRole != role.LEARNER ||
+			status.User(learner.Status) != status.Valid || !learner.IsVerified {
+			return nil, model.ErrUserNotFound
+		}
+	} else {
+		learner, err := middleware.AuthorizeVerifiedLearner(ctx, qtx)
+		if err != nil {
+			return nil, err
+		}
+		return &learner.ID, nil
+	}
+	return userId, nil
+}
+
+func handleCertificateData(ctx *gin.Context, qtx *sqlc.Queries, dbCert sqlc.Certificate) (*Certificate, error) {
+	certificate := toCoreCertificate(dbCert)
 	if dbCert.SpecializationID != nil {
 		dbSpecialization, err := qtx.GetSpecializationById(ctx, *dbCert.SpecializationID)
 		if err != nil {
-			c.logger.Error(err.Error())
-			return nil, nil
+			return nil, err
 		}
-		certificate.Specialization = &Specialization{
-			ID:          dbSpecialization.ID,
-			Name:        dbSpecialization.Name,
-			Code:        dbSpecialization.Code,
-			TimeAmount:  *dbSpecialization.TimeAmount,
-			ImageLink:   *dbSpecialization.ImageLink,
-			Description: *dbSpecialization.Description,
-		}
+		certificate.Specialization = toCoreSpecialization(dbSpecialization)
 	}
 
 	if dbCert.SubjectID != nil {
+		dbProgram, err := qtx.GetProgramByClassId(ctx, *dbCert.ClassID)
+		if err != nil {
+			return nil, err
+		}
+
 		dbSubject, err := qtx.GetSubjectById(ctx, *dbCert.SubjectID)
 		if err != nil {
-			c.logger.Error(err.Error())
-			return nil, nil
+			return nil, err
 		}
-		certificate.Subject = &Subject{
-			ID:          dbSubject.ID,
-			Name:        dbSubject.Name,
-			Code:        dbSubject.Code,
-			Description: *dbSubject.Description,
-			ImageLink:   *dbSubject.ImageLink,
-		}
-
-		if dbCert.ClassID == nil {
-			return &certificate, nil
-		}
-
-		program, err := qtx.GetProgramByClassId(ctx, *dbCert.ClassID)
-		if err != nil {
-			c.logger.Error(err.Error())
-			return &certificate, nil
-		}
-		certificate.Program = &Program{
-			ID:        program.ID,
-			Name:      program.Name,
-			StartDate: program.StartDate,
-			EndDate:   program.EndDate,
-		}
+		certificate.Subject = toCoreSubject(dbSubject, dbProgram)
 	}
-
 	return &certificate, nil
 }
-
-//func (c *Core) Query(ctx *gin.Context, learnerId string) ([]Certificate, error) {
-//	tx, err := c.pool.Begin(ctx)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	qtx := c.queries.WithTx(tx)
-//	learner, err := qtx.GetUserById(ctx, learnerId)
-//	learnerId = learner.ID
-//	if err != nil || !learner.IsVerified ||
-//		learner.AuthRole != role.LEARNER ||
-//		learner.Status == Invalid {
-//		currentUser, err := qtx.GetUserById(ctx, learnerId)
-//		if err != nil {
-//			learnerId = ""
-//		}
-//		learnerId = currentUser.ID
-//	}
-//
-//	return nil, nil
-//}

@@ -58,6 +58,88 @@ func (q *Queries) GetCertificateById(ctx context.Context, id uuid.UUID) (Certifi
 	return i, err
 }
 
+const getCertificateByLearnerAndSpecialization = `-- name: GetCertificateByLearnerAndSpecialization :one
+SELECT id, learner_id, specialization_id, subject_id, class_id, name, status, created_at, updated_at, updated_by
+FROM certificates
+WHERE learner_id = $1
+AND specialization_id = $2
+AND status = $3::int
+`
+
+type GetCertificateByLearnerAndSpecializationParams struct {
+	LearnerID        string     `db:"learner_id" json:"learnerId"`
+	SpecializationID *uuid.UUID `db:"specialization_id" json:"specializationId"`
+	Status           int32      `db:"status" json:"status"`
+}
+
+func (q *Queries) GetCertificateByLearnerAndSpecialization(ctx context.Context, arg GetCertificateByLearnerAndSpecializationParams) (Certificate, error) {
+	row := q.db.QueryRow(ctx, getCertificateByLearnerAndSpecialization, arg.LearnerID, arg.SpecializationID, arg.Status)
+	var i Certificate
+	err := row.Scan(
+		&i.ID,
+		&i.LearnerID,
+		&i.SpecializationID,
+		&i.SubjectID,
+		&i.ClassID,
+		&i.Name,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const getCertificatesByLearnerAndSubjects = `-- name: GetCertificatesByLearnerAndSubjects :many
+SELECT c.id, c.learner_id, c.specialization_id, c.subject_id, c.class_id, c.name, c.status, c.created_at, c.updated_at, c.updated_by
+FROM certificates c
+         JOIN specialization_subjects ss
+             ON c.specialization_id = ss.specialization_id
+                OR c.subject_id = ss.subject_id
+WHERE c.learner_id = $1
+AND c.subject_id = ANY($2::uuid[])
+AND c.status = $3::int
+GROUP BY c.id, c.subject_id
+ORDER BY MAX(ss.index)
+`
+
+type GetCertificatesByLearnerAndSubjectsParams struct {
+	LearnerID  string      `db:"learner_id" json:"learnerId"`
+	SubjectIds []uuid.UUID `db:"subject_ids" json:"subjectIds"`
+	Status     int32       `db:"status" json:"status"`
+}
+
+func (q *Queries) GetCertificatesByLearnerAndSubjects(ctx context.Context, arg GetCertificatesByLearnerAndSubjectsParams) ([]Certificate, error) {
+	rows, err := q.db.Query(ctx, getCertificatesByLearnerAndSubjects, arg.LearnerID, arg.SubjectIds, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Certificate
+	for rows.Next() {
+		var i Certificate
+		if err := rows.Scan(
+			&i.ID,
+			&i.LearnerID,
+			&i.SpecializationID,
+			&i.SubjectID,
+			&i.ClassID,
+			&i.Name,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UpdatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCertificationsByLearnerAndSubjects = `-- name: GetCertificationsByLearnerAndSubjects :many
 SELECT id, learner_id, specialization_id, subject_id, class_id, name, status, created_at, updated_at, updated_by
 FROM certificates
