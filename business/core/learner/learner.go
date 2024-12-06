@@ -563,7 +563,7 @@ func (c *Core) GetVerificationsInformation(ctx *gin.Context) (*VerifyLearnerInfo
 	return &learnerVerification, nil
 }
 
-func (c *Core) GetAttendanceReports(ctx *gin.Context, classId uuid.UUID) ([]AttendanceReport, error) {
+func (c *Core) GetAttendanceReports(ctx *gin.Context, classId uuid.UUID, learnerId string) ([]AttendanceReport, error) {
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -571,9 +571,23 @@ func (c *Core) GetAttendanceReports(ctx *gin.Context, classId uuid.UUID) ([]Atte
 	defer tx.Commit(ctx)
 
 	qtx := c.queries.WithTx(tx)
-	learner, err := middleware.AuthorizeLearner(ctx, qtx)
+	//if learnerId == "" {
+	//_, err = middleware.AuthorizeWithoutLearner(ctx, c.queries)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//	}
+	learner, err := qtx.GetVerifiedLearnersByLearnerId(ctx,
+		sqlc.GetVerifiedLearnersByLearnerIdParams{
+			ID:     learnerId,
+			Status: int32(status.Valid),
+		})
 	if err != nil {
-		return nil, err
+		dbLearner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
+		if err != nil {
+			return nil, err
+		}
+		learner = *dbLearner
 	}
 
 	class, err := qtx.GetClassById(ctx, classId)

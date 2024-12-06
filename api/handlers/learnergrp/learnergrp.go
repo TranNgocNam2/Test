@@ -324,7 +324,9 @@ func (h *Handlers) GetAttendanceReports() gin.HandlerFunc {
 			return
 		}
 
-		reports, err := h.learner.GetAttendanceReports(ctx, classId)
+		learnerId := ctx.Query("learnerId")
+
+		reports, err := h.learner.GetAttendanceReports(ctx, classId, learnerId)
 		if err != nil {
 			switch {
 			case errors.Is(err, model.ErrAttendanceReportsNotFound),

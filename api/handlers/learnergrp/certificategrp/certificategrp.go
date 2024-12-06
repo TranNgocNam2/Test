@@ -3,6 +3,7 @@ package certificategrp
 import (
 	"Backend/business/core/learner/certificate"
 	"Backend/internal/common/model"
+	"Backend/internal/middleware"
 	"Backend/internal/order"
 	"Backend/internal/page"
 	"Backend/internal/web"
@@ -88,9 +89,13 @@ func (h *Handlers) GetSubjectCertificates() gin.HandlerFunc {
 			switch {
 			case
 				errors.Is(err, model.ErrCertificateNotFound),
+				errors.Is(err, model.ErrUserNotFound),
 				errors.Is(err, model.ErrSpecNotFound),
 				errors.Is(err, model.ErrSubjectNotFound):
 				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
 				return
 			default:
 				web.Respond(ctx, nil, http.StatusInternalServerError, err)
