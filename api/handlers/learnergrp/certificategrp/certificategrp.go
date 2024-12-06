@@ -72,3 +72,32 @@ func (h *Handlers) GetCertificates() gin.HandlerFunc {
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}
 }
+
+func (h *Handlers) GetSubjectCertificates() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		specId, err := uuid.Parse(ctx.Param("specializationId"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrSpecIDInvalid)
+			return
+		}
+
+		learnerId := ctx.Query("learnerId")
+
+		certificate, err := h.certificate.GetSubjectCertificates(ctx, specId, &learnerId)
+		if err != nil {
+			switch {
+			case
+				errors.Is(err, model.ErrCertificateNotFound),
+				errors.Is(err, model.ErrSpecNotFound),
+				errors.Is(err, model.ErrSubjectNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		web.Respond(ctx, certificate, http.StatusOK, nil)
+	}
+}

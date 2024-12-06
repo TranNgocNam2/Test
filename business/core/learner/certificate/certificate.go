@@ -143,26 +143,62 @@ func (c *Core) Count(ctx *gin.Context, filter QueryFilter) int {
 	return count.Count
 }
 
-//	func (c *Core) GetByLearnerAndSpecialization(ctx *gin.Context, specId uuid.UUID, learnerId *string) ([]Certificate, error) {
-//		tx, err := c.pool.Begin(ctx)
-//		if err != nil {
-//			return nil, err
-//		}
-//		defer tx.Commit(ctx)
-//
-//		qtx := c.queries.WithTx(tx)
-//		learnerId, err = getUserId(ctx, learnerId, qtx)
-//		if err != nil || learnerId == nil {
-//			return nil, err
-//		}
-//
-//		subjectIds, err := qtx.GetSubjectIdsBySpecialization(ctx, specId)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		cer
-//	}
+func (c *Core) GetSubjectCertificates(ctx *gin.Context, specId uuid.UUID, learnerId *string) ([]Certificate, error) {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(ctx)
+
+	qtx := c.queries.WithTx(tx)
+	learnerId, err = getUserId(ctx, learnerId, qtx)
+	if err != nil || learnerId == nil {
+		return nil, err
+	}
+
+	spec, err := qtx.GetSpecializationById(ctx, specId)
+	if err != nil {
+		return nil, model.ErrSpecNotFound
+	}
+
+	_, err = qtx.GetCertificateByLearnerAndSpecialization(ctx,
+		sqlc.GetCertificateByLearnerAndSpecializationParams{
+			LearnerID:        *learnerId,
+			SpecializationID: &spec.ID,
+			Status:           Valid,
+		})
+	if err != nil {
+		return nil, model.ErrCertificateNotFound
+	}
+
+	subjectIds, err := qtx.GetSubjectIdsBySpecialization(ctx, specId)
+	if err != nil {
+		return nil, model.ErrSubjectNotFound
+	}
+
+	dbCertificates, err := qtx.GetCertificatesByLearnerAndSubjects(ctx,
+		sqlc.GetCertificatesByLearnerAndSubjectsParams{
+			LearnerID:  *learnerId,
+			SubjectIds: subjectIds,
+			Status:     Valid,
+		})
+	if err != nil || dbCertificates == nil {
+		return nil, model.ErrCertificateNotFound
+	}
+
+	var certificates []Certificate
+	for _, dbCert := range dbCertificates {
+		certificate, err := handleCertificateData(ctx, qtx, dbCert)
+		if err != nil {
+			c.logger.Error(err.Error())
+			return nil, nil
+		}
+
+		certificates = append(certificates, *certificate)
+	}
+
+	return certificates, nil
+}
 func getUserId(ctx *gin.Context, userId *string, qtx *sqlc.Queries) (*string, error) {
 	if userId != nil {
 		learner, err := qtx.GetUserById(ctx, *userId)

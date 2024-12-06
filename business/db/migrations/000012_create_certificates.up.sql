@@ -28,6 +28,8 @@ CREATE table certificates(
         FOREIGN KEY (updated_by)
             REFERENCES users(id) ON DELETE CASCADE,
 
+    CONSTRAINT fk_unique_certificates_specialization_learner
+        UNIQUE (learner_id, specialization_id),
 
     CONSTRAINT check_type_specialization_subject
         CHECK (

@@ -13,5 +13,6 @@ func CertificateRoutes(router *gin.Engine, app *app.Application) {
 	{
 		certificates.GET("/:id", handlers.GetCertificateById())
 		certificates.GET("", handlers.GetCertificates())
+		certificates.GET("/specializations/:specializationId", handlers.GetSubjectCertificates())
 	}
 }

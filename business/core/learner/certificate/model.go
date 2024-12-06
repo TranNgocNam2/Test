@@ -15,14 +15,14 @@ type Certificate struct {
 }
 
 type Specialization struct {
-	ID          uuid.UUID  `json:"id"`
-	Name        string     `json:"name"`
-	Code        string     `json:"code"`
-	TimeAmount  float32    `json:"timeAmount"`
-	ImageLink   string     `json:"imageLink"`
-	Description string     `json:"description"`
-	Subject     *[]Subject `json:"subject,omitempty"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Code        string    `json:"code"`
+	TimeAmount  float32   `json:"timeAmount"`
+	ImageLink   string    `json:"imageLink"`
+	Description string    `json:"description"`
 }
+
 type Subject struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
