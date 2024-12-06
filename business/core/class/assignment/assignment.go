@@ -307,9 +307,10 @@ func (c *Core) QueryLearnerAssignment(ctx *gin.Context, assignmentId uuid.UUID, 
 	}
 
 	const q = `SELECT
-                        cl.learner_id, la.grade, la.data, la.submission_status, la.grading_status
+                        cl.learner_id, la.grade, la.data, la.submission_status, la.grading_status, u.full_name, u.email
                FROM learner_assignments la
                 JOIN class_learners cl ON la.class_learner_id = cl.id
+                JOIN users u ON u.id = cl.learner_id
                 WHERE la.assignment_id = :assignment_id`
 
 	buf := bytes.NewBufferString(q)
@@ -318,6 +319,8 @@ func (c *Core) QueryLearnerAssignment(ctx *gin.Context, assignmentId uuid.UUID, 
 
 	var learnerAssignments []struct {
 		LearnerId        string  `db:"learner_id"`
+		Name             string  `db:"full_name"`
+		Email            string  `db:"email"`
 		Grade            float32 `db:"grade"`
 		Data             []byte  `db:"data"`
 		SubmissionStatus int16   `db:"submission_status"`
@@ -337,6 +340,8 @@ func (c *Core) QueryLearnerAssignment(ctx *gin.Context, assignmentId uuid.UUID, 
 	for _, asm := range learnerAssignments {
 		assignment := LearnerAssignmentQuery{
 			LearnerId:        asm.LearnerId,
+			Name:             asm.Name,
+			Email:            asm.Email,
 			Grade:            asm.Grade,
 			Data:             json.RawMessage(asm.Data),
 			SubmissionStatus: int(asm.SubmissionStatus),
