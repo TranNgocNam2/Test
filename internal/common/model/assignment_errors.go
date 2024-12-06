@@ -14,4 +14,6 @@ var (
 	ErrInvalidAssignmentSubmision   = errors.New("Assignment này không gửi bài được")
 	ErrInvalidAssignmentId          = errors.New("Assignment Id khong phai uuid")
 	ErrSubmitOverdue                = errors.New("Assignment khong chap nhan nop tre")
+	ErrChangeAssignmentStatus       = errors.New("Assignment không thể quay lại visible")
+	ErrChangeAssignmentType         = errors.New("Type của assignment chỉ được đổi khi visible")
 )
