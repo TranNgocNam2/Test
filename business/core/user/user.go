@@ -38,11 +38,13 @@ func NewCore(app *app.Application) *Core {
 
 func (c *Core) Create(ctx *gin.Context, newUser NewUser) error {
 	if _, err := c.queries.GetUserByEmail(ctx, newUser.Email.Address); err == nil {
-		return model.ErrEmailAlreadyExists
+		c.logger.Info(model.ErrEmailAlreadyExists.Error())
+		return nil
 	}
 
 	if _, err := c.queries.GetUserById(ctx, newUser.ID); err == nil {
-		return model.ErrUserAlreadyExist
+		c.logger.Info(model.ErrUserAlreadyExist.Error())
+		return nil
 	}
 
 	var isVerified = false
@@ -66,6 +68,28 @@ func (c *Core) Create(ctx *gin.Context, newUser NewUser) error {
 		return err
 	}
 
+	return nil
+}
+
+func (c *Core) Import(ctx *gin.Context, newLearners []NewLearner) error {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	qtx := c.queries.WithTx(tx)
+
+	_, err = middleware.AuthorizeAdmin(ctx, qtx)
+	if err != nil {
+		return err
+	}
+	for _, newLearner := range newLearners {
+		err = handleCreateLearner(ctx, qtx, newLearner)
+		if err != nil {
+			return err
+		}
+	}
+	tx.Commit(ctx)
 	return nil
 }
 
@@ -390,27 +414,7 @@ func (c *Core) CreateLearner(ctx *gin.Context, learner NewLearner) error {
 	defer tx.Rollback(ctx)
 	qtx := c.queries.WithTx(tx)
 
-	if _, err := qtx.GetUserByEmail(ctx, learner.Email); err == nil {
-		return model.ErrEmailAlreadyExists
-	}
-
-	if _, err := qtx.GetUserById(ctx, learner.ID); err == nil {
-		return model.ErrUserAlreadyExist
-	}
-
-	if _, err := qtx.GetSchoolById(ctx, learner.SchoolID); err != nil {
-		return model.ErrSchoolNotFound
-	}
-
-	err = qtx.CreateLearner(ctx, sqlc.CreateLearnerParams{
-		ID:         learner.ID,
-		Email:      learner.Email,
-		AuthRole:   role.LEARNER,
-		FullName:   &learner.FullName,
-		IsVerified: true,
-		SchoolID:   &learner.SchoolID,
-	})
-	if err != nil {
+	if err := handleCreateLearner(ctx, qtx, learner); err != nil {
 		return err
 	}
 
@@ -448,5 +452,33 @@ func (c *Core) UpdateLearner(ctx *gin.Context, id string, updatedLearner UpdateL
 	}
 
 	tx.Commit(ctx)
+	return nil
+}
+
+func handleCreateLearner(ctx *gin.Context, qtx *sqlc.Queries, learner NewLearner) error {
+	if _, err := qtx.GetUserByEmail(ctx, learner.Email); err == nil {
+		return model.ErrEmailAlreadyExists
+	}
+
+	if _, err := qtx.GetUserById(ctx, learner.ID); err == nil {
+		return model.ErrUserAlreadyExist
+	}
+
+	if _, err := qtx.GetSchoolById(ctx, learner.SchoolID); err != nil {
+		return model.ErrSchoolNotFound
+	}
+
+	err := qtx.CreateLearner(ctx, sqlc.CreateLearnerParams{
+		ID:         learner.ID,
+		Email:      learner.Email,
+		AuthRole:   role.LEARNER,
+		FullName:   &learner.FullName,
+		IsVerified: true,
+		SchoolID:   &learner.SchoolID,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

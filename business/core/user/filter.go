@@ -17,6 +17,7 @@ type QueryFilter struct {
 	Status     *int16  `validate:"omitempty"`
 	SchoolName *string `validate:"omitempty"`
 	Role       *int    `validate:"omitempty"`
+	IsVerified *bool   `validate:"omitempty"`
 }
 
 func (qf *QueryFilter) Validate() error {
@@ -24,6 +25,10 @@ func (qf *QueryFilter) Validate() error {
 		return err
 	}
 	return nil
+}
+
+func (qf *QueryFilter) WithIsVerified(isVerified bool) {
+	qf.IsVerified = &isVerified
 }
 
 func (qf *QueryFilter) WithFullName(fullName string) {
@@ -53,6 +58,11 @@ func applyFilter(filter QueryFilter, data map[string]interface{}, buf *bytes.Buf
 	if filter.SchoolName != nil {
 		data["school_name"] = fmt.Sprintf("%%%s%%", *filter.SchoolName)
 		wc = append(wc, "s.name LIKE :school_name")
+	}
+
+	if filter.IsVerified != nil {
+		data["is_verified"] = fmt.Sprintf("%t", *filter.IsVerified)
+		wc = append(wc, "u.is_verified = :is_verified")
 	}
 
 	if filter.Status != nil {

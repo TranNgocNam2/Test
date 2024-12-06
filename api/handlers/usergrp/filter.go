@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	filterByName   = "name"
-	filterBySchool = "school"
-	filterByStatus = "status"
-	filterByRole   = "role"
+	filterByName       = "name"
+	filterBySchool     = "school"
+	filterByStatus     = "status"
+	filterByRole       = "role"
+	filterByIsVerified = "isVerified"
 )
 
 var (
@@ -28,6 +29,14 @@ func parseFilter(ctx *gin.Context) (user.QueryFilter, error) {
 
 	if name := ctx.Query(filterByName); name != "" {
 		filter.WithFullName(name)
+	}
+
+	if isVerified := ctx.Query(filterByIsVerified); isVerified != "" {
+		isVerifiedBool, err := strconv.ParseBool(isVerified)
+		if err != nil {
+			return filter, fmt.Errorf(InvalidFilterData, filterByIsVerified)
+		}
+		filter.WithIsVerified(isVerifiedBool)
 	}
 
 	if school := ctx.Query(filterBySchool); school != "" {
