@@ -140,6 +140,19 @@ func (c *Core) UpdateAssignment(ctx *gin.Context, classId uuid.UUID, asmId uuid.
 		return model.InvalidClassAssignment
 	}
 
+	asm, err := c.queries.GetAssignmentById(ctx, asmId)
+	if err != nil {
+		return model.ErrAssignmentNotFound
+	}
+
+	if asm.Status != VISIBLE && asm.Type != int16(*data.Type) {
+		return model.ErrChangeAssignmentType
+	}
+
+	if asm.Status != VISIBLE && *data.Status == VISIBLE {
+		return model.ErrChangeAssignmentStatus
+	}
+
 	dbProgram, _ := c.queries.GetProgramById(ctx, class.ProgramID)
 
 	deadline, err := time.Parse(time.DateTime, data.Deadline)

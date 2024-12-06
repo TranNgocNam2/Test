@@ -117,6 +117,8 @@ func (h *Handlers) UpdateAssignment() gin.HandlerFunc {
 			case
 				errors.Is(err, model.ErrInvalidDeadlineTime),
 				errors.Is(err, model.ErrTimeFormat),
+				errors.Is(err, model.ErrChangeAssignmentStatus),
+				errors.Is(err, model.ErrChangeAssignmentType),
 				errors.Is(err, model.InvalidClassAssignment),
 				errors.Is(err, model.ErrDataConversion):
 

@@ -4,7 +4,7 @@ type Assignment struct {
 	Question   interface{} `json:"question"`
 	Deadline   string      `json:"deadline" validate:"required"`
 	Type       *int        `json:"type" validate:"required,gte=0,lte=1"`
-	Status     *int        `json:"status" validate:"required,gte=0,lte=1"`
+	Status     *int        `json:"status" validate:"required,gte=0,lte=2"`
 	CanOverdue *bool       `json:"canOverdue" validate:"required"`
 }
 
