@@ -117,6 +117,8 @@ func (h *Handlers) UpdateAssignment() gin.HandlerFunc {
 			case
 				errors.Is(err, model.ErrInvalidDeadlineTime),
 				errors.Is(err, model.ErrTimeFormat),
+				errors.Is(err, model.ErrChangeAssignmentStatus),
+				errors.Is(err, model.ErrChangeAssignmentType),
 				errors.Is(err, model.InvalidClassAssignment),
 				errors.Is(err, model.ErrDataConversion):
 
@@ -341,7 +343,6 @@ func (h *Handlers) GetLearnerAssignments() gin.HandlerFunc {
 
 		assignmentId, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			fmt.Println(err.Error())
 			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
 			return
 		}
@@ -349,7 +350,7 @@ func (h *Handlers) GetLearnerAssignments() gin.HandlerFunc {
 		assignments, err := h.assignment.QueryLearnerAssignment(ctx, assignmentId, pageInfo.Number, pageInfo.Size)
 
 		if errors.Is(err, model.ErrAssignmentNotFound) {
-			web.Respond(ctx, nil, http.StatusBadRequest, nil)
+			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
 

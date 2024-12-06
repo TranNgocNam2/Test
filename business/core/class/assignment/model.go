@@ -28,6 +28,8 @@ type LearnerAssignment struct {
 
 type LearnerAssignmentQuery struct {
 	LearnerId        string          `json:"learnerId"`
+	Name             string          `json:"name"`
+	Email            string          `json:"email"`
 	Grade            float32         `json:"grade"`
 	Data             json.RawMessage `json:"data"`
 	SubmissionStatus int             `json:"submissionStatus"`
