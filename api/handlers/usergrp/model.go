@@ -75,14 +75,14 @@ func toCoreCreateLearner(req payload.NewLearner) (user.NewLearner, error) {
 	if err != nil {
 		return user.NewLearner{}, model.ErrInvalidSchoolID
 	}
-	emailAddr, err := mail.ParseAddress(req.Email)
+	_, err = mail.ParseAddress(req.Email)
 	if err != nil {
 		return user.NewLearner{}, model.ErrInvalidEmail
 	}
 
 	return user.NewLearner{
 		ID:       req.ID,
-		Email:    emailAddr.String(),
+		Email:    req.Email,
 		FullName: req.FullName,
 		Type:     int16(*req.Type),
 		SchoolID: schoolID,
@@ -110,6 +110,25 @@ func toCoreUpdateLearner(req payload.UpdateLearner) (user.UpdateLearner, error) 
 
 func validateUpdateLearnerRequest(req payload.UpdateLearner) error {
 	if err := validate.Check(req); err != nil {
+		return err
+	}
+	return nil
+}
+
+func toCoreImportLearners(users payload.ImportUsers) ([]user.NewLearner, error) {
+	var newLearners []user.NewLearner
+	for _, user := range users.User {
+		newLearner, err := toCoreCreateLearner(user)
+		if err != nil {
+			return nil, err
+		}
+		newLearners = append(newLearners, newLearner)
+	}
+	return newLearners, nil
+}
+
+func validateImportUsersRequest(users payload.ImportUsers) error {
+	if err := validate.Check(users); err != nil {
 		return err
 	}
 	return nil
