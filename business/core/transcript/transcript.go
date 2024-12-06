@@ -1,7 +1,6 @@
 package transcript
 
 import (
-	"Backend/business/core/learner"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
