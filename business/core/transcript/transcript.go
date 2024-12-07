@@ -103,12 +103,12 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 		if err != nil {
 			return err
 		}
-		total := 0
 		for _, transcript := range transcripts {
 			if float64(*transcript.Grade) < transcript.MinGrade {
 
 			}
-            sum := transcript.Grade *
 		}
 	}
+
+	return nil
 }
