@@ -793,12 +793,12 @@ func (c *Core) GetByID(ctx *gin.Context, id uuid.UUID) (Details, error) {
 	for _, dbSlot := range dbSlots {
 		dbSession, _ := qtx.GetSessionById(ctx, dbSlot.SessionID)
 		session := toCoreSession(dbSession)
-		startTime := *dbSlot.StartTime
-		endTime := *dbSlot.EndTime
+		//startTime := *dbSlot.StartTime
+		//endTime := *dbSlot.EndTime
 		slot := Slot{
 			ID:         dbSlot.ID,
-			StartTime:  startTime,
-			EndTime:    endTime,
+			StartTime:  dbSlot.StartTime,
+			EndTime:    dbSlot.EndTime,
 			Index:      dbSlot.Index,
 			Session:    session,
 			RecordLink: dbSlot.RecordLink,

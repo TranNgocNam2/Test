@@ -110,13 +110,13 @@ type Teacher struct {
 }
 
 type Slot struct {
-	ID         uuid.UUID `json:"id"`
-	StartTime  time.Time `json:"startTime"`
-	EndTime    time.Time `json:"endTime"`
-	Index      int32     `json:"index"`
-	Session    Session   `json:"session"`
-	Teacher    Teacher   `json:"teacher"`
-	RecordLink *string   `json:"recordLink"`
+	ID         uuid.UUID  `json:"id"`
+	StartTime  *time.Time `json:"startTime"`
+	EndTime    *time.Time `json:"endTime"`
+	Index      int32      `json:"index"`
+	Session    Session    `json:"session"`
+	Teacher    Teacher    `json:"teacher"`
+	RecordLink *string    `json:"recordLink"`
 }
 
 type Session struct {
