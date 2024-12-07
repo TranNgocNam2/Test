@@ -62,13 +62,25 @@ func (h *Handlers) GetCertificates() gin.HandlerFunc {
 			orderBy = order.NewBy(filterByName, order.ASC)
 		}
 
-		classes, err := h.certificate.Query(ctx, filter, orderBy, pageInfo)
+		certificates, err := h.certificate.Query(ctx, filter, orderBy, pageInfo)
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusUnauthorized, err)
-			return
+			switch {
+			case errors.Is(err, model.ErrUserNotFound),
+				errors.Is(err, model.ErrSpecNotFound),
+				errors.Is(err, model.ErrSubjectNotFound),
+				errors.Is(err, model.ErrProgramNotFound):
+				web.Respond(ctx, nil, http.StatusNotFound, err)
+				return
+			case errors.Is(err, middleware.ErrInvalidUser):
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
 		}
 		total := h.certificate.Count(ctx, filter)
-		result := page.NewPageResponse(classes, total, pageInfo.Number, pageInfo.Size)
+		result := page.NewPageResponse(certificates, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, result, http.StatusOK, nil)
 	}
