@@ -2,11 +2,14 @@ package transcript
 
 import (
 	"Backend/business/core/learner/certificate"
+	"Backend/business/db/pgx"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
 	"Backend/internal/middleware"
+	"Backend/internal/order"
 	"Backend/internal/web/payload"
+	"bytes"
 	"math"
 	"time"
 
@@ -106,25 +109,35 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 		return model.CannotGetAllLearners
 	}
 
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := c.queries.WithTx(tx)
+
 	for _, learner := range classLearners {
-		transcripts, err := c.queries.GetLearnerTranscriptByClassLearnerId(learner.ClassLearnerID)
+		transcripts, err := qtx.GetLearnerTranscriptByClassLearnerId(ctx, learner.ClassLearnerID)
 		if err != nil {
 			return err
 		}
 		var totalGrade float64
 		totalGrade = 0
+		pass := true
 		for _, transcript := range transcripts {
 			if float64(*transcript.Grade) < transcript.MinGrade {
 				// Update transcript status
-				if err = c.queries.UpdateTranscriptStatus(ctx, sqlc.UpdateTranscriptStatusParams{
+				if err = qtx.UpdateTranscriptStatus(ctx, sqlc.UpdateTranscriptStatusParams{
 					ClassLearnerID: learner.ClassLearnerID,
 					TranscriptID:   transcript.TranscriptID,
-					Status:         0,
+					Status:         2,
 				}); err != nil {
 					return err
 				}
+				pass = false
 			} else {
-				if err = c.queries.UpdateTranscriptStatus(ctx, sqlc.UpdateTranscriptStatusParams{
+				if err = qtx.UpdateTranscriptStatus(ctx, sqlc.UpdateTranscriptStatusParams{
 					ClassLearnerID: learner.ClassLearnerID,
 					TranscriptID:   transcript.TranscriptID,
 					Status:         1,
@@ -135,32 +148,126 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 			}
 		}
 
-		attendaces, err := c.queries.CountAttendace(ctx, learner.ClassLearnerID)
+		attendaces, err := qtx.CountAttendace(ctx, learner.ClassLearnerID)
 		if err != nil {
 			return err
 		}
 
-		slots, err := c.queries.CountSlotsByClassId(ctx, classId)
+		slots, err := qtx.CountSlotsByClassId(ctx, classId)
 		if err != nil {
 			return err
 		}
 
-		if totalGrade < float64(*subject.MinPassGrade) || math.Ceil(float64(attendaces)/float64(slots)*100) < float64(*subject.MinAttendance) {
-			if err = c.queries.UpdateClassStatus(ctx, sqlc.UpdateClassStatusParams{
+		if !pass || totalGrade < float64(*subject.MinPassGrade) || math.Ceil(float64(attendaces)/float64(slots)*100) < float64(*subject.MinAttendance) {
+			if err = qtx.UpdateClassStatus(ctx, sqlc.UpdateClassStatusParams{
 				ID:     learner.ClassLearnerID,
-				Status: 0,
+				Status: 2,
 			}); err != nil {
 				return err
 			}
 		} else {
-			if err = c.queries.UpdateClassStatus(ctx, sqlc.UpdateClassStatusParams{
+			if err = qtx.UpdateClassStatus(ctx, sqlc.UpdateClassStatusParams{
 				ID:     learner.ClassLearnerID,
 				Status: 1,
 			}); err != nil {
 				return err
 			}
-		}
 
+			if err = qtx.CreateSubjectCertificate(ctx, sqlc.CreateSubjectCertificateParams{
+				ID:        uuid.New(),
+				LearnerID: learner.ID,
+				SubjectID: &subject.ID,
+				Name:      subject.Name,
+				Status:    certificate.Valid,
+				CreatedAt: time.Now(),
+			}); err != nil {
+				return err
+			}
+		}
 	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (c *Core) GetLearnerTranscripts(ctx *gin.Context, filter QueryFilter, learnerId string, pageNumber int, rowsPerPage int) []LearnerTranscriptQuery {
+	data := map[string]interface{}{
+		"learner_id":    learnerId,
+		"offset":        (pageNumber - 1) * rowsPerPage,
+		"rows_per_page": rowsPerPage,
+	}
+
+	const q = `SELECT DISTINCT cl.learner_id, u.full_name, u.email, lt.transcript_id, t.name, lt.grade, lt.status, t.index
+                FROM learner_transcripts lt
+                JOIN transcripts t ON lt.transcript_id = t.id
+                JOIN class_learners cl ON cl.id = lt.class_learner_id
+                JOIN users u ON u.id = cl.learner_id
+                WHERE cl.learner_id = :learner_id`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf)
+	buf.WriteString(orderByClause(order.NewBy(OrderByIndex, order.ASC)))
+	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
+	c.logger.Info(buf.String())
+
+	var learnerTranscripts []struct {
+		LearnerId      string    `db:"learner_id"`
+		Name           string    `db:"full_name"`
+		Email          string    `db:"email"`
+		TranscriptId   uuid.UUID `db:"transcript_id"`
+		TranscriptName string    `db:"name"`
+		Grade          float32   `db:"grade"`
+		Status         int16     `db:"status"`
+		Index          int32     `db:"index"`
+	}
+	if err := pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &learnerTranscripts); err != nil {
+		c.logger.Error(err.Error())
+		return nil
+	}
+
+	if learnerTranscripts == nil {
+		return nil
+	}
+
+	var result []LearnerTranscriptQuery
+	for _, t := range learnerTranscripts {
+		t := LearnerTranscriptQuery{
+			LearnerId:      t.LearnerId,
+			Name:           t.Name,
+			Email:          t.Email,
+			TranscriptId:   t.TranscriptId,
+			TranscriptName: t.TranscriptName,
+			Grade:          float64(t.Grade),
+			Status:         int32(t.Status),
+			Index:          int(t.Index),
+		}
+		result = append(result, t)
+	}
+
+	return result
+}
+
+func (c *Core) Count(ctx *gin.Context, learnerId string, filter QueryFilter) int {
+	data := map[string]interface{}{
+		"learner_id": learnerId,
+	}
+
+	const q = `SELECT COUNT(1) as count FROM learner_transcripts lt
+                JOIN class_learners cl ON cl.id = lt.class_learner_id
+                WHERE cl.learner_id = :learner_id`
+
+	buf := bytes.NewBufferString(q)
+	applyFilter(filter, data, buf)
+
+	var count struct {
+		Count int `db:"count"`
+	}
+	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
+		c.logger.Error(err.Error())
+		return 0
+	}
+	return count.Count
 }

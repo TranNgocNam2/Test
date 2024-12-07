@@ -46,43 +46,6 @@ func (q *Queries) CreateSlots(ctx context.Context, arg []CreateSlotsParams) (int
 	return q.db.CopyFrom(ctx, []string{"slots"}, []string{"id", "session_id", "class_id", "start_time", "end_time", "index"}, &iteratorForCreateSlots{rows: arg})
 }
 
-// iteratorForCreateSubjectCertificate implements pgx.CopyFromSource.
-type iteratorForCreateSubjectCertificate struct {
-	rows                 []CreateSubjectCertificateParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForCreateSubjectCertificate) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForCreateSubjectCertificate) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].ID,
-		r.rows[0].LearnerID,
-		r.rows[0].SubjectID,
-		r.rows[0].Name,
-		r.rows[0].Status,
-		r.rows[0].CreatedAt,
-	}, nil
-}
-
-func (r iteratorForCreateSubjectCertificate) Err() error {
-	return nil
-}
-
-func (q *Queries) CreateSubjectCertificate(ctx context.Context, arg []CreateSubjectCertificateParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"certificates"}, []string{"id", "learner_id", "subject_id", "name", "status", "created_at"}, &iteratorForCreateSubjectCertificate{rows: arg})
-}
-
 // iteratorForInsertLearnerAssignment implements pgx.CopyFromSource.
 type iteratorForInsertLearnerAssignment struct {
 	rows                 []InsertLearnerAssignmentParams

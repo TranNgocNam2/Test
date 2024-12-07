@@ -3,9 +3,11 @@ package transcriptgrp
 import (
 	"Backend/business/core/transcript"
 	"Backend/internal/common/model"
+	"Backend/internal/page"
 	"Backend/internal/validate"
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,11 +25,11 @@ func New(transcript *transcript.Core) *Handlers {
 }
 
 func (h *Handlers) UpdateGrade() gin.HandlerFunc {
-
 	return func(ctx *gin.Context) {
 		var request []payload.LearnerTranscript
 
 		if err := web.Decode(ctx, &request); err != nil {
+			fmt.Println(err)
 			web.Respond(ctx, nil, http.StatusBadRequest, err)
 			return
 		}
@@ -53,9 +55,48 @@ func (h *Handlers) UpdateGrade() gin.HandlerFunc {
 	}
 }
 
+func (h *Handlers) SubmitGrade() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		classId, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
+
+		err = h.transcript.SubmitScore(ctx, classId)
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusInternalServerError, err)
+			return
+		}
+
+		web.Respond(ctx, nil, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) GetLearnerTranscripts() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		learnerId := ctx.Param("id")
+		pageInfo := page.Parse(ctx)
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = transcript.QueryFilter{
+				TranscriptName: nil,
+			}
+		}
+
+		result := h.transcript.GetLearnerTranscripts(ctx, filter, learnerId, pageInfo.Number, pageInfo.Size)
+		total := h.transcript.Count(ctx, learnerId, filter)
+		results := page.NewPageResponse(result, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, results, http.StatusOK, nil)
+	}
+}
+
 func validateGradeRequest(request []payload.LearnerTranscript) error {
-	if err := validate.Check(request); err != nil {
-		return err
+	for _, data := range request {
+		if err := validate.Check(data); err != nil {
+			return err
+		}
 	}
 	return nil
 }

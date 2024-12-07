@@ -35,6 +35,11 @@ func (q *Queries) CreateSpecializationCertificate(ctx context.Context, arg Creat
 	return err
 }
 
+const createSubjectCertificate = `-- name: CreateSubjectCertificate :exec
+INSERT INTO certificates (id, learner_id, subject_id, name, status, created_at)
+VALUES ($1, $2, $3, $4, $5, $6)
+`
+
 type CreateSubjectCertificateParams struct {
 	ID        uuid.UUID  `db:"id" json:"id"`
 	LearnerID string     `db:"learner_id" json:"learnerId"`
@@ -42,6 +47,18 @@ type CreateSubjectCertificateParams struct {
 	Name      string     `db:"name" json:"name"`
 	Status    int32      `db:"status" json:"status"`
 	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
+}
+
+func (q *Queries) CreateSubjectCertificate(ctx context.Context, arg CreateSubjectCertificateParams) error {
+	_, err := q.db.Exec(ctx, createSubjectCertificate,
+		arg.ID,
+		arg.LearnerID,
+		arg.SubjectID,
+		arg.Name,
+		arg.Status,
+		arg.CreatedAt,
+	)
+	return err
 }
 
 const getCertificateById = `-- name: GetCertificateById :one

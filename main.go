@@ -13,6 +13,7 @@ import (
 	"Backend/api/handlers/subjectgrp"
 	"Backend/api/handlers/teachergrp"
 	"Backend/api/handlers/testgrp"
+	"Backend/api/handlers/transcriptgrp"
 	"Backend/api/handlers/usergrp"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
@@ -21,9 +22,10 @@ import (
 	"Backend/internal/middleware"
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"io"
 	"os"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -125,4 +127,5 @@ func LoadRoutes(router *gin.Engine, app *app.Application) {
 	assignmentgrp.AssignmentRoutes(router, app)
 	slotgrp.SlotRoutes(router, app)
 	certificategrp.CertificateRoutes(router, app)
+	transcriptgrp.TranscriptRoutes(router, app)
 }
