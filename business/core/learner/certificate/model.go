@@ -12,6 +12,13 @@ type Certificate struct {
 	CreatedAt      time.Time       `json:"createdAt"`
 	Specialization *Specialization `json:"specialization,omitempty"`
 	Subject        *Subject        `json:"subject,omitempty"`
+	Learner        Learner         `json:"learner,omitempty"`
+}
+
+type Learner struct {
+	ID       string `json:"id"`
+	FullName string `json:"fullName"`
+	Email    string `json:"email"`
 }
 
 type Specialization struct {
@@ -37,6 +44,14 @@ type Program struct {
 	Name      string    `json:"name"`
 	StartDate time.Time `json:"startDate"`
 	EndDate   time.Time `json:"endDate"`
+}
+
+func toCoreLearner(learner sqlc.User) Learner {
+	return Learner{
+		ID:       learner.ID,
+		FullName: *learner.FullName,
+		Email:    learner.Email,
+	}
 }
 
 func toCoreProgram(program sqlc.Program) *Program {
