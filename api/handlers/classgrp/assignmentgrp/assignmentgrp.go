@@ -99,7 +99,7 @@ func (h *Handlers) UpdateAssignment() gin.HandlerFunc {
 
 		asmId, err := uuid.Parse(ctx.Param("assignmentId"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidAssignmentId)
 			return
 		}
 
@@ -138,7 +138,7 @@ func (h *Handlers) DeleteAssignment() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		asmId, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidAssignmentId)
 			return
 		}
 
@@ -171,7 +171,7 @@ func (h *Handlers) GetById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		asmId, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidAssignmentId)
 			return
 		}
 
@@ -206,15 +206,11 @@ func (h *Handlers) GradeAssignment() gin.HandlerFunc {
 
 		asmId, err := uuid.Parse(ctx.Param("id"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidAssignmentId)
 			return
 		}
 
-		learnerId, err := uuid.Parse(ctx.Param("learnerId"))
-		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
-			return
-		}
+		learnerId := ctx.Param("learnerId")
 
 		err = h.assignment.GradeAssignment(ctx, learnerId, asmId, request)
 		if err != nil {
