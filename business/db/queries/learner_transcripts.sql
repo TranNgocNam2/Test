@@ -26,3 +26,14 @@ SELECT lt.grade, lt.class_learner_id, lt.transcript_id, t.min_grade, t.weight
 FROM learner_transcripts lt
 JOIN transcripts t ON lt.transcript_id = t.id
 WHERE lt.class_learner_id = sqlc.arg(class_learner_id);
+
+-- name: UpdateClassStatus :exec
+UPDATE class_learners
+SET status = sqlc.arg(status)
+WHERE id = sqlc.arg(id);
+
+-- name: UpdateTranscriptStatus :exec
+UPDATE learner_transcripts
+SET status = sqlc.arg(status)
+WHERE class_learner_id = sqlc.arg(class_learner_id)
+AND transcript_id = sqlc.arg(transcript_id);

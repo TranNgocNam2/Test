@@ -157,7 +157,7 @@ func (q *Queries) CountLearnersByClassId(ctx context.Context, classID uuid.UUID)
 }
 
 const getClassLearnerByClassAndLearner = `-- name: GetClassLearnerByClassAndLearner :one
-SELECT id, learner_id, class_id FROM class_learners
+SELECT id, learner_id, class_id, status FROM class_learners
          WHERE class_id = $1::uuid
            AND learner_id = $2
 `
@@ -170,7 +170,12 @@ type GetClassLearnerByClassAndLearnerParams struct {
 func (q *Queries) GetClassLearnerByClassAndLearner(ctx context.Context, arg GetClassLearnerByClassAndLearnerParams) (ClassLearner, error) {
 	row := q.db.QueryRow(ctx, getClassLearnerByClassAndLearner, arg.ClassID, arg.LearnerID)
 	var i ClassLearner
-	err := row.Scan(&i.ID, &i.LearnerID, &i.ClassID)
+	err := row.Scan(
+		&i.ID,
+		&i.LearnerID,
+		&i.ClassID,
+		&i.Status,
+	)
 	return i, err
 }
 

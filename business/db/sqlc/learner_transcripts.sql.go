@@ -49,7 +49,7 @@ func (q *Queries) GenerateLearnersTranscripts(ctx context.Context, arg GenerateL
 }
 
 const getLearnerTranscript = `-- name: GetLearnerTranscript :one
-SELECT id, class_learner_id, transcript_id, grade, updated_at, updated_by FROM learner_transcripts WHERE class_learner_id = $1 AND transcript_id = $2
+SELECT id, class_learner_id, transcript_id, grade, status, updated_at, updated_by FROM learner_transcripts WHERE class_learner_id = $1 AND transcript_id = $2
 `
 
 type GetLearnerTranscriptParams struct {
@@ -65,6 +65,7 @@ func (q *Queries) GetLearnerTranscript(ctx context.Context, arg GetLearnerTransc
 		&i.ClassLearnerID,
 		&i.TranscriptID,
 		&i.Grade,
+		&i.Status,
 		&i.UpdatedAt,
 		&i.UpdatedBy,
 	)
@@ -112,6 +113,22 @@ func (q *Queries) GetLearnerTranscriptByClassLearnerId(ctx context.Context, clas
 	return items, nil
 }
 
+const updateClassStatus = `-- name: UpdateClassStatus :exec
+UPDATE class_learners
+SET status = $1
+WHERE id = $2
+`
+
+type UpdateClassStatusParams struct {
+	Status int16     `db:"status" json:"status"`
+	ID     uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateClassStatus(ctx context.Context, arg UpdateClassStatusParams) error {
+	_, err := q.db.Exec(ctx, updateClassStatus, arg.Status, arg.ID)
+	return err
+}
+
 const updateLearnerTranscriptGrade = `-- name: UpdateLearnerTranscriptGrade :exec
 UPDATE learner_transcripts
 SET grade = $1
@@ -125,5 +142,23 @@ type UpdateLearnerTranscriptGradeParams struct {
 
 func (q *Queries) UpdateLearnerTranscriptGrade(ctx context.Context, arg UpdateLearnerTranscriptGradeParams) error {
 	_, err := q.db.Exec(ctx, updateLearnerTranscriptGrade, arg.Grade, arg.ID)
+	return err
+}
+
+const updateTranscriptStatus = `-- name: UpdateTranscriptStatus :exec
+UPDATE learner_transcripts
+SET status = $1
+WHERE class_learner_id = $2
+AND transcript_id = $3
+`
+
+type UpdateTranscriptStatusParams struct {
+	Status         int16     `db:"status" json:"status"`
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	TranscriptID   uuid.UUID `db:"transcript_id" json:"transcriptId"`
+}
+
+func (q *Queries) UpdateTranscriptStatus(ctx context.Context, arg UpdateTranscriptStatusParams) error {
+	_, err := q.db.Exec(ctx, updateTranscriptStatus, arg.Status, arg.ClassLearnerID, arg.TranscriptID)
 	return err
 }

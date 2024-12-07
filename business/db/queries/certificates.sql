@@ -33,3 +33,7 @@ AND c.subject_id = ANY(sqlc.arg(subject_ids)::uuid[])
 AND c.status = sqlc.arg(status)::int
 GROUP BY c.id, c.subject_id
 ORDER BY MAX(ss.index);;
+
+-- name: CreateSubjectCertificate :copyfrom
+INSERT INTO certificates (id, learner_id, subject_id, name, status, created_at)
+VALUES ($1, $2, $3, $4, $5, $6);

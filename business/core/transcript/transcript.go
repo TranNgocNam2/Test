@@ -1,11 +1,14 @@
 package transcript
 
 import (
+	"Backend/business/core/learner/certificate"
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
 	"Backend/internal/middleware"
 	"Backend/internal/web/payload"
+	"math"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -93,22 +96,71 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 		return model.ErrClassNotFound
 	}
 
+	subject, err := c.queries.GetSubjectById(ctx, class.SubjectID)
+	if err != nil {
+		return model.ErrSubjectNotFound
+	}
+
 	classLearners, err := c.queries.GetLearnersByClassId(ctx, class.ID)
 	if err != nil {
-		return err
+		return model.CannotGetAllLearners
 	}
 
 	for _, learner := range classLearners {
-		transcripts, err := c.queries.GetLearnerTranscriptByClassLearnerId(ctx, learner.ClassLearnerID)
+		transcripts, err := c.queries.GetLearnerTranscriptByClassLearnerId(learner.ClassLearnerID)
 		if err != nil {
 			return err
 		}
+		var totalGrade float64
+		totalGrade = 0
 		for _, transcript := range transcripts {
 			if float64(*transcript.Grade) < transcript.MinGrade {
-
+				// Update transcript status
+				if err = c.queries.UpdateTranscriptStatus(ctx, sqlc.UpdateTranscriptStatusParams{
+					ClassLearnerID: learner.ClassLearnerID,
+					TranscriptID:   transcript.TranscriptID,
+					Status:         0,
+				}); err != nil {
+					return err
+				}
+			} else {
+				if err = c.queries.UpdateTranscriptStatus(ctx, sqlc.UpdateTranscriptStatusParams{
+					ClassLearnerID: learner.ClassLearnerID,
+					TranscriptID:   transcript.TranscriptID,
+					Status:         1,
+				}); err != nil {
+					return err
+				}
+				totalGrade = float64(*transcript.Grade) * transcript.Weight
 			}
 		}
-	}
 
+		attendaces, err := c.queries.CountAttendace(ctx, learner.ClassLearnerID)
+		if err != nil {
+			return err
+		}
+
+		slots, err := c.queries.CountSlotsByClassId(ctx, classId)
+		if err != nil {
+			return err
+		}
+
+		if totalGrade < float64(*subject.MinPassGrade) || math.Ceil(float64(attendaces)/float64(slots)*100) < float64(*subject.MinAttendance) {
+			if err = c.queries.UpdateClassStatus(ctx, sqlc.UpdateClassStatusParams{
+				ID:     learner.ClassLearnerID,
+				Status: 0,
+			}); err != nil {
+				return err
+			}
+		} else {
+			if err = c.queries.UpdateClassStatus(ctx, sqlc.UpdateClassStatusParams{
+				ID:     learner.ClassLearnerID,
+				Status: 1,
+			}); err != nil {
+				return err
+			}
+		}
+
+	}
 	return nil
 }

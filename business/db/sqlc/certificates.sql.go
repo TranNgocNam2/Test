@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -32,6 +33,15 @@ func (q *Queries) CreateSpecializationCertificate(ctx context.Context, arg Creat
 		arg.Status,
 	)
 	return err
+}
+
+type CreateSubjectCertificateParams struct {
+	ID        uuid.UUID  `db:"id" json:"id"`
+	LearnerID string     `db:"learner_id" json:"learnerId"`
+	SubjectID *uuid.UUID `db:"subject_id" json:"subjectId"`
+	Name      string     `db:"name" json:"name"`
+	Status    int32      `db:"status" json:"status"`
+	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
 }
 
 const getCertificateById = `-- name: GetCertificateById :one
