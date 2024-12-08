@@ -1,7 +1,6 @@
 package transcript
 
 import (
-	"Backend/business/core/learner"
 	"Backend/business/core/learner/certificate"
 	"Backend/business/db/pgx"
 	"Backend/business/db/sqlc"
