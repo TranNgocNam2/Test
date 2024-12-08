@@ -195,33 +195,31 @@ func (c *Core) JoinSpecialization(ctx *gin.Context, specializationId uuid.UUID) 
 	return nil
 }
 
-func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceSubmission AttendanceSubmission) error {
-	learner, err := middleware.AuthorizeVerifiedLearner(ctx, c.queries)
+func (c *Core) SubmitAttendance(ctx *gin.Context, slotId uuid.UUID, attendanceSubmission AttendanceSubmission) error {
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	qtx := c.queries.WithTx(tx)
+
+	learner, err := middleware.AuthorizeVerifiedLearner(ctx, qtx)
 	if err != nil {
 		return err
 	}
 
-	class, err := c.queries.GetClassById(ctx, classId)
+	slot, err := qtx.GetSlotById(ctx, slotId)
 	if err != nil {
-		return model.ErrClassNotFound
+		return model.ErrSlotNotFound
 	}
 
-	classLearner, err := c.queries.GetClassLearnerByClassAndLearner(ctx,
+	classLearner, err := qtx.GetClassLearnerByClassAndLearner(ctx,
 		sqlc.GetClassLearnerByClassAndLearnerParams{
-			ClassID:   class.ID,
+			ClassID:   slot.ClassID,
 			LearnerID: learner.ID,
 		})
 	if err != nil {
 		return model.LearnerNotInClass
-	}
-
-	slot, err := c.queries.GetSlotByClassIdAndIndex(ctx,
-		sqlc.GetSlotByClassIdAndIndexParams{
-			ClassID: class.ID,
-			Index:   attendanceSubmission.Index,
-		})
-	if err != nil {
-		return model.ErrSlotNotFound
 	}
 
 	if strings.Compare(*slot.AttendanceCode, attendanceSubmission.AttendanceCode) != 0 {
@@ -238,13 +236,13 @@ func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceS
 		return model.ErrSlotNotStarted
 	}
 
-	learnerAttendance, _ := c.queries.GetLearnerAttendanceByClassLearnerAndSlot(ctx,
+	learnerAttendance, _ := qtx.GetLearnerAttendanceByClassLearnerAndSlot(ctx,
 		sqlc.GetLearnerAttendanceByClassLearnerAndSlotParams{
 			ClassLearnerID: classLearner.ID,
 			SlotID:         slot.ID,
 		})
 
-	err = c.queries.SubmitLearnerAttendance(ctx,
+	err = qtx.SubmitLearnerAttendance(ctx,
 		sqlc.SubmitLearnerAttendanceParams{
 			Status: int32(status.Attended),
 			ID:     learnerAttendance.ID,
@@ -253,6 +251,7 @@ func (c *Core) SubmitAttendance(ctx *gin.Context, classId uuid.UUID, attendanceS
 		return err
 	}
 
+	tx.Commit(ctx)
 	return nil
 }
 
@@ -316,13 +315,9 @@ func (c *Core) GetLearnersInClass(ctx *gin.Context, classId uuid.UUID, filter Qu
 		dbAttendances, _ := c.queries.GetAttendanceByClassLearner(ctx, dbLearner.ClassLearnerID)
 		learner.Attendances = toCoreAttendanceSlice(dbAttendances)
 
-		dbAssignments, err := c.queries.GetAssignmentsByClassLearner(ctx, dbLearner.ClassLearnerID)
-		if err != nil {
-			return nil, nil
-		}
-		learner.Assignments = toCoreAssignmentSlice(dbAssignments)
 		learners = append(learners, learner)
 	}
+
 	return learners, nil
 }
 

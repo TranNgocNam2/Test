@@ -12,7 +12,6 @@ type ClassAccess struct {
 }
 
 type AttendanceSubmission struct {
-	Index          int32
 	AttendanceCode string
 }
 
@@ -25,7 +24,7 @@ type Learner struct {
 	Type        *int16       `json:"type"`
 	School      School       `json:"school"`
 	Attendances []Attendance `json:"attendances"`
-	Assignments []Assignment `json:"assignments"`
+	//Assignments []Assignment `json:"assignments"`
 }
 
 type VerifyLearnerInfo struct {
@@ -91,24 +90,24 @@ func toCoreAttendanceSlice(dbAttendances []sqlc.LearnerAttendance) []Attendance 
 	return attendances
 }
 
-type Assignment struct {
-	ID           uuid.UUID `json:"id"`
-	AssignmentId uuid.UUID `json:"assignmentId"`
-	Grade        float32   `json:"grade"`
-}
+//type Assignment struct {
+//	ID           uuid.UUID `json:"id"`
+//	AssignmentId uuid.UUID `json:"assignmentId"`
+//	Grade        float32   `json:"grade"`
+//}
 
-func toCoreAssignment(dbLearnerAssignment sqlc.LearnerAssignment) Assignment {
-	return Assignment{
-		ID:           dbLearnerAssignment.ID,
-		AssignmentId: dbLearnerAssignment.AssignmentID,
-		Grade:        dbLearnerAssignment.Grade,
-	}
-}
-
-func toCoreAssignmentSlice(dbLearnerAssignments []sqlc.LearnerAssignment) []Assignment {
-	assignments := make([]Assignment, len(dbLearnerAssignments))
-	for i, dbLearnerAssignment := range dbLearnerAssignments {
-		assignments[i] = toCoreAssignment(dbLearnerAssignment)
-	}
-	return assignments
-}
+//func toCoreAssignment(dbLearnerAssignment sqlc.LearnerAssignment) Assignment {
+//	return Assignment{
+//		ID:           dbLearnerAssignment.ID,
+//		AssignmentId: dbLearnerAssignment.AssignmentID,
+//		Grade:        dbLearnerAssignment.Grade,
+//	}
+//}
+//
+//func toCoreAssignmentSlice(dbLearnerAssignments []sqlc.LearnerAssignment) []Assignment {
+//	assignments := make([]Assignment, len(dbLearnerAssignments))
+//	for i, dbLearnerAssignment := range dbLearnerAssignments {
+//		assignments[i] = toCoreAssignment(dbLearnerAssignment)
+//	}
+//	return assignments
+//}
