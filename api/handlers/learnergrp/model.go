@@ -44,7 +44,6 @@ func validateNewClassAccessRequest(request payload.ClassAccess) error {
 
 func toCoreSubmitAttendance(request payload.LearnerAttendance) learner.AttendanceSubmission {
 	return learner.AttendanceSubmission{
-		Index:          int32(*request.Index),
 		AttendanceCode: request.AttendanceCode,
 	}
 }

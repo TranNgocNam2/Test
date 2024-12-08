@@ -237,6 +237,9 @@ func handleCertificateData(ctx *gin.Context, qtx *sqlc.Queries, dbCert sqlc.Cert
 	}
 
 	if dbCert.SubjectID != nil {
+		if dbCert.ClassID == nil {
+			return nil, model.ErrClassNotFound
+		}
 		dbProgram, err := qtx.GetProgramByClassId(ctx, *dbCert.ClassID)
 		if err != nil {
 			return nil, model.ErrProgramNotFound
