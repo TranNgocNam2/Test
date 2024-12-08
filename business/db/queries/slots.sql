@@ -98,3 +98,4 @@ WHERE class_id = sqlc.arg(class_id)
 UPDATE slots
 SET record_link = sqlc.arg(record_link)
 WHERE id = sqlc.arg(id);
+

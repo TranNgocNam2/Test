@@ -56,6 +56,7 @@ type ClassLearner struct {
 	ID        uuid.UUID `db:"id" json:"id"`
 	LearnerID string    `db:"learner_id" json:"learnerId"`
 	ClassID   uuid.UUID `db:"class_id" json:"classId"`
+	Status    int16     `db:"status" json:"status"`
 }
 
 type District struct {
@@ -93,6 +94,7 @@ type LearnerTranscript struct {
 	ClassLearnerID uuid.UUID  `db:"class_learner_id" json:"classLearnerId"`
 	TranscriptID   uuid.UUID  `db:"transcript_id" json:"transcriptId"`
 	Grade          *float32   `db:"grade" json:"grade"`
+	Status         int16      `db:"status" json:"status"`
 	UpdatedAt      *time.Time `db:"updated_at" json:"updatedAt"`
 	UpdatedBy      *string    `db:"updated_by" json:"updatedBy"`
 }

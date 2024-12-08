@@ -359,7 +359,7 @@ func (c *Core) CountLearnerAssignment(ctx *gin.Context, assignmentId uuid.UUID) 
 		"assignment_id": assignmentId,
 	}
 
-	const q = `SELECT COUNT(1) FROM learner_assignments`
+	const q = `SELECT COUNT(1) FROM learner_assignments WHERE assignment_id = :assignment_id `
 	buf := bytes.NewBufferString(q)
 	var count struct {
 		Count int `db:"count"`
@@ -378,7 +378,7 @@ func (c *Core) Count(ctx *gin.Context, classId uuid.UUID) int {
 		"class_id": classId,
 	}
 
-	const q = `SELECT COUNT(1) FROM assignments`
+	const q = `SELECT COUNT(1) FROM assignments WHERE class_id = :class_id`
 	buf := bytes.NewBufferString(q)
 	var count struct {
 		Count int `db:"count"`

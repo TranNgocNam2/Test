@@ -8,12 +8,15 @@ import (
 )
 
 type Config struct {
-	Host        string `mapstructure:"APP_HOST"`
-	Port        int    `mapstructure:"APP_PORT"`
-	CorsOrigin  string `mapstructure:"CORS_ORIGIN"`
-	CorsProd    string `mapstructure:"CORS_PRODUCTION"`
-	DatabaseUrl string `mapstructure:"DB_DSN"`
-	ApiKey      string `mapstructure:"API_KEY"`
+	Host           string `mapstructure:"APP_HOST"`
+	Port           int    `mapstructure:"APP_PORT"`
+	CorsOrigin     string `mapstructure:"CORS_ORIGIN"`
+	CorsProd       string `mapstructure:"CORS_PRODUCTION"`
+	DatabaseUrl    string `mapstructure:"DB_DSN"`
+	ApiKey         string `mapstructure:"API_KEY"`
+	SendGridApiKey string `mapstructure:"SENDGRID_API_KEY"`
+	MailName       string `mapstructure:"MAIL_NAME"`
+	MAIL_DOMAIN    string `mapstructure:"MAIL_DOMAIN"`
 }
 
 func LoadAllAppConfig(path string) (config *Config, err error) {

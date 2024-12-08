@@ -47,3 +47,118 @@ func (q *Queries) GenerateLearnersTranscripts(ctx context.Context, arg GenerateL
 	_, err := q.db.Exec(ctx, generateLearnersTranscripts, arg.ClassLearnerIds, arg.TranscriptIds)
 	return err
 }
+
+const getLearnerTranscript = `-- name: GetLearnerTranscript :one
+SELECT id, class_learner_id, transcript_id, grade, status, updated_at, updated_by FROM learner_transcripts WHERE class_learner_id = $1 AND transcript_id = $2
+`
+
+type GetLearnerTranscriptParams struct {
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	TranscriptID   uuid.UUID `db:"transcript_id" json:"transcriptId"`
+}
+
+func (q *Queries) GetLearnerTranscript(ctx context.Context, arg GetLearnerTranscriptParams) (LearnerTranscript, error) {
+	row := q.db.QueryRow(ctx, getLearnerTranscript, arg.ClassLearnerID, arg.TranscriptID)
+	var i LearnerTranscript
+	err := row.Scan(
+		&i.ID,
+		&i.ClassLearnerID,
+		&i.TranscriptID,
+		&i.Grade,
+		&i.Status,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const getLearnerTranscriptByClassLearnerId = `-- name: GetLearnerTranscriptByClassLearnerId :many
+SELECT lt.grade, lt.class_learner_id, lt.transcript_id, t.min_grade, t.weight
+FROM learner_transcripts lt
+JOIN transcripts t ON lt.transcript_id = t.id
+WHERE lt.class_learner_id = $1
+`
+
+type GetLearnerTranscriptByClassLearnerIdRow struct {
+	Grade          *float32  `db:"grade" json:"grade"`
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	TranscriptID   uuid.UUID `db:"transcript_id" json:"transcriptId"`
+	MinGrade       float64   `db:"min_grade" json:"minGrade"`
+	Weight         float64   `db:"weight" json:"weight"`
+}
+
+func (q *Queries) GetLearnerTranscriptByClassLearnerId(ctx context.Context, classLearnerID uuid.UUID) ([]GetLearnerTranscriptByClassLearnerIdRow, error) {
+	rows, err := q.db.Query(ctx, getLearnerTranscriptByClassLearnerId, classLearnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetLearnerTranscriptByClassLearnerIdRow
+	for rows.Next() {
+		var i GetLearnerTranscriptByClassLearnerIdRow
+		if err := rows.Scan(
+			&i.Grade,
+			&i.ClassLearnerID,
+			&i.TranscriptID,
+			&i.MinGrade,
+			&i.Weight,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateClassStatus = `-- name: UpdateClassStatus :exec
+UPDATE class_learners
+SET status = $1
+WHERE id = $2
+`
+
+type UpdateClassStatusParams struct {
+	Status int16     `db:"status" json:"status"`
+	ID     uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateClassStatus(ctx context.Context, arg UpdateClassStatusParams) error {
+	_, err := q.db.Exec(ctx, updateClassStatus, arg.Status, arg.ID)
+	return err
+}
+
+const updateLearnerTranscriptGrade = `-- name: UpdateLearnerTranscriptGrade :exec
+UPDATE learner_transcripts
+SET grade = $1
+WHERE id = $2::uuid
+`
+
+type UpdateLearnerTranscriptGradeParams struct {
+	Grade *float32  `db:"grade" json:"grade"`
+	ID    uuid.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateLearnerTranscriptGrade(ctx context.Context, arg UpdateLearnerTranscriptGradeParams) error {
+	_, err := q.db.Exec(ctx, updateLearnerTranscriptGrade, arg.Grade, arg.ID)
+	return err
+}
+
+const updateTranscriptStatus = `-- name: UpdateTranscriptStatus :exec
+UPDATE learner_transcripts
+SET status = $1
+WHERE class_learner_id = $2
+AND transcript_id = $3
+`
+
+type UpdateTranscriptStatusParams struct {
+	Status         int16     `db:"status" json:"status"`
+	ClassLearnerID uuid.UUID `db:"class_learner_id" json:"classLearnerId"`
+	TranscriptID   uuid.UUID `db:"transcript_id" json:"transcriptId"`
+}
+
+func (q *Queries) UpdateTranscriptStatus(ctx context.Context, arg UpdateTranscriptStatusParams) error {
+	_, err := q.db.Exec(ctx, updateTranscriptStatus, arg.Status, arg.ClassLearnerID, arg.TranscriptID)
+	return err
+}

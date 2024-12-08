@@ -45,3 +45,6 @@ FROM learner_attendances la
 WHERE cl.class_id = sqlc.arg(class_id)::uuid
   AND cl.learner_id = sqlc.arg(learner_id)
 ORDER BY s.index;
+
+-- name: CountAttendace :one
+SELECT COUNT(*) FROM learner_attendances WHERE class_learner_id = sqlc.arg(class_learner_id);

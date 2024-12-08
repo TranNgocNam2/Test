@@ -12,6 +12,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const countAttendace = `-- name: CountAttendace :one
+SELECT COUNT(*) FROM learner_attendances WHERE class_learner_id = $1
+`
+
+func (q *Queries) CountAttendace(ctx context.Context, classLearnerID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countAttendace, classLearnerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const generateLearnerAttendance = `-- name: GenerateLearnerAttendance :exec
 INSERT INTO learner_attendances(id, class_learner_id, slot_id)
 VALUES (uuid_generate_v4(), $1, UNNEST($2::uuid[]))
