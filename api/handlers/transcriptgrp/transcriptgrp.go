@@ -75,7 +75,11 @@ func (h *Handlers) SubmitGrade() gin.HandlerFunc {
 
 func (h *Handlers) GetLearnerTranscripts() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		learnerId := ctx.Param("id")
+		classId, err := uuid.Parse(ctx.Param("id"))
+		if err != nil {
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			return
+		}
 		pageInfo := page.Parse(ctx)
 		filter, err := parseFilter(ctx)
 		if err != nil {
@@ -84,8 +88,8 @@ func (h *Handlers) GetLearnerTranscripts() gin.HandlerFunc {
 			}
 		}
 
-		result := h.transcript.GetLearnerTranscripts(ctx, filter, learnerId, pageInfo.Number, pageInfo.Size)
-		total := h.transcript.Count(ctx, learnerId, filter)
+		result := h.transcript.GetLearnerTranscripts(ctx, filter, classId, pageInfo.Number, pageInfo.Size)
+		total := h.transcript.Count(ctx, classId, filter)
 		results := page.NewPageResponse(result, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, results, http.StatusOK, nil)

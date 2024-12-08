@@ -193,9 +193,9 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 	return nil
 }
 
-func (c *Core) GetLearnerTranscripts(ctx *gin.Context, filter QueryFilter, learnerId string, pageNumber int, rowsPerPage int) []LearnerTranscriptQuery {
+func (c *Core) GetLearnerTranscripts(ctx *gin.Context, filter QueryFilter, classId uuid.UUID, pageNumber int, rowsPerPage int) []LearnerTranscriptQuery {
 	data := map[string]interface{}{
-		"learner_id":    learnerId,
+		"class_id":      classId,
 		"offset":        (pageNumber - 1) * rowsPerPage,
 		"rows_per_page": rowsPerPage,
 	}
@@ -205,7 +205,7 @@ func (c *Core) GetLearnerTranscripts(ctx *gin.Context, filter QueryFilter, learn
                 JOIN transcripts t ON lt.transcript_id = t.id
                 JOIN class_learners cl ON cl.id = lt.class_learner_id
                 JOIN users u ON u.id = cl.learner_id
-                WHERE cl.learner_id = :learner_id`
+                WHERE cl.class_id = :class_id`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf)
@@ -250,14 +250,14 @@ func (c *Core) GetLearnerTranscripts(ctx *gin.Context, filter QueryFilter, learn
 	return result
 }
 
-func (c *Core) Count(ctx *gin.Context, learnerId string, filter QueryFilter) int {
+func (c *Core) Count(ctx *gin.Context, classId uuid.UUID, filter QueryFilter) int {
 	data := map[string]interface{}{
-		"learner_id": learnerId,
+		"classId": classId,
 	}
 
 	const q = `SELECT COUNT(1) as count FROM learner_transcripts lt
                 JOIN class_learners cl ON cl.id = lt.class_learner_id
-                WHERE cl.learner_id = :learner_id`
+                WHERE cl.class_id = :classId`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf)
