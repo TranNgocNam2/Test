@@ -222,7 +222,7 @@ func (c *Core) GetLearnerTranscripts(ctx *gin.Context, filter QueryFilter, class
 		"rows_per_page": rowsPerPage,
 	}
 
-	const q = `SELECT DISTINCT cl.learner_id, u.full_name, u.email, lt.transcript_id, t.name, lt.grade, lt.status, t.index
+	const q = `SELECT cl.learner_id, u.full_name, u.email, lt.transcript_id, t.name, lt.grade, lt.status, t.index
                 FROM learner_transcripts lt
                 JOIN transcripts t ON lt.transcript_id = t.id
                 JOIN class_learners cl ON cl.id = lt.class_learner_id
@@ -241,7 +241,7 @@ func (c *Core) GetLearnerTranscripts(ctx *gin.Context, filter QueryFilter, class
 		Email          string    `db:"email"`
 		TranscriptId   uuid.UUID `db:"transcript_id"`
 		TranscriptName string    `db:"name"`
-		Grade          float32   `db:"grade"`
+		Grade          *float32  `db:"grade"`
 		Status         int16     `db:"status"`
 		Index          int32     `db:"index"`
 	}
@@ -259,56 +259,7 @@ func (c *Core) GetLearnerTranscripts(ctx *gin.Context, filter QueryFilter, class
 		t := LearnerTranscriptQuery{
 			LearnerId:    t.LearnerId,
 			TranscriptId: t.TranscriptId,
-			Grade:        float64(t.Grade),
-			Status:       int32(t.Status),
-		}
-		result = append(result, t)
-	}
-
-	return result
-}
-
-func (c *Core) GetLearnerTranscriptsByLearnerId(ctx *gin.Context, filter QueryFilter, learnerId string, pageNumber int, rowsPerPage int) []LearnerTranscriptQuery {
-	data := map[string]interface{}{
-		"learner_id":    learnerId,
-		"offset":        (pageNumber - 1) * rowsPerPage,
-		"rows_per_page": rowsPerPage,
-	}
-
-	const q = `SELECT DISTINCT cl.learner_id, lt.transcript_id, lt.grade, lt.status, t.index
-                FROM learner_transcripts lt
-                JOIN transcripts t ON lt.transcript_id = t.id
-                JOIN class_learners cl ON cl.id = lt.class_learner_id
-                WHERE cl.learner_id = :learner_id`
-
-	buf := bytes.NewBufferString(q)
-	applyFilter(filter, data, buf)
-	buf.WriteString(orderByClause(order.NewBy(OrderByIndex, order.ASC)))
-	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
-	c.logger.Info(buf.String())
-
-	var learnerTranscripts []struct {
-		LearnerId    string    `db:"learner_id"`
-		TranscriptId uuid.UUID `db:"transcript_id"`
-		Grade        float32   `db:"grade"`
-		Status       int16     `db:"status"`
-		Index        int32     `db:"index"`
-	}
-	if err := pgx.NamedQuerySlice(ctx, c.logger, c.db, buf.String(), data, &learnerTranscripts); err != nil {
-		c.logger.Error(err.Error())
-		return nil
-	}
-
-	if learnerTranscripts == nil {
-		return nil
-	}
-
-	var result []LearnerTranscriptQuery
-	for _, t := range learnerTranscripts {
-		t := LearnerTranscriptQuery{
-			LearnerId:    t.LearnerId,
-			TranscriptId: t.TranscriptId,
-			Grade:        float64(t.Grade),
+			Grade:        t.Grade,
 			Status:       int32(t.Status),
 		}
 		result = append(result, t)
@@ -325,28 +276,6 @@ func (c *Core) Count(ctx *gin.Context, classId uuid.UUID, filter QueryFilter) in
 	const q = `SELECT COUNT(1) as count FROM learner_transcripts lt
                 JOIN class_learners cl ON cl.id = lt.class_learner_id
                 WHERE cl.class_id = :classId`
-
-	buf := bytes.NewBufferString(q)
-	applyFilter(filter, data, buf)
-
-	var count struct {
-		Count int `db:"count"`
-	}
-	if err := pgx.NamedQueryStruct(ctx, c.logger, c.db, buf.String(), data, &count); err != nil {
-		c.logger.Error(err.Error())
-		return 0
-	}
-	return count.Count
-}
-
-func (c *Core) CountLearnerTranscript(ctx *gin.Context, learnerId string, filter QueryFilter) int {
-	data := map[string]interface{}{
-		"learner_id": learnerId,
-	}
-
-	const q = `SELECT COUNT(1) as count FROM learner_transcripts lt
-                JOIN class_learners cl ON cl.id = lt.class_learner_id
-                WHERE cl.learner_id = :learner_id`
 
 	buf := bytes.NewBufferString(q)
 	applyFilter(filter, data, buf)

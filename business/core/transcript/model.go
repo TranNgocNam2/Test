@@ -5,7 +5,7 @@ import "github.com/google/uuid"
 type LearnerTranscriptQuery struct {
 	LearnerId    string    `json:"learnerId"`
 	TranscriptId uuid.UUID `json:"transcriptId"`
-	Grade        float64   `json:"grade"`
+	Grade        *float32  `json:"grade"`
 	Status       int32     `json:"status"`
 }
 
