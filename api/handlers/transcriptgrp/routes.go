@@ -17,10 +17,4 @@ func TranscriptRoutes(router *gin.Engine, app *app.Application) {
 		classes.POST("/:id/transcripts/submit", handlers.SubmitGrade())
 		classes.GET("/:id/transcripts", handlers.GetLearnerTranscripts())
 	}
-
-	learners := router.Group("/learners")
-	{
-		learners.GET("/:id/transcripts", handlers.GetLearnerTranscriptsByLearnerId())
-	}
-
 }

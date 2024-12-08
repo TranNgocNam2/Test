@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	filterByName = "transcriptName"
+	filterByName      = "transcriptName"
+	filterByLearnerId = "learnerId"
 )
 
 func parseFilter(ctx *gin.Context) (transcript.QueryFilter, error) {
@@ -15,6 +16,10 @@ func parseFilter(ctx *gin.Context) (transcript.QueryFilter, error) {
 
 	if name := ctx.Query(filterByName); name != "" {
 		filter.WithName(name)
+	}
+
+	if name := ctx.Query(filterByLearnerId); name != "" {
+		filter.WithLearnerId(name)
 	}
 
 	return filter, nil

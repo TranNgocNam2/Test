@@ -112,30 +112,12 @@ func (h *Handlers) GetLearnerTranscripts() gin.HandlerFunc {
 		if err != nil {
 			filter = transcript.QueryFilter{
 				TranscriptName: nil,
+				LearnerId:      nil,
 			}
 		}
 
 		result := h.transcript.GetLearnerTranscripts(ctx, filter, classId, pageInfo.Number, pageInfo.Size)
 		total := h.transcript.Count(ctx, classId, filter)
-		results := page.NewPageResponse(result, total, pageInfo.Number, pageInfo.Size)
-
-		web.Respond(ctx, results, http.StatusOK, nil)
-	}
-}
-
-func (h *Handlers) GetLearnerTranscriptsByLearnerId() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		learnerId := ctx.Param("id")
-		pageInfo := page.Parse(ctx)
-		filter, err := parseFilter(ctx)
-		if err != nil {
-			filter = transcript.QueryFilter{
-				TranscriptName: nil,
-			}
-		}
-
-		result := h.transcript.GetLearnerTranscriptsByLearnerId(ctx, filter, learnerId, pageInfo.Number, pageInfo.Size)
-		total := h.transcript.CountLearnerTranscript(ctx, learnerId, filter)
 		results := page.NewPageResponse(result, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, results, http.StatusOK, nil)
