@@ -3,10 +3,12 @@ package transcriptgrp
 import (
 	"Backend/business/core/transcript"
 	"Backend/internal/common/model"
+	"Backend/internal/middleware"
 	"Backend/internal/page"
 	"Backend/internal/validate"
 	"Backend/internal/web"
 	"Backend/internal/web/payload"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -47,8 +49,19 @@ func (h *Handlers) UpdateGrade() gin.HandlerFunc {
 
 		err = h.transcript.ChangeScore(ctx, classId, request)
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusInternalServerError, err)
-			return
+			switch {
+			case errors.Is(err, model.LearnerNotInClass):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
+
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
 		}
 
 		web.Respond(ctx, nil, http.StatusOK, nil)
@@ -65,8 +78,22 @@ func (h *Handlers) SubmitGrade() gin.HandlerFunc {
 
 		err = h.transcript.SubmitScore(ctx, classId)
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusInternalServerError, err)
-			return
+			switch {
+			case
+				errors.Is(err, model.ErrClassNotFound),
+				errors.Is(err, model.ErrSubjectNotFound),
+				errors.Is(err, model.LearnerNotInClass):
+				web.Respond(ctx, nil, http.StatusBadRequest, err)
+				return
+			case
+				errors.Is(err, middleware.ErrInvalidUser):
+
+				web.Respond(ctx, nil, http.StatusUnauthorized, err)
+				return
+			default:
+				web.Respond(ctx, nil, http.StatusInternalServerError, err)
+				return
+			}
 		}
 
 		web.Respond(ctx, nil, http.StatusOK, nil)
@@ -90,6 +117,25 @@ func (h *Handlers) GetLearnerTranscripts() gin.HandlerFunc {
 
 		result := h.transcript.GetLearnerTranscripts(ctx, filter, classId, pageInfo.Number, pageInfo.Size)
 		total := h.transcript.Count(ctx, classId, filter)
+		results := page.NewPageResponse(result, total, pageInfo.Number, pageInfo.Size)
+
+		web.Respond(ctx, results, http.StatusOK, nil)
+	}
+}
+
+func (h *Handlers) GetLearnerTranscriptsByLearnerId() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		learnerId := ctx.Param("id")
+		pageInfo := page.Parse(ctx)
+		filter, err := parseFilter(ctx)
+		if err != nil {
+			filter = transcript.QueryFilter{
+				TranscriptName: nil,
+			}
+		}
+
+		result := h.transcript.GetLearnerTranscriptsByLearnerId(ctx, filter, learnerId, pageInfo.Number, pageInfo.Size)
+		total := h.transcript.CountLearnerTranscript(ctx, learnerId, filter)
 		results := page.NewPageResponse(result, total, pageInfo.Number, pageInfo.Size)
 
 		web.Respond(ctx, results, http.StatusOK, nil)
