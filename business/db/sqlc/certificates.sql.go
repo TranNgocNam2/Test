@@ -36,8 +36,8 @@ func (q *Queries) CreateSpecializationCertificate(ctx context.Context, arg Creat
 }
 
 const createSubjectCertificate = `-- name: CreateSubjectCertificate :exec
-INSERT INTO certificates (id, learner_id, subject_id, name, status, created_at)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO certificates (id, learner_id, subject_id, name, status, created_at, class_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateSubjectCertificateParams struct {
@@ -47,6 +47,7 @@ type CreateSubjectCertificateParams struct {
 	Name      string     `db:"name" json:"name"`
 	Status    int32      `db:"status" json:"status"`
 	CreatedAt time.Time  `db:"created_at" json:"createdAt"`
+	ClassID   *uuid.UUID `db:"class_id" json:"classId"`
 }
 
 func (q *Queries) CreateSubjectCertificate(ctx context.Context, arg CreateSubjectCertificateParams) error {
@@ -57,6 +58,7 @@ func (q *Queries) CreateSubjectCertificate(ctx context.Context, arg CreateSubjec
 		arg.Name,
 		arg.Status,
 		arg.CreatedAt,
+		arg.ClassID,
 	)
 	return err
 }

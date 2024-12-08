@@ -138,6 +138,11 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 		totalGrade = 0
 		pass := true
 		for _, transcript := range transcripts {
+			if transcript.Grade == nil {
+				var zero float32
+				transcript.Grade = &zero
+			}
+
 			if float64(*transcript.Grade) < transcript.MinGrade {
 				// Update transcript status
 				if err = qtx.UpdateTranscriptStatus(ctx, sqlc.UpdateTranscriptStatusParams{
@@ -193,6 +198,7 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 				SubjectID: &subject.ID,
 				Name:      subject.Name,
 				Status:    certificate.Valid,
+				ClassID:   &class.ID,
 				CreatedAt: time.Now(),
 			}); err != nil {
 				return err

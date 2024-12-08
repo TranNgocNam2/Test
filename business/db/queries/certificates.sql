@@ -35,5 +35,5 @@ GROUP BY c.id, c.subject_id
 ORDER BY MAX(ss.index);;
 
 -- name: CreateSubjectCertificate :exec
-INSERT INTO certificates (id, learner_id, subject_id, name, status, created_at)
-VALUES ($1, $2, $3, $4, $5, $6);
+INSERT INTO certificates (id, learner_id, subject_id, name, status, created_at, class_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7);
