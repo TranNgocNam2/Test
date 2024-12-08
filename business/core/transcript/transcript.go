@@ -6,10 +6,14 @@ import (
 	"Backend/business/db/sqlc"
 	"Backend/internal/app"
 	"Backend/internal/common/model"
+	"Backend/internal/config"
 	"Backend/internal/middleware"
 	"Backend/internal/order"
+	"Backend/internal/tmplt"
 	"Backend/internal/web/payload"
 	"bytes"
+	"fmt"
+	"html/template"
 	"math"
 	"time"
 
@@ -17,6 +21,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"go.uber.org/zap"
 )
 
@@ -25,6 +31,7 @@ type Core struct {
 	queries *sqlc.Queries
 	logger  *zap.Logger
 	pool    *pgxpool.Pool
+	config  *config.Config
 }
 
 func NewCore(app *app.Application) *Core {
@@ -33,6 +40,7 @@ func NewCore(app *app.Application) *Core {
 		queries: app.Queries,
 		logger:  app.Logger,
 		pool:    app.Pool,
+		config:  app.Config,
 	}
 }
 
@@ -161,7 +169,7 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 		if !pass || totalGrade < float64(*subject.MinPassGrade) || math.Ceil(float64(attendaces)/float64(slots)*100) < float64(*subject.MinAttendance) {
 			if err = qtx.UpdateClassStatus(ctx, sqlc.UpdateClassStatusParams{
 				ID:     learner.ClassLearnerID,
-				Status: 2,
+				Status: 0,
 			}); err != nil {
 				return err
 			}
@@ -173,14 +181,24 @@ func (c *Core) SubmitScore(ctx *gin.Context, classId uuid.UUID) error {
 				return err
 			}
 
+			certId := uuid.New()
+
 			if err = qtx.CreateSubjectCertificate(ctx, sqlc.CreateSubjectCertificateParams{
-				ID:        uuid.New(),
+				ID:        certId,
 				LearnerID: learner.ID,
 				SubjectID: &subject.ID,
 				Name:      subject.Name,
 				Status:    certificate.Valid,
 				CreatedAt: time.Now(),
 			}); err != nil {
+				return err
+			}
+			err := sendCertiMail(learner.Email,
+				*learner.FullName,
+				c.config.SendGridApiKey,
+				c.config.MAIL_DOMAIN,
+				c.config.MailName, subject.Name, certId.String())
+			if err != nil {
 				return err
 			}
 		}
@@ -270,4 +288,36 @@ func (c *Core) Count(ctx *gin.Context, classId uuid.UUID, filter QueryFilter) in
 		return 0
 	}
 	return count.Count
+}
+
+func sendCertiMail(email string, name string, apiKey string, domain string, fromName string, subjectName string, certiId string) error {
+	link := "frontend-innovia.vercel.app/certificate/" + certiId
+	data := map[string]interface{}{
+		"Name":        name,
+		"SubjectName": subjectName,
+		"Link":        link,
+	}
+
+	htmlTemp, err := template.New("email").Parse(tmplt.SuccessHTML)
+	if err != nil {
+		return err
+	}
+
+	t := template.Must(htmlTemp, err)
+	buf := &bytes.Buffer{}
+	if err := t.Execute(buf, data); err != nil {
+		return err
+	}
+	from := mail.NewEmail(fromName, domain)
+	subject := "Congratulations, Your Certificate is Ready!"
+	to := mail.NewEmail(name, email)
+	html := buf.String()
+	message := mail.NewSingleEmail(from, subject, to, "", html)
+	client := sendgrid.NewSendClient(apiKey)
+	response, err := client.Send(message)
+	if err != nil || response.StatusCode != 202 {
+		return fmt.Errorf("Gui mail that bai")
+	}
+
+	return nil
 }
