@@ -16,7 +16,7 @@ func LearnerRoutes(router *gin.Engine, app *app.Application) {
 		learners.GET("/verifications", handlers.GetVerificationInfo())
 		learners.PUT("/verifications/:verificationId/cancel", handlers.CancelVerification())
 		learners.POST("/specializations/:specializationId", handlers.AddLearnerToSpecialization())
-		learners.PUT("/classes/:classId/attendance", handlers.SubmitAttendance())
+		learners.PUT("/slots/:slotId/attendance", handlers.SubmitAttendance())
 		learners.GET("/classes/:classId", handlers.GetLearnerClasses())
 		learners.GET("/slots/:slotId", handlers.GetAttendanceRecords())
 		learners.GET("/classes/:classId/slots", handlers.GetAttendanceReports())

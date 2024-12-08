@@ -392,7 +392,7 @@ func (c *Core) Count(ctx *gin.Context, classId uuid.UUID) int {
 	return count.Count
 }
 
-func (c *Core) GradeAssignment(ctx *gin.Context, learnerId uuid.UUID, asmId uuid.UUID, data payload.AssignmentGrade) error {
+func (c *Core) GradeAssignment(ctx *gin.Context, learnerId string, asmId uuid.UUID, data payload.AssignmentGrade) error {
 	_, err := middleware.AuthorizeTeacher(ctx, c.queries)
 	if err != nil {
 		c.logger.Error(err.Error())
@@ -411,7 +411,7 @@ func (c *Core) GradeAssignment(ctx *gin.Context, learnerId uuid.UUID, asmId uuid
 
 	classLearner, err := c.queries.GetClassLearnerByClassAndLearner(ctx, sqlc.GetClassLearnerByClassAndLearnerParams{
 		ClassID:   asm.ClassID,
-		LearnerID: learnerId.String(),
+		LearnerID: learnerId,
 	})
 
 	if err != nil {

@@ -98,9 +98,9 @@ func (h *Handlers) AddLearnerToSpecialization() gin.HandlerFunc {
 
 func (h *Handlers) SubmitAttendance() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		classId, err := uuid.Parse(ctx.Param("classId"))
+		slotId, err := uuid.Parse(ctx.Param("slotId"))
 		if err != nil {
-			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrClassIdInvalid)
+			web.Respond(ctx, nil, http.StatusBadRequest, model.ErrInvalidSlotId)
 			return
 		}
 
@@ -115,9 +115,7 @@ func (h *Handlers) SubmitAttendance() gin.HandlerFunc {
 			return
 		}
 
-		attendanceSubmission := toCoreSubmitAttendance(req)
-
-		err = h.learner.SubmitAttendance(ctx, classId, attendanceSubmission)
+		err = h.learner.SubmitAttendance(ctx, slotId, toCoreSubmitAttendance(req))
 		if err != nil {
 			switch {
 			case
@@ -324,7 +322,9 @@ func (h *Handlers) GetAttendanceReports() gin.HandlerFunc {
 			return
 		}
 
-		reports, err := h.learner.GetAttendanceReports(ctx, classId)
+		learnerId := ctx.Query("learnerId")
+
+		reports, err := h.learner.GetAttendanceReports(ctx, classId, learnerId)
 		if err != nil {
 			switch {
 			case errors.Is(err, model.ErrAttendanceReportsNotFound),

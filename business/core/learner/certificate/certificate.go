@@ -79,7 +79,7 @@ func (c *Core) Query(ctx *gin.Context, filter QueryFilter, orderBy order.By, pag
 		"rows_per_page": page.Size,
 	}
 
-	const q = `SELECT c.id, c.name, c.created_at, c.specialization_id, c.subject_id, c.class_id
+	const q = `SELECT c.id, c.name, c.created_at, c.specialization_id, c.subject_id, c.class_id, c.learner_id
 					FROM certificates c`
 
 	buf := bytes.NewBufferString(q)
@@ -217,24 +217,37 @@ func getUserId(ctx *gin.Context, userId *string, qtx *sqlc.Queries) (*string, er
 }
 
 func handleCertificateData(ctx *gin.Context, qtx *sqlc.Queries, dbCert sqlc.Certificate) (*Certificate, error) {
+	learner, err := qtx.GetVerifiedLearnersByLearnerId(ctx,
+		sqlc.GetVerifiedLearnersByLearnerIdParams{
+			ID:     dbCert.LearnerID,
+			Status: int32(status.Valid),
+		})
+	if err != nil {
+		return nil, model.ErrUserNotFound
+	}
+
 	certificate := toCoreCertificate(dbCert)
+	certificate.Learner = toCoreLearner(learner)
 	if dbCert.SpecializationID != nil {
 		dbSpecialization, err := qtx.GetSpecializationById(ctx, *dbCert.SpecializationID)
 		if err != nil {
-			return nil, err
+			return nil, model.ErrSpecNotFound
 		}
 		certificate.Specialization = toCoreSpecialization(dbSpecialization)
 	}
 
 	if dbCert.SubjectID != nil {
+		if dbCert.ClassID == nil {
+			return nil, model.ErrClassNotFound
+		}
 		dbProgram, err := qtx.GetProgramByClassId(ctx, *dbCert.ClassID)
 		if err != nil {
-			return nil, err
+			return nil, model.ErrProgramNotFound
 		}
 
 		dbSubject, err := qtx.GetSubjectById(ctx, *dbCert.SubjectID)
 		if err != nil {
-			return nil, err
+			return nil, model.ErrSubjectNotFound
 		}
 		certificate.Subject = toCoreSubject(dbSubject, dbProgram)
 	}
