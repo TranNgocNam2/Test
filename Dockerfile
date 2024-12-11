@@ -36,10 +36,10 @@ COPY --from=builder /build/innovia-backend /app/
 COPY --from=builder /build/.env /app/
 
 # Use nonroot user
-RUN addgroup -S nonroot \
-    && adduser -S nonroot -G nonroot
-
-USER nonroot
+#RUN addgroup -S nonroot \
+#    && adduser -S nonroot -G nonroot
+#
+#USER nonroot
 
 # Set the entrypoint to the Go application
 ENTRYPOINT ["/app/innovia-backend"]
